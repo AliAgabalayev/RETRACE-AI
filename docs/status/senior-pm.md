@@ -53,3 +53,6 @@ Each agent writes only its own files and its own `docs/status/<agent>.md`; senio
 - If interrupted: read all `docs/status/*.md`, re-dispatch any workstream whose status file is missing or stale, then continue integration.
 - Agent IDs (session 2, for SendMessage): DATA=afdb34c03018a7700, DL=a17dc2333c0a549cc, APP=acd79cea7f082b82b, QA=affe4eaa1acbfb700, EXP=a15e1832adce4ec82 (done), DOCS=a01bcf1c36e5f78de (done phase 1; re-dispatch once app/cli/artifacts exist).
 - Done: initial commit 9c09345; D6 policy fixes (QA-D1/D2/D3); D7 splits + 60-pair eval subset; EXPERIMENTS.md, DATA_CARD.md (partial), THIRD_PARTY_NOTICES.md written.
+- Checkpoint 0b3cc1b: integrated slice (101 files). Tests: 83 + 39 pass, 4 real_model skipped. APP done; real VLM run → NEEDS_REVIEW (audit timeout, rule-ID compliance) → sent to DL.
+- D8: benchmark rules split into A1 (ACCEPTABLE) / D1 (UNACCEPTABLE); manifest regenerated. DATA done: 250 pairs, demo 5 / dev 40 / eval 205, eval_subset_60.json.
+- QA done: 138 pass / 4 skip after D9. E1 classical: eval_full balanced acc 0.516 (bug recall 0.03) ≈ chance. E2/E4 blocked on real-VLM (D6 RAM, DL fixes).

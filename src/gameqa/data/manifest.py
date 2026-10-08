@@ -19,19 +19,38 @@ _ACCEPTABLE_BLOCK = re.compile(
 )
 
 
-def rules_from_question(question: str) -> list[Rule]:
-    """Map a benchmark question to rules.
-
-    Q1 (DENY): the original question text, verbatim, prefixed with "Report a regression: ".
-    A1 (ALLOW): only when the question has an explicit ACCEPTABLE header with bullet lines;
-    that header block is copied verbatim. No label information is ever used.
-    """
-    rules = [Rule(id="Q1", effect=RuleEffect.DENY, description=f"Report a regression: {question}")]
+def _criteria_block(question: str, unacceptable: bool) -> str | None:
+    """Return the verbatim '... ACCEPTABLE:' or '... UNACCEPTABLE:' header + bullet block."""
     for m in _ACCEPTABLE_BLOCK.finditer(question):
         block = m.group("block").strip()
-        if block.upper().lstrip().startswith(("CONSIDER", "ACCEPTABLE")) and "UNACCEPTABLE" not in block.split(":")[0].upper():
-            rules.append(Rule(id="A1", effect=RuleEffect.ALLOW, description=block))
-            break
+        header = block.split(":")[0].upper()
+        if ("UNACCEPTABLE" in header) == unacceptable:
+            return block
+    return None
+
+
+def rules_from_question(question: str) -> list[Rule]:
+    """Map a benchmark question to rules (DECISIONS D8). No label information is used.
+
+    A1 (ALLOW): the question's ACCEPTABLE header + bullets, verbatim.
+    D1 (DENY):  the question's UNACCEPTABLE header + bullets, verbatim.
+    If the question has no UNACCEPTABLE block, D1 falls back to the whole question
+    verbatim, prefixed with "Report a regression: ". The benchmark's output-format
+    instruction is deliberately not turned into a rule; the full original question is
+    kept in the manifest's ``question`` field for provenance.
+    """
+    rules: list[Rule] = []
+    allow = _criteria_block(question, unacceptable=False)
+    if allow:
+        rules.append(Rule(id="A1", effect=RuleEffect.ALLOW, description=allow))
+    deny = _criteria_block(question, unacceptable=True)
+    rules.append(
+        Rule(
+            id="D1",
+            effect=RuleEffect.DENY,
+            description=deny if deny else f"Report a regression: {question}",
+        )
+    )
     return rules
 
 

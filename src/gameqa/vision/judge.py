@@ -13,9 +13,10 @@ import cv2
 import numpy as np
 
 from gameqa.contracts import RegionJudgment, Rule, RuleEffect, SceneAudit, Verdict
-from gameqa.vision.prompts import AUDIT_PROMPT, AUDIT_SCHEMA, PROMPT_VERSION, REGION_PROMPT, REGION_SCHEMA
+from gameqa.vision.prompts import (AUDIT_PROMPT, DECIDE_PROMPT, PROMPT_VERSION, REGION_PROMPT, STAGE1_AUDIT_SCHEMA,
+                                   STAGE1_SCHEMA, STAGE2_SCHEMA)
 
-_NO_CHANGE = re.compile(r"\b(no (visible |noticeable |significant )?(change|difference)s?|identical|unchanged|same)\b", re.I)
+_DISAPPEAR = re.compile(r"\b(missing|absent|gone|removed|disappear\w*|no longer|vanish\w*|deleted)\b", re.I)
 MOCK_BEHAVIORS = ("allowed", "forbidden", "uncertain", "timeout", "invalid_json", "unknown_rule")
 
 
@@ -35,12 +36,48 @@ def _fit(img: np.ndarray, max_side: int) -> tuple[np.ndarray, float]:
     return cv2.resize(img, (max(1, round(w * s)), max(1, round(h * s))), interpolation=cv2.INTER_AREA), s
 
 
+def prep_crop(img: np.ndarray, max_side: int, min_side: int = 112) -> np.ndarray:
+    """Fit a crop for the VLM. Ollama's qwen2.5vl preprocessing panics (HTTP 500 / runner crash) when a side
+    is < 28 px, so small crops are upscaled (cubic) to >= min_side on the short side, capped by max_side;
+    extreme aspect ratios are edge-padded so both sides stay >= 28."""
+    h, w = img.shape[:2]
+    s = min(max_side / max(h, w), max(1.0, min_side / min(h, w)))
+    if s != 1.0:
+        img = cv2.resize(img, (max(1, round(w * s)), max(1, round(h * s))),
+                         interpolation=cv2.INTER_CUBIC if s > 1 else cv2.INTER_AREA)
+    h, w = img.shape[:2]
+    ph, pw = max(0, 28 - h), max(0, 28 - w)
+    if ph or pw:
+        img = cv2.copyMakeBorder(img, 0, ph, 0, pw, cv2.BORDER_REPLICATE)
+    return img
+
+
 def _draw_box(img: np.ndarray, box, scale: float, color, label: str | None = None) -> None:
     x1, y1, x2, y2 = [int(round(v * scale)) for v in box]
     t = max(2, int(round(min(img.shape[:2]) / 200)))
     cv2.rectangle(img, (x1, y1), (max(x1 + 1, x2 - 1), max(y1 + 1, y2 - 1)), color, t)
     if label:
         cv2.putText(img, label, (x1 + 2, max(12, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+
+
+def labelled_pair(before: np.ndarray, after: np.ndarray, max_side: int, min_h: int = 160, boxes=None, color=(255, 220, 0),
+                  labels=None) -> np.ndarray:
+    """ONE composite image: BEFORE (left) | AFTER (right), captions burned in. Boxes are in the frame of `before`."""
+    h, w = before.shape[:2]
+    s = max(min(max_side / max(h, w), 1.0 if boxes else 8.0), 0.0)
+    if not boxes:  # crops: upscale small ones so the VLM can see them
+        s = min(max_side / max(h, w), max(1.0, min_h / min(h, w)))
+    nh, nw = max(28, round(h * s)), max(28, round(w * s))
+    f = lambda im: cv2.resize(im, (nw, nh), interpolation=cv2.INTER_CUBIC if s > 1 else cv2.INTER_AREA)
+    a, b = f(before).copy(), f(after).copy()
+    for i, bx in enumerate(boxes or []):
+        _draw_box(a, bx, s, color, labels[i] if labels else None)
+        _draw_box(b, bx, s, color, labels[i] if labels else None)
+    fs = max(0.4, min(0.8, nh / 400))
+    for im, t in ((a, "BEFORE"), (b, "AFTER")):
+        cv2.putText(im, t, (4, int(18 + 6 * fs)), cv2.FONT_HERSHEY_SIMPLEX, fs, (255, 255, 255), 3, cv2.LINE_AA)
+        cv2.putText(im, t, (4, int(18 + 6 * fs)), cv2.FONT_HERSHEY_SIMPLEX, fs, (0, 0, 0), 1, cv2.LINE_AA)
+    return np.concatenate([a, np.full((nh, 8, 3), 255, np.uint8), b], axis=1)
 
 
 def side_by_side(ref: np.ndarray, cand: np.ndarray, boxes, half_max_side: int, color=(255, 0, 0), labels=None) -> np.ndarray:
@@ -56,6 +93,19 @@ def side_by_side(ref: np.ndarray, cand: np.ndarray, boxes, half_max_side: int, c
         _draw_box(b, bx, s, color, lab)
     gap = np.full((a.shape[0], 6, 3), 255, np.uint8)
     return np.concatenate([a, gap, b], axis=1)
+
+
+def _scene_residual(ref, cand, boxes, thr: float, min_px: int) -> tuple[int, int]:
+    """(#pixels with any channel diff > 6, #pixels with blurred diff > thr outside all boxes)."""
+    g1 = cv2.cvtColor(ref, cv2.COLOR_RGB2GRAY); g2 = cv2.cvtColor(cand, cv2.COLOR_RGB2GRAY)
+    mad = float(np.mean(cv2.absdiff(g1, g2)))
+    raw_px = int((np.abs(ref.astype(np.int16) - cand.astype(np.int16)).max(axis=2) > 6).sum())  # any visible pixel change
+    d = cv2.absdiff(cv2.GaussianBlur(g1, (0, 0), 2.0), cv2.GaussianBlur(g2, (0, 0), 2.0))
+    m = d > thr
+    for x1, y1, x2, y2 in boxes:
+        m[y1:y2, x1:x2] = False
+    n = int(m.sum())
+    return raw_px, (n if n >= min_px else 0)
 
 
 # ---------------- validation ----------------
@@ -77,6 +127,13 @@ def validate_response(raw: str, rules: list[Rule], audit: bool = False) -> dict:
     if not isinstance(data, dict):
         errs.append("response is not a JSON object")
         return out
+    diff = data.get("any_difference", True)
+    if not isinstance(diff, bool):
+        errs.append("any_difference must be boolean")
+        diff = True
+    ctype = str(data.get("change_type", "other"))
+    nvc = (not diff) and ctype in ("none", "other")
+    out["no_visible_change"] = nvc
     need = ["observed_change", "verdict", "rule_ids", "evidence"] + (["other_changes_outside_boxes"] if audit else [])
     missing = [k for k in need if k not in data]
     if missing:
@@ -116,10 +173,16 @@ def validate_response(raw: str, rules: list[Rule], audit: bool = False) -> dict:
         if not out["evidence"]:
             errs.append("forbidden verdict without evidence")
     elif verdict is Verdict.ALLOWED:
+        if _DISAPPEAR.search(out["observed_change"] + " " + out["evidence"]) and any(r.effect is RuleEffect.DENY for r in rules):
+            errs.append("allowed verdict but the text describes something missing/removed (internal contradiction)")
         if any(r.effect is RuleEffect.DENY for r in cited):
             errs.append("allowed verdict cites a deny rule (rule conflict)")
-        if not cited and not _NO_CHANGE.search(out["observed_change"]):
-            errs.append("allowed verdict without an allow rule and not 'no visible change'")
+        if not cited and not nvc:
+            errs.append("allowed verdict without an allow rule and not 'no difference'")
+        if ctype in ("disappeared", "distorted_or_corrupted"):
+            errs.append(f"allowed verdict but change_type={ctype} (never auto-allowed; needs review)")
+        if cited and not diff:
+            errs.append("allowed verdict cites a rule but any_difference is false")
         if not out["evidence"]:
             errs.append("allowed verdict without evidence")
     if errs:
@@ -139,7 +202,14 @@ class Judge:
         self.temperature = float(v.get("temperature", 0.0))
         self.crop_max_side = int(v.get("crop_max_side", 448))
         self.context_max_side = int(v.get("context_max_side", 768))
-        self.num_ctx = v.get("num_ctx")
+        self.num_ctx = v.get("num_ctx", 4096)
+        self.classical_thr = float(cfg.get("proposals", {}).get("classical_threshold", 40))
+        self.resid_min_px = int(cfg.get("proposals", {}).get("min_area_px", 40))
+        self.identical_px = int(v.get("identical_max_px", 8))
+        self.use_context = bool(v.get("use_context", False))
+        self.audit_max_side = int(v.get("audit_max_side", 512))
+        self.keep_alive = v.get("keep_alive", "30m")
+        self.warmup_timeout_s = float(v.get("warmup_timeout_s", 180))
         self.mock_behavior = v.get("mock_behavior", "uncertain")
         self.prompt_version = PROMPT_VERSION
         self.cache_enabled = bool(v.get("cache", True)) and self.provider == "ollama"
@@ -174,11 +244,11 @@ class Judge:
             return "Sure! The region looks different {not json"
         allow = [r.id for r in rules if r.effect is RuleEffect.ALLOW][:1]
         deny = [r.id for r in rules if r.effect is RuleEffect.DENY][:1]
-        d = {"observed_change": "mock observation", "evidence": "mock evidence (no image was examined)"}
+        d = {"observed_change": "mock observation", "change_type": "other", "any_difference": True, "evidence": "mock evidence (no image was examined)"}
         if b == "allowed":
             d.update(verdict="allowed", rule_ids=allow)
             if not allow:
-                d["observed_change"] = "no visible change (mock)"
+                d["observed_change"] = "no visible change (mock)"; d["change_type"] = "none"; d["any_difference"] = False
         elif b == "forbidden":
             d.update(verdict="forbidden", rule_ids=deny)
         elif b == "unknown_rule":
@@ -193,11 +263,12 @@ class Judge:
         import httpx
         payload = {
             "model": self._model, "stream": False, "format": schema,
-            "options": {"temperature": self.temperature, **({"num_ctx": self.num_ctx} if self.num_ctx else {})},
-            "messages": [{"role": "user", "content": prompt, "images": [_png_b64(i) for i in images]}],
+            "keep_alive": self.keep_alive, "options": {"temperature": self.temperature, "use_mmap": True, **({"num_ctx": self.num_ctx} if self.num_ctx else {})},
+            "messages": [{"role": "user", "content": prompt, **({"images": [_png_b64(i) for i in images]} if images else {})}],
         }
         r = httpx.post(f"{self.base_url}/api/chat", json=payload, timeout=self.timeout_s)
-        r.raise_for_status()
+        if r.status_code >= 400:
+            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
         return r.json()["message"]["content"]
 
     def _ask(self, images, prompt, schema, rules, audit) -> tuple[str | None, list[str], float]:
@@ -220,6 +291,8 @@ class Judge:
                 raw = self._mock_reply(rules, audit) if self.is_mock else self._ollama_reply(images, prompt, schema)
             except Exception as e:  # noqa: BLE001  (timeouts, connection, HTTP, bad payload)
                 errors.append(f"provider error (attempt {attempt}): {type(e).__name__}: {e}")
+                if attempt < self.max_attempts and not self.is_mock:
+                    time.sleep(3.0)
                 continue
             parsed = validate_response(raw, rules, audit)
             # retry only on unparsable output; a parsed-but-inconsistent reply is returned as is
@@ -235,6 +308,34 @@ class Judge:
             return raw, errors, time.time() - t0
         return None, errors, time.time() - t0
 
+    def _two_stage(self, images, stage1_prompt, audit, rules, where):
+        """Stage 1 (image, no rules) then stage 2 (text only, rules). Returns (merged_raw_json|None, errors, latency).
+        Mock provider: single call returning the final JSON."""
+        if self.is_mock:
+            return self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit)
+        raw1, e1, l1 = self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit)
+        if raw1 is None:
+            return None, e1, l1
+        try:
+            d1 = json.loads(raw1)
+            assert isinstance(d1, dict)
+        except Exception as e:  # noqa: BLE001
+            return raw1, e1 + [f"stage1 not a JSON object: {e}"], l1
+        f = self._rule_fields(rules)
+        p2 = DECIDE_PROMPT.format(where=where, before_shows=d1.get("before_shows", ""), after_shows=d1.get("after_shows", ""),
+                                  observed_change=d1.get("observed_change", ""), change_type=d1.get("change_type", ""),
+                                  any_difference=str(d1.get("any_difference", "")).lower(),
+                                  rules=f["rules"], allow_ids=f["allow_ids"], deny_ids=f["deny_ids"])
+        raw2, e2, l2 = self._ask([], p2, STAGE2_SCHEMA, rules, False)
+        if raw2 is None:
+            return None, e1 + e2, l1 + l2
+        try:
+            d2 = json.loads(raw2)
+            assert isinstance(d2, dict)
+        except Exception as e:  # noqa: BLE001
+            return raw2, e1 + e2 + [f"stage2 not a JSON object: {e}"], l1 + l2
+        return json.dumps({**d1, **d2}), e1 + e2, l1 + l2
+
     def _to_judgment(self, region_id, raw, perr, latency, rules, audit):
         if raw is None:
             return RegionJudgment(region_id=region_id, observed_change="", verdict=Verdict.UNCERTAIN, model=self.model_id,
@@ -246,18 +347,37 @@ class Judge:
                               validated=p["validated"], latency_s=latency), p["extra"]
 
     @staticmethod
-    def _rules_text(rules: list[Rule]) -> str:
-        return "\n".join(f"- {r.id} [{r.effect.value.upper()}]: {r.description}" for r in rules)
+    def _rule_fields(rules: list[Rule], audit: bool = False) -> dict:
+        allow = [r.id for r in rules if r.effect is RuleEffect.ALLOW]
+        deny = [r.id for r in rules if r.effect is RuleEffect.DENY]
+        return dict(rules="\n".join(f"- {r.id} [{r.effect.value.upper()}]: {r.description}" for r in rules),
+                    allow_ids=", ".join(allow) or "(none)", deny_ids=", ".join(deny) or "(none)",
+                    ex_deny=deny[0] if deny else "D1", ex_other=', "other_changes_outside_boxes": false' if audit else "")
+
+    def warmup(self) -> dict:
+        """Load the model into memory (cold load can take ~70 s on CPU). Never raises."""
+        if self.is_mock:
+            return {"ok": True, "mock": True, "seconds": 0.0}
+        import httpx
+        t0 = time.time()
+        try:
+            r = httpx.post(f"{self.base_url}/api/chat", timeout=self.warmup_timeout_s, json={
+                "model": self._model, "stream": False, "keep_alive": self.keep_alive,
+                "options": {"num_ctx": self.num_ctx, "num_predict": 1, "use_mmap": True},
+                "messages": [{"role": "user", "content": "ok"}]})
+            return {"ok": r.status_code < 400, "seconds": time.time() - t0, "status": r.status_code}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "seconds": time.time() - t0, "error": f"{type(e).__name__}: {e}"}
 
     # ---- public API ----
     def judge_region(self, proposal, ref_crop, cand_crop, ref_context, cand_context, rules) -> RegionJudgment:
         try:
             x1, y1, x2, y2 = proposal.box
-            prompt = REGION_PROMPT.format(x1=x1, y1=y1, x2=x2, y2=y2, rules=self._rules_text(rules))
-            a, _ = _fit(ref_crop, self.crop_max_side)
-            b, _ = _fit(cand_crop, self.crop_max_side)
-            ctx = side_by_side(ref_context, cand_context, [proposal.box], self.context_max_side)
-            raw, perr, lat = self._ask([a, b, ctx], prompt, REGION_SCHEMA, rules, False)
+            prompt = REGION_PROMPT.format(x1=x1, y1=y1, x2=x2, y2=y2)
+            imgs = [labelled_pair(ref_crop, cand_crop, self.crop_max_side)]
+            if self.use_context:
+                imgs.append(side_by_side(ref_context, cand_context, [proposal.box], self.context_max_side))
+            raw, perr, lat = self._two_stage(imgs, prompt, False, rules, f" (region [{x1},{y1},{x2},{y2}])")
             j, _ = self._to_judgment(proposal.id, raw, perr, lat, rules, False)
             return j
         except Exception as e:  # noqa: BLE001
@@ -268,15 +388,23 @@ class Judge:
         try:
             boxes = [p.box for p in proposals]
             btxt = ", ".join(f"{p.id}={list(p.box)}" for p in proposals) or "none"
-            prompt = AUDIT_PROMPT.format(boxes=btxt, rules=self._rules_text(rules))
-            a, s = _fit(reference, self.context_max_side)
-            b, _ = _fit(aligned_candidate, self.context_max_side)
-            a, b = a.copy(), b.copy()
-            for p in proposals:
-                _draw_box(a, p.box, s, (255, 220, 0), p.id)
-                _draw_box(b, p.box, s, (255, 220, 0), p.id)
-            raw, perr, lat = self._ask([a, b], prompt, AUDIT_SCHEMA, rules, True)
+            prompt = AUDIT_PROMPT.format(boxes=btxt)
+            comp = labelled_pair(reference, aligned_candidate, self.audit_max_side, boxes=boxes, labels=[p.id for p in proposals])
+            diff_px, resid = _scene_residual(reference, aligned_candidate, boxes, self.classical_thr, self.resid_min_px)
+            if not proposals and diff_px <= self.identical_px and resid == 0:
+                # Documented deterministic shortcut: pixel-identical pair, nothing to audit. NOT a VLM result.
+                return SceneAudit(judgment=RegionJudgment(
+                    region_id="SCENE", observed_change="no visible change", verdict=Verdict.ALLOWED, rule_ids=[],
+                    evidence=f"pixel-identical within tolerance ({diff_px} px differ by more than 6 levels)",
+                    model="deterministic:pixel-identical", is_mock=False, errors=[], validated=True, latency_s=0.0),
+                    extra_changes_reported=False)
+            raw, perr, lat = self._two_stage([comp], prompt, True, rules, " (whole scene)")
             j, extra = self._to_judgment("SCENE", raw, perr, lat, rules, True)
+            if j.validated and j.verdict is Verdict.FORBIDDEN and resid == 0:
+                # A 3B VLM hallucinates 'forbidden' on near-identical pairs (measured). A scene-level forbidden claim
+                # needs pixel support OUTSIDE the already-judged boxes; otherwise it is not trusted.
+                j = j.model_copy(update={"verdict": Verdict.UNCERTAIN, "validated": False,
+                    "errors": j.errors + ["audit forbidden claim has no pixel evidence outside proposed regions; downgraded to uncertain"]})
             # if the audit could not be validated we cannot claim it found nothing extra
             return SceneAudit(judgment=j, extra_changes_reported=bool(extra) if j.validated else False)
         except Exception as e:  # noqa: BLE001

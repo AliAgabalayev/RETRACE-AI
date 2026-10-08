@@ -26,8 +26,7 @@ def run_props(case):
 
 @pytest.mark.parametrize("name", [
     "object_removed", "translation_object_removed",
-    pytest.param("small_object_removed", marks=pytest.mark.xfail(
-        strict=False, reason="defect QA-D5: 12px coin missed by classical proposals (area < min_area / diff<thr)")),
+    "small_object_removed",
 ])
 def test_proposal_overlaps_true_changed_box(case, name):
     c = case(name)

@@ -170,49 +170,77 @@ def _group_ids(prepared: list[dict]) -> dict[str, str]:
 
 
 def assign_splits(items: list[dict], seed: int = SEED) -> dict[str, str]:
-    """items: [{sample_id, group_id, label}]. Labels are used ONLY to balance demo and stratify dev."""
+    """items: [{sample_id, group_id, label, source}].
+
+    Labels and media_source are read ONLY to build strata (source x label). Rules (DECISIONS D7):
+    demo = 5 singleton pairs (>=2 no_bug); dev >= 6 no_bug and >= 5 bug per source (>= 10 bug) or 15%
+    of each stratum, whichever is larger; eval = rest. Groups (shared image sha) never straddle splits.
+    """
     rng = random.Random(seed)
     groups: dict[str, list[dict]] = {}
     for it in items:
         groups.setdefault(it["group_id"], []).append(it)
-    split: dict[str, str] = {}
+
+    def stratum(g: str) -> tuple[str, str]:
+        m = groups[g][0]
+        return (m["source"], m["label"])
+
     gids = sorted(groups)
     rng.shuffle(gids)
-    # demo: up to 5 singleton-or-small groups, 3 bug + 2 no_bug when available
-    want = {"bug": 3, "no_bug": 2}
-    demo_ids: list[str] = []
-    for g in gids:
-        members = groups[g]
-        labs = {m["label"] for m in members}
-        if len(demo_ids) + len(members) > DEMO_MAX or len(members) != 1:
-            continue
-        lab = next(iter(labs))
-        if want.get(lab, 0) > 0:
-            want[lab] -= 1
-            demo_ids.append(g)
-    for g in demo_ids:
-        for m in groups[g]:
-            split[m["sample_id"]] = "demo"
-    rest = [g for g in gids if g not in demo_ids]
-    n_rest = sum(len(groups[g]) for g in rest)
-    target_dev = round(DEV_FRACTION * n_rest) if n_rest >= 7 else 0
-    with_ok = [g for g in rest if any(m["label"] == "no_bug" for m in groups[g])]
-    without = [g for g in rest if g not in with_ok]
-    dev_count = 0
-    dev_groups: set[str] = set()
-    for pool_frac in (with_ok, without):
-        quota = round(target_dev * sum(len(groups[g]) for g in pool_frac) / max(n_rest, 1))
-        c = 0
-        for g in pool_frac:
-            if c >= quota:
+    split: dict[str, str] = {}
+
+    # demo: 2 no_bug + 3 bug (one per source first), singleton groups only
+    demo: list[str] = []
+    picks = [("no_bug", None), ("no_bug", None)] + [("bug", "UnityCapturesDataset"), ("bug", "Youtube-Cutscene"), ("bug", None)]
+    for lab, src in picks:
+        for g in gids:
+            if g in demo or len(groups[g]) != 1:
+                continue
+            if stratum(g)[1] == lab and (src is None or stratum(g)[0] == src):
+                demo.append(g)
                 break
-            dev_groups.add(g)
+    for g in demo:
+        split[groups[g][0]["sample_id"]] = "demo"
+    rest = [g for g in gids if g not in demo]
+
+    strata: dict[tuple[str, str], list[str]] = {}
+    for g in rest:
+        strata.setdefault(stratum(g), []).append(g)
+    nb_total = sum(len(v) for k, v in strata.items() if k[1] == "no_bug")
+    quota: dict[tuple[str, str], int] = {}
+    for k, v in strata.items():
+        n = sum(len(groups[g]) for g in v)
+        floor = round(6 * n / nb_total) if k[1] == "no_bug" and nb_total else (5 if k[1] == "bug" else 0)
+        quota[k] = min(n, max(round(DEV_FRACTION * n), floor))
+    dev: set[str] = set()
+    for k, v in strata.items():
+        c = 0
+        for g in v:
+            if c >= quota[k]:
+                break
+            dev.add(g)
             c += len(groups[g])
-        dev_count += c
     for g in rest:
         for m in groups[g]:
-            split[m["sample_id"]] = "dev" if g in dev_groups else "eval"
+            split[m["sample_id"]] = "dev" if g in dev else "eval"
     return split
+
+
+def eval_subset(items: list[dict], split: dict[str, str], n: int = 60, seed: int = SEED) -> list[str]:
+    """Seeded: up to 20 no_bug, then 20 cutscene bug + 20 Unity bug, topped up from remaining eval bug pairs."""
+    rng = random.Random(seed + 1)
+    pool = [i for i in items if split.get(i["sample_id"]) == "eval"]
+    rng.shuffle(pool)
+
+    def take(pred, k):
+        return [i["sample_id"] for i in pool if pred(i)][:k]
+
+    chosen = take(lambda i: i["label"] == "no_bug", 20)
+    chosen += take(lambda i: i["label"] == "bug" and i["source"] == "Youtube-Cutscene", 20)
+    chosen += take(lambda i: i["label"] == "bug" and i["source"] == "UnityCapturesDataset", 20)
+    if len(chosen) < n:
+        chosen += [i["sample_id"] for i in pool if i["label"] == "bug" and i["sample_id"] not in chosen][: n - len(chosen)]
+    return sorted(chosen)
 
 
 def build_manifests(selected: list[dict], prepared: list[dict], revision: str) -> dict:
@@ -220,7 +248,7 @@ def build_manifests(selected: list[dict], prepared: list[dict], revision: str) -
     ok = [p for p in prepared if p["validation_status"] == "ok"]
     groups = _group_ids(ok)
     items = [
-        {"sample_id": p["sample_id"], "group_id": groups[p["sample_id"]], "label": parse_label(by_cid[p["custom_id"]]["ground_truth"])}
+        {"sample_id": p["sample_id"], "group_id": groups[p["sample_id"]], "label": parse_label(by_cid[p["custom_id"]]["ground_truth"]), "source": by_cid[p["custom_id"]]["media_source"]}
         for p in ok
     ]
     split = assign_splits(items)
@@ -254,6 +282,7 @@ def build_manifests(selected: list[dict], prepared: list[dict], revision: str) -
         )
         labels[sid] = {"ground_truth_raw": rec["ground_truth"], "label": parse_label(rec["ground_truth"]), "split": sp}
     MANIFESTS.mkdir(parents=True, exist_ok=True)
+    (MANIFESTS / "eval_subset_60.json").write_text(json.dumps(eval_subset(items, split), indent=2), encoding="utf-8")
     (MANIFESTS / "inference_manifest.json").write_text(json.dumps(inference, indent=2), encoding="utf-8")
     (MANIFESTS / "eval_labels.json").write_text(json.dumps(labels, indent=2), encoding="utf-8")
     return {

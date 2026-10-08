@@ -69,3 +69,21 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 - Final splits (seeded, stratified by media_source × label): demo 5 (≥2 no_bug), dev ≥ 6 no_bug + ≥ 10 bug (both sources), eval = everything else. Thresholds/prompts tuned on dev + synthetic fixtures only.
 - E2 (real pipeline) runs on a stratified 60-pair eval subset (≈20 no_bug, 20 cutscene bug, 20 Unity bug), chosen by seeded script before any result is seen; cut to 40 if >90 s/pair. E1 classical and E4 VLM-only run on the same IDs (E1 also on full eval). E2b (classical-only proposals + VLM) only if time remains.
 - Qwen2.5-VL-3B license treated as non-commercial (Qwen Research License) until verified; noted in THIRD_PARTY_NOTICES.
+
+## D8 — Benchmark question → rules (session 2)
+- Original mapping put the whole question (including the ACCEPTABLE list and the benchmark's own "Provide your assessment as JSON {test_pass}" instruction) into one deny rule — contradictory and likely to hijack the VLM's output format.
+- New mapping (`gameqa.data.manifest.rules_from_question`): `A1` allow = ACCEPTABLE block verbatim; `D1` deny = UNACCEPTABLE block verbatim; fallback D1 = whole question verbatim if no UNACCEPTABLE block. Full question stays in the manifest `question` field. All 250 records → (A1, D1). Manifest rules regenerated in place (no re-download). Only 2 distinct question texts exist in the subset, so rule-awareness is barely exercised by the benchmark; fixtures with A1/A2/D1/D2 cover multi-rule logic.
+
+## D9 — QA-D7/D8 and alignment-dependent FAIL (session 2)
+- QA-D7: a judgment citing any unknown rule ID can support neither PASS nor FAIL (→ NEEDS_REVIEW).
+- QA-D8: a forbidden judgment counts toward FAIL only if it cites a deny rule that is NOT part of a detected rule conflict. Conflicted deny rule → NEEDS_REVIEW (brief §6: conflicts → review).
+- Alignment: region crops cut the same reference box from both images, so under UNRELIABLE / FAILED / missing alignment a region-level "missing object" may be misregistration. In that case only the whole-scene audit (full images) can establish FAIL; region forbidden → NEEDS_REVIEW. This tightens the earlier "reliable forbidden always FAILs" reading: with bad alignment the forbidden evidence is not "reliable" in the brief's sense. Tests in `tests/policy/test_decision.py` updated accordingly by senior-pm (documented policy change, not a test weakened to fit a bug).
+- QA-D6 (Ollama "requires more system memory"): transient RAM pressure from parallel agents (swap 6 GB used). Mitigation: real-VLM runs (smoke, E2, E4) run serially, one Ollama client at a time; the owner's desktop apps are not touched.
+
+## D10 — Real-VLM operating point, frozen before E2 (session 2)
+- Ollama runs qwen2.5vl:3b on **CPU** (its vision graph needs ~6.7 GiB, more than the 6 GB GPU; DINOv2 runs on CUDA). Measured on 10 dev pairs: median 84.8 s / p90 141 s per pair, ~20 s per region call, ~35 s per scene audit, cold load 55–70 s.
+- `vlm.timeout_s` raised 30 → 75 s (brief default 30 s is infeasible on CPU; audit call alone ≈ 35 s). Max attempts stays 2.
+- Prompt v9: one BEFORE|AFTER composite image; two stages (describe change without rules → text-only verdict against rules). Developed on fixtures + ~6 dev pairs only.
+- Global-change collapse: if ≥10 % of the valid area exceeds the DINOv2 threshold, `propose` returns one full-frame region with `truncated=True` → never auto-PASS (tuned on dev). DINOv2 threshold 0.35 unchanged.
+- Engine mode: only component failures (provider error / timeout / exception) mark a run `degraded`; a real answer rejected by validation stays `real/complete` and becomes NEEDS_REVIEW via `decide`.
+- E2 runs on all 60 IDs of `eval_subset_60.json` (not cut to 40: cutting would need label-based re-selection; ~85–100 min is affordable). Config and prompt frozen at this commit; no changes during or after based on eval results.

@@ -295,7 +295,10 @@ def _analyze_inner(run: _Run, versions: Versions, judge, extractor, is_mock: boo
         run.stage("audit", t)
 
     coverage.proposals_judged = len(judgments)
-    judge_errors = any(j.errors for j in judgments) or bool(scene_audit and scene_audit.judgment.errors)
+    # Only component failures (provider errors, timeouts, exceptions) degrade the engine. A real
+    # model answer rejected by validation is still real inference; decide() turns it into review.
+    all_j = judgments + ([scene_audit.judgment] if scene_audit else [])
+    judge_errors = any(_is_component_failure(e) for j in all_j for e in j.errors)
     if degraded or judge_errors or judge_failed:
         mode = "mock" if is_mock else "degraded"
 
@@ -329,13 +332,26 @@ class UnavailableExtractor:
         raise RuntimeError(f"feature extractor unavailable: {self.error.__class__.__name__}: {self.error}")
 
 
+_COMPONENT_FAILURE_MARKERS = ("provider error", "failure:", "timeout", "timed out", "unavailable")
+
+
+def _is_component_failure(error: str) -> bool:
+    low = error.lower()
+    return any(m in low for m in _COMPONENT_FAILURE_MARKERS)
+
+
 def build_engines(cfg: dict):
     """Build (extractor, judge) once for reuse; load failures become visible degraded modes."""
+    # dl-engineer: warm the VLM FIRST. Ollama refuses to load the CPU-resident qwen2.5vl:3b (~9.7 GiB) when
+    # torch/CUDA has already consumed RAM, and a cold load takes ~70 s. warmup() never raises.
+    judge = _try_judge(cfg)
+    if judge is not None and hasattr(judge, "warmup"):
+        judge.warmup()
     try:
         extractor = build_extractor(cfg)
     except Exception as exc:  # noqa: BLE001
         extractor = UnavailableExtractor(exc)
-    return extractor, _try_judge(cfg)
+    return extractor, judge
 
 
 def _try_judge(cfg: dict):

@@ -37,15 +37,32 @@ class DecisionInput:
     pipeline_errors: list[str] = field(default_factory=list)
 
 
+def _conflicted_rule_ids(rules: list[Rule]) -> set[str]:
+    """IDs of rules involved in a conflict found by ``find_rule_conflicts``."""
+    by_text: dict[str, list[Rule]] = {}
+    for r in rules:
+        by_text.setdefault(" ".join(r.description.lower().split()), []).append(r)
+    ids = {r.id for group in by_text.values() if len({r.effect for r in group}) > 1 for r in group}
+    seen: set[str] = set()
+    for r in rules:
+        if r.id in seen:
+            ids.add(r.id)
+        seen.add(r.id)
+    return ids
+
+
 def is_reliable_forbidden(j: RegionJudgment, rules: list[Rule]) -> bool:
-    """Forbidden verdict from a real, validated response citing a deny rule with evidence."""
-    deny_ids = {r.id for r in rules if r.effect == RuleEffect.DENY}
+    """Forbidden verdict from a real, validated response with evidence, citing only known rule
+    IDs, at least one of which is a deny rule that is not involved in a rule conflict."""
+    known = {r.id for r in rules}
+    deny_ids = {r.id for r in rules if r.effect == RuleEffect.DENY} - _conflicted_rule_ids(rules)
     return (
         j.verdict == Verdict.FORBIDDEN
         and j.validated
         and not j.is_mock
         and not j.errors
         and bool(j.evidence.strip())
+        and all(rid in known for rid in j.rule_ids)
         and any(rid in deny_ids for rid in j.rule_ids)
     )
 
@@ -70,7 +87,9 @@ def find_rule_conflicts(rules: list[Rule]) -> list[str]:
 
 
 def is_acceptable_allowed(j: RegionJudgment, rules: list[Rule]) -> bool:
-    """Allowed verdict we can rely on for PASS: validated, evidence given, no deny rule cited."""
+    """Allowed verdict we can rely on for PASS: validated, evidence given, only known rule IDs,
+    no deny rule cited."""
+    known = {r.id for r in rules}
     deny_ids = {r.id for r in rules if r.effect == RuleEffect.DENY}
     return (
         j.verdict == Verdict.ALLOWED
@@ -78,6 +97,7 @@ def is_acceptable_allowed(j: RegionJudgment, rules: list[Rule]) -> bool:
         and not j.is_mock
         and not j.errors
         and bool(j.evidence.strip())
+        and all(rid in known for rid in j.rule_ids)
         and not any(rid in deny_ids for rid in j.rule_ids)
     )
 
@@ -88,7 +108,18 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
     if inp.scene_audit is not None:
         all_judgments.append(inp.scene_audit.judgment)
 
-    forbidden = [j for j in all_judgments if is_reliable_forbidden(j, inp.rules)]
+    # Region crops compare the same reference box in both images, so they are only
+    # trustworthy when alignment is trustworthy. Under unreliable/failed/missing alignment a
+    # "missing object" may be a misregistration artefact: only the whole-scene audit, which
+    # sees both full images, can establish FAIL (DECISIONS D9).
+    alignment_ok = inp.alignment is not None and inp.alignment.status not in (
+        AlignmentStatus.UNRELIABLE,
+        AlignmentStatus.FAILED,
+    )
+    fail_sources = all_judgments if alignment_ok else [
+        j for j in all_judgments if j.region_id == "SCENE"
+    ]
+    forbidden = [j for j in fail_sources if is_reliable_forbidden(j, inp.rules)]
     if forbidden:
         ids = ", ".join(f"{j.region_id} ({'/'.join(j.rule_ids)})" for j in forbidden)
         return FinalDecision.FAIL, f"Forbidden change with visual evidence: {ids}."

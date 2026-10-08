@@ -11,6 +11,7 @@ alignment:
   max_shift_fraction: 0.05    # larger estimated shift -> unreliable
   min_overlap_fraction: 0.85  # below -> unreliable -> review
   min_inlier_ratio: 0.5
+  min_error_gain: 0.7         # a warp is adopted only if residual < gain * identity residual
 
 features:
   model: dinov2_vits14
@@ -24,7 +25,10 @@ proposals:
   sources: [dinov2, classical]  # union, each proposal keeps its source
   dinov2_threshold: 0.35        # 1 - cosine similarity; tuned on dev split only
   classical_threshold: 40       # absolute gray diff (0-255) after blur
-  min_area_fraction: 0.0005
+  min_area_fraction: 0.0001
+  min_area_px: 40               # absolute floor (small objects such as coins)
+  global_change_fraction: 0.10  # >=10% of valid area above dinov2 threshold -> one full-frame proposal, truncated=true (dev-tuned)
+  mask_erode_px: 7              # erode valid-overlap mask before thresholding (warp border)
   box_padding_px: 8
   merge_iou: 0.1
   max_regions: 8                # cap; truncation is recorded and blocks PASS
@@ -33,12 +37,15 @@ vlm:
   provider: ollama              # ollama | mock
   model: qwen2.5vl:3b
   base_url: http://localhost:11434
-  timeout_s: 30
+  timeout_s: 75                 # CPU-resident VLM: stage-1 audit call takes ~35 s (was 30; see MODEL_NOTES)
   max_attempts: 2
   temperature: 0.0
   prompt_version: v1
-  crop_max_side: 448
-  context_max_side: 768
+  crop_max_side: 336
+  context_max_side: 512
+  num_ctx: 2048
+  keep_alive: 30m
+  audit_max_side: 512
 
 run:
   deadline_s: 300               # end-to-end; exceeded -> NEEDS_REVIEW

@@ -106,6 +106,8 @@ def align(reference: np.ndarray, candidate: np.ndarray, cfg: dict) -> tuple[Alig
     diag.update(shift_dx=round(dx, 2), shift_dy=round(dy, 2), phase_response=round(resp, 4))
     best = None
     shift_frac = max(abs(dx) / W, abs(dy) / H)
+    # Candidates are *evaluated* up to 2x the limit so an over-limit but well-fitting shift is reported as
+    # UNRELIABLE (with diagnostics) rather than silently treated as 'no transform'. Acceptance below uses 1x.
     if 0.5 <= max(abs(dx), abs(dy)) and shift_frac <= max_shift * 2 and resp > 0.05:
         Mt = np.array([[1, 0, dx], [0, 1, dy], [0, 0, 1.0]])
         w_t, v_t = _warp(cand, Mt, (H, W))

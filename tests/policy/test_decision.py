@@ -86,9 +86,6 @@ def test_identical_but_invalid_inputs_review():
     dict(pipeline_errors=["extractor failed"]),
     dict(coverage=cov(10, 8, truncated=True)),
     dict(coverage=cov(2, 1, deadline=True)),
-    dict(alignment=align(AlignmentStatus.UNRELIABLE)),
-    dict(alignment=align(AlignmentStatus.FAILED)),
-    dict(alignment=None),
     dict(scene_audit=None, coverage=cov(audit_ran=False)),
     dict(rules=RULES),  # control
 ], ids=lambda e: next(iter(e)))
@@ -188,3 +185,31 @@ def test_conflicting_rules_not_pass():
 def test_reason_is_nonempty_and_mentions_review_cause():
     dec, reason = decide(inp(coverage=cov(10, 8, truncated=True)))
     assert dec == REVIEW and "truncated" in reason
+
+
+def test_allowed_citing_unknown_rule_id_is_not_pass():
+    assert d(judgments=[J(verdict=Verdict.ALLOWED, rule_ids=["NOPE"])]) != PASS
+
+
+def test_conflicting_rules_with_forbidden_is_review():
+    conflict = [Rule(id="A1", effect=RuleEffect.ALLOW, description="Trees may disappear"),
+                Rule(id="D1", effect=RuleEffect.DENY, description="Trees may disappear")]
+    assert d(rules=conflict, judgments=[J(verdict=Verdict.FORBIDDEN)]) == REVIEW
+
+
+# ---- DECISIONS D9: alignment-dependent FAIL ---------------------------------
+
+@pytest.mark.parametrize("alignment", [align(AlignmentStatus.UNRELIABLE), align(AlignmentStatus.FAILED), None],
+                         ids=["unreliable", "failed", "missing"])
+def test_region_forbidden_under_bad_alignment_is_review(alignment):
+    assert d(judgments=[J("R1", Verdict.FORBIDDEN)], alignment=alignment) == REVIEW
+
+
+@pytest.mark.parametrize("alignment", [align(AlignmentStatus.UNRELIABLE), align(AlignmentStatus.FAILED), None],
+                         ids=["unreliable", "failed", "missing"])
+def test_scene_audit_forbidden_fails_even_under_bad_alignment(alignment):
+    assert d(scene_audit=audit(J("SCENE", Verdict.FORBIDDEN)), alignment=alignment) == FAIL
+
+
+def test_forbidden_citing_unknown_rule_id_is_not_fail():
+    assert d(judgments=[J(verdict=Verdict.FORBIDDEN, rule_ids=["D1", "NOPE"])]) == REVIEW

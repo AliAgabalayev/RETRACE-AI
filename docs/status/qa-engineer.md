@@ -1,25 +1,33 @@
-# qa-engineer status
+# qa-engineer status (updated after evaluate.py + reviewer pass pending)
 
-## Defects (policy, frozen decision.py -- owner: senior-pm / python-developer)
+## Done
+- tests/conftest.py (`real_model` marker, skipped unless GAMEQA_REAL=1), tests/policy/test_decision.py, tests/acceptance/{helpers,test_coordinates,test_pipeline_faults,test_real_smoke,test_evaluate_scoring}.py
+- scripts/make_fixtures.py -> data/fixtures/ (13 SYNTHETIC cases incl. extra `translation_object_removed`)
+- scripts/evaluate.py (predict / tune-classical / score; methods pipeline, classical, vlm_only)
+- Real smoke run recorded in artifacts/qa_smoke/*.json
 
-### QA-D1 (important) allowed verdict citing a deny rule still PASSes
-Repro: `decide(DecisionInput(rules=[A1 allow, D1 deny], judgments=[RegionJudgment(region_id="R1", verdict=allowed, rule_ids=["D1"], evidence="x", validated=True, model="ollama:q")], scene_audit=<clean allowed audit>, coverage=Coverage(proposals_total=1, proposals_judged=1, scene_audit_ran=True), alignment=<identity>))` -> PASS.
-Expected: NEEDS_REVIEW (self-contradictory response). Either decision.py or the judge validator (validated must be False) must catch it. Test: tests/policy/test_decision.py::test_allowed_verdict_citing_deny_rule_is_not_pass (xfail strict).
+## Defects
+| ID | Sev | Owner | State |
+| --- | --- | --- | --- |
+| QA-D1 allowed verdict citing deny rule PASSed | important | decision.py | RESOLVED (D6), markers removed, tests pass |
+| QA-D2 allowed w/o rule+evidence PASSed | minor | decision.py | RESOLVED |
+| QA-D3 conflicting rules not detected | important | decision.py | RESOLVED (also pipeline test passes) |
+| QA-D4 translation -> full-frame classical proposal | important | dl-engineer | RESOLVED (test passes without xfail) |
+| QA-D5 12 px coin zero proposals | important | dl-engineer | RESOLVED (test passes) |
+| QA-D6 real VLM run unusable under memory pressure | important (env) | senior-pm | OPEN, see below |
 
-### QA-D2 (minor) allowed verdict with no rule_ids and empty evidence PASSes
-Same setup, `rule_ids=[]`, `evidence=""`. Unverifiable "allowed" -> PASS. Suggest require evidence for allowed or validator rejection. Test xfail strict.
+### QA-D6 real smoke: every real VLM call failed (timeouts / HTTP 500)
+Repro: `GAMEQA_REAL=1 .venv/bin/python -m pytest tests/acceptance/test_real_smoke.py -q` (4 passed in 270 s, but outcomes in artifacts/qa_smoke/*.json): object_removed, lighting_change, allowed_and_forbidden all NEEDS_REVIEW because every judgment had errors (ReadTimeout at 30 s x2 attempts; HTTP 500). Direct probe: `curl localhost:11434/api/generate` -> `{"error":"model requires more system memory (9.6 GiB) than is available (9.6 GiB)"}` after 32 s. RAM: 14 GiB total, ~1.5 GiB free (parallel agents + browser). No real VLM verdict has been obtained yet by QA. Safe behaviour confirmed: errors -> NEEDS_REVIEW, never PASS; identical -> PASS without models. Re-run when memory is free; consider 30 s timeout vs cold model load (first call loads 3.2 GB) and `keep_alive`/warm-up call.
+Also observed: lighting_change produced one full-frame proposal [0,0,640,360] (global change; expected for global lighting but means region crop == scene).
 
-### QA-D3 (important) conflicting rules are not detected anywhere in decision layer
-`rules=[A1 allow "Trees may disappear", D1 deny "Trees may disappear"]` with a clean run -> PASS. Brief section 6: conflicting rules -> review. Needs a conflict check (pipeline/rules.py can flag and pass pipeline_errors or a new DecisionInput field). Test xfail strict.
+### QA-D7 (medium) allowed verdict citing nonexistent rule id (or "same/unchanged" escape in judge.py _NO_CHANGE) PASSes
+Repro: tests/policy/test_decision.py::test_allowed_citing_unknown_rule_id_is_not_pass (xfail strict). Owner: decision.py (require a cited ALLOW rule present in rules) + judge.py regex tightening.
+### QA-D8 (medium) conflicting rules + reliable forbidden citing the conflicted deny rule -> FAIL (brief: conflict -> review). Judgement call; test xfail strict. Owner senior-pm.
+### Reviewer note (policy question) FAIL under UNRELIABLE alignment is allowed by current policy and tested; senior-pm to confirm in DECISIONS.
 
-Verified OK: forbidden precedence, mock/unvalidated/errored forbidden never FAIL, truncation/audit/empty rules/alignment/deadline never PASS, identical shortcut.
-Note: identical_images shortcut returns PASS even with empty rules and pipeline_errors (documented shortcut; acceptable).
-
-## Progress
-- [x] tests/conftest.py, tests/policy/test_decision.py (46 pass, 3 xfail = defects above)
-
-### QA-D4 (important, owner dl-engineer) translation leaves a full-frame classical proposal
-Repro: `.venv/bin/python -m pytest tests/acceptance/test_coordinates.py -k flood` (fixture small_translation: shift +4,+3). align() -> ALIGNED (shift -4,-3, correct). propose(classical only) -> single box (0,0,640,360). Cause: GaussianBlur(sigma 2) of the warped candidate bleeds the black invalid border ~4-6 px into the valid mask region, `diff>40 & valid` forms an L-shaped edge band, close+bbox -> whole frame. Interior max diff is 0. Fix: erode overlap mask by >=3*sigma (or masked/normalized blur / BORDER_REPLICATE warp) before thresholding. Impact: any aligned (shifted) pair yields a whole-frame region for the VLM; wrong crops, wasted judgment, likely false review. Required verification: test flips (xfail strict will error "XPASS" -> remove marker).
-
-### QA-D5 (important, owner dl-engineer) 12 px coin removal produces zero proposals (classical)
-Repro: tests/acceptance/test_coordinates.py[small_object_removed]; propose() returns []. Disk area ~113 px < min_area (0.0005*HxW = 115) and blurred yellow-vs-green diff. Zero proposals + clean audit => PASS is allowed by decision.py, so this is a real miss path; the scene audit is the only safety net. DINOv2 path not yet measured here.
+## Evaluation (E1 classical, real data, run by QA)
+- Threshold tuned on dev (37 usable: 33 bug / 4 no_bug) -> artifacts/eval/classical_threshold.json (dev BA 0.53, weakly determined). tune-classical now REFUSES single-class dev.
+- artifacts/eval/e1_classical_eval_full (205: 187 bug/18 no_bug): PASS 199, FAIL 6; BA(review->FAIL)=0.516 CI [0.505,0.529]; bug recall 0.032, no_bug recall 1.0.
+- artifacts/eval/e1_classical_eval_subset60 (42 bug/18 no_bug): BA 0.524, bug recall 0.048. Essentially chance; a fixed global pixel-fraction cannot separate classes at 3840x2160.
+- E2 pipeline not run: Ollama needs ~9 GB free system RAM (QA-D6) and dl-engineer latency pending.
+- evaluate.py fixes after code-review: resume guard (method/config/ids/threshold), unexpected/missing IDs reported, side stats over scored set.
