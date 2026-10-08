@@ -1,0 +1,13 @@
+rules:
+  - id: A1
+    effect: allow
+    description: "Weather and lighting may change if scene objects remain present."
+  - id: A2
+    effect: allow
+    description: "Character clothing color may change; the character must remain visible."
+  - id: D1
+    effect: deny
+    description: "Existing scene objects must not disappear."
+  - id: D2
+    effect: deny
+    description: "Visible geometry or textures must not become corrupted."

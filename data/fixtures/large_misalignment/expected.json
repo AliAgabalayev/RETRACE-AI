@@ -1,0 +1,10 @@
+{
+  "expected_decision": "NEEDS_REVIEW",
+  "changed_boxes": [],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "large_misalignment: different crop/zoom (camera moved). Alignment unreliable -> must be NEEDS_REVIEW, never PASS. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "must_not": [
+    "PASS"
+  ]
+}

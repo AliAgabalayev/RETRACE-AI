@@ -51,3 +51,5 @@ Each agent writes only its own files and its own `docs/status/<agent>.md`; senio
 - Wrote `docs/tasks/m1-tasklist.md` (ownership table, data + fixture contracts).
 - Dispatched in parallel: git-workflow-master (initial commit), python-developer DATA, python-developer APP, dl-engineer, qa-engineer, experiment-tracker-pm, documentation-engineer. Each writes `docs/status/<name>.md`.
 - If interrupted: read all `docs/status/*.md`, re-dispatch any workstream whose status file is missing or stale, then continue integration.
+- Agent IDs (session 2, for SendMessage): DATA=afdb34c03018a7700, DL=a17dc2333c0a549cc, APP=acd79cea7f082b82b, QA=affe4eaa1acbfb700, EXP=a15e1832adce4ec82 (done), DOCS=a01bcf1c36e5f78de (done phase 1; re-dispatch once app/cli/artifacts exist).
+- Done: initial commit 9c09345; D6 policy fixes (QA-D1/D2/D3); D7 splits + 60-pair eval subset; EXPERIMENTS.md, DATA_CARD.md (partial), THIRD_PARTY_NOTICES.md written.

@@ -1,0 +1,21 @@
+{
+  "expected_decision": "FAIL",
+  "changed_boxes": [
+    [
+      444,
+      209,
+      506,
+      271
+    ]
+  ],
+  "forbidden_boxes": [
+    [
+      444,
+      209,
+      506,
+      271
+    ]
+  ],
+  "synthetic": true,
+  "notes": "object_removed: barrel deleted (rule D1). SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance."
+}

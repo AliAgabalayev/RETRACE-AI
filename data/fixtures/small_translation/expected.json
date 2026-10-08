@@ -1,0 +1,10 @@
+{
+  "expected_decision": "PASS",
+  "changed_boxes": [],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "small_translation: whole frame shifted by (+4,+3) px, content unchanged. Pipeline should align or send to review; a FAIL is a false positive. changed_boxes empty (no real change). SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "alt_decisions": [
+    "NEEDS_REVIEW"
+  ]
+}

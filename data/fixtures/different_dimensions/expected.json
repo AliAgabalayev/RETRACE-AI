@@ -1,0 +1,10 @@
+{
+  "expected_decision": "PASS",
+  "changed_boxes": [],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "different_dimensions: candidate downscaled to 480x270, same content. Expect RESIZED alignment; NEEDS_REVIEW also acceptable. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "alt_decisions": [
+    "NEEDS_REVIEW"
+  ]
+}

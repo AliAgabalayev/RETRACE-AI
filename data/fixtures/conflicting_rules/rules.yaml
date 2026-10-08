@@ -1,0 +1,7 @@
+rules:
+  - id: A1
+    effect: allow
+    description: "Barrels may disappear from the scene."
+  - id: D1
+    effect: deny
+    description: "Barrels may disappear from the scene."

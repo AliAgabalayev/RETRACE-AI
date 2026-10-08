@@ -1,0 +1,14 @@
+{
+  "expected_decision": "PASS",
+  "changed_boxes": [
+    [
+      540,
+      198,
+      570,
+      240
+    ]
+  ],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "clothing_color_change: character shirt red -> blue (rule A2); character still visible. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance."
+}

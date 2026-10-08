@@ -1,0 +1,21 @@
+{
+  "expected_decision": "FAIL",
+  "changed_boxes": [
+    [
+      326,
+      296,
+      346,
+      316
+    ]
+  ],
+  "forbidden_boxes": [
+    [
+      326,
+      296,
+      346,
+      316
+    ]
+  ],
+  "synthetic": true,
+  "notes": "small_object_removed: 12 px coin deleted (rule D1). Hard for patch-14 features; a miss must not become PASS silently. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance."
+}

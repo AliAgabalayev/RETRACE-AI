@@ -1,0 +1,27 @@
+{
+  "expected_decision": "FAIL",
+  "changed_boxes": [
+    [
+      444,
+      209,
+      506,
+      271
+    ]
+  ],
+  "forbidden_boxes": [
+    [
+      444,
+      209,
+      506,
+      271
+    ]
+  ],
+  "synthetic": true,
+  "notes": "translation_object_removed: frame shifted by (+4,+3) AND barrel deleted (rule D1). Box must be reported in REFERENCE coordinates after alignment. NEEDS_REVIEW acceptable, PASS is a blocker. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "alt_decisions": [
+    "NEEDS_REVIEW"
+  ],
+  "must_not": [
+    "PASS"
+  ]
+}

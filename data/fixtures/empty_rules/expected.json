@@ -1,0 +1,17 @@
+{
+  "expected_decision": "NEEDS_REVIEW",
+  "changed_boxes": [
+    [
+      444,
+      209,
+      506,
+      271
+    ]
+  ],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "empty_rules: no rules supplied; must not PASS. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "must_not": [
+    "PASS"
+  ]
+}

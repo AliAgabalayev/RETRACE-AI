@@ -1,0 +1,7 @@
+{
+  "expected_decision": "PASS",
+  "changed_boxes": [],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "lighting_change: global brightness/tint, all objects present (rule A1). changed_boxes empty because the change is global. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance."
+}

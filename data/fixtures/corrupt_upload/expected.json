@@ -1,0 +1,10 @@
+{
+  "expected_decision": "NEEDS_REVIEW",
+  "changed_boxes": [],
+  "forbidden_boxes": [],
+  "synthetic": true,
+  "notes": "corrupt_upload: candidate.png is truncated PNG bytes; must be NEEDS_REVIEW (or clean input error), never a crash or PASS. SYNTHETIC hand-drawn fixture (seed 1234); does not measure benchmark performance.",
+  "must_not": [
+    "PASS"
+  ]
+}

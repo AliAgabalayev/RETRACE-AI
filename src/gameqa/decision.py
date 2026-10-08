@@ -50,6 +50,38 @@ def is_reliable_forbidden(j: RegionJudgment, rules: list[Rule]) -> bool:
     )
 
 
+def find_rule_conflicts(rules: list[Rule]) -> list[str]:
+    """Detect rule sets we cannot decide under: duplicate IDs, or the same description
+    (case/whitespace-insensitive) declared both allow and deny. Semantic conflicts beyond
+    this are left to the VLM, which must answer ``uncertain`` for them."""
+    conflicts: list[str] = []
+    seen: set[str] = set()
+    for r in rules:
+        if r.id in seen:
+            conflicts.append(f"duplicate rule id {r.id}")
+        seen.add(r.id)
+    by_text: dict[str, set[RuleEffect]] = {}
+    for r in rules:
+        by_text.setdefault(" ".join(r.description.lower().split()), set()).add(r.effect)
+    for text, effects in by_text.items():
+        if len(effects) > 1:
+            conflicts.append(f"same rule text is both allow and deny: {text[:60]!r}")
+    return conflicts
+
+
+def is_acceptable_allowed(j: RegionJudgment, rules: list[Rule]) -> bool:
+    """Allowed verdict we can rely on for PASS: validated, evidence given, no deny rule cited."""
+    deny_ids = {r.id for r in rules if r.effect == RuleEffect.DENY}
+    return (
+        j.verdict == Verdict.ALLOWED
+        and j.validated
+        and not j.is_mock
+        and not j.errors
+        and bool(j.evidence.strip())
+        and not any(rid in deny_ids for rid in j.rule_ids)
+    )
+
+
 def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
     """Return (decision, human-readable reason)."""
     all_judgments = list(inp.judgments)
@@ -70,6 +102,8 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
     reasons: list[str] = []
     if not inp.rules:
         reasons.append("no rules provided")
+    for conflict in find_rule_conflicts(inp.rules):
+        reasons.append(f"rule conflict: {conflict}")
     if inp.alignment is None or inp.alignment.status in (
         AlignmentStatus.UNRELIABLE,
         AlignmentStatus.FAILED,
@@ -97,6 +131,8 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
             reasons.append(f"{j.region_id}: invalid or failed model response")
         elif j.verdict != Verdict.ALLOWED:
             reasons.append(f"{j.region_id}: {j.verdict.value}")
+        elif not is_acceptable_allowed(j, inp.rules):
+            reasons.append(f"{j.region_id}: allowed verdict without evidence or citing a deny rule")
 
     if reasons:
         return FinalDecision.NEEDS_REVIEW, "Needs review: " + "; ".join(reasons) + "."

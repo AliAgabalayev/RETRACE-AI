@@ -59,3 +59,13 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 - `python-developer`: download/prepare utilities (`src/gameqa/data/`), manifest writer.
 - `experiment-tracker-pm`: selection criteria, dev/eval split protocol, `docs/DATA_CARD.md`, experiment registry.
 - `qa-engineer`: label/order checks, evaluation-only manifest consumption, scoring.
+
+## D6 — Policy fixes from QA (session 2)
+- QA-D1/D2: an `allowed` judgment supports PASS only if validated, non-mock, error-free, has non-empty evidence and cites no deny rule (`decision.is_acceptable_allowed`). Otherwise NEEDS_REVIEW.
+- QA-D3: `decision.find_rule_conflicts` flags duplicate rule IDs and identical descriptions declared both allow and deny → NEEDS_REVIEW. Deeper semantic conflicts are delegated to the VLM (must answer `uncertain`). Computed inside `decide`, so no pipeline change.
+
+## D7 — Splits and evaluation budget (session 2)
+- Data facts (verified by DATA/experiment-tracker): 250 visual-regression pairs, revision `2afbfdcc9cb84318845f348c023bb2e92b942e29`; 224 bug / 26 no_bug; all no_bug are Youtube-Cutscene; all 171 Unity pairs are bug. Source confounds label → results reported per source; primary metric = balanced accuracy (review→FAIL), per experiment-tracker protocol in `docs/EXPERIMENTS.md`.
+- Final splits (seeded, stratified by media_source × label): demo 5 (≥2 no_bug), dev ≥ 6 no_bug + ≥ 10 bug (both sources), eval = everything else. Thresholds/prompts tuned on dev + synthetic fixtures only.
+- E2 (real pipeline) runs on a stratified 60-pair eval subset (≈20 no_bug, 20 cutscene bug, 20 Unity bug), chosen by seeded script before any result is seen; cut to 40 if >90 s/pair. E1 classical and E4 VLM-only run on the same IDs (E1 also on full eval). E2b (classical-only proposals + VLM) only if time remains.
+- Qwen2.5-VL-3B license treated as non-commercial (Qwen Research License) until verified; noted in THIRD_PARTY_NOTICES.
