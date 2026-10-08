@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Downloaded / generated data (see docs/DATA_CARD.md)
+data/raw/
+data/work/
+data/cache/
+artifacts/*
+!artifacts/.gitkeep
+references/*
+!references/.gitkeep
+models/
+.streamlit/secrets.toml
+.env
+.claude/settings.local.json
