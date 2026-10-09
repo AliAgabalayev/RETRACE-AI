@@ -126,10 +126,15 @@ def test_frozen_demo_uses_inventory_rules_and_blocks_changed_inputs(app, monkeyp
     (bundle.parents[1] / "inventory.json").write_text(json.dumps({"samples": [
         {"sample_id": "vr_4b921c5d", "rules": rules, "images": hashes}]}))
     monkeypatch.setattr(gc, "REPO_ROOT", root)
+    manifest = root / "data/manifests/inference_manifest.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps([{"split": "demo", "sample_id": "unavailable_example",
+        "reference_path": "missing_reference.png", "candidate_path": "missing_candidate.png"}]))
     app.run()
     next(r for r in app.radio if r.label == "Pair source").set_value("Demo pair").run()
     assert not app.exception
     assert next(s for s in app.selectbox if s.label == "Demo pair").value == "Frozen dev demo | vr_4b921c5d"
+    assert next(s for s in app.selectbox if s.label == "Demo pair").options == ["Frozen dev demo | vr_4b921c5d"]
     assert app.dataframe[0].value.to_dict("records") == rules
     assert not next(b for b in app.button if b.label == "Analyze").disabled
     Image.new("RGB", (20, 20), "black").save(bundle / "candidate.png")

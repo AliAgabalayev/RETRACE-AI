@@ -75,8 +75,11 @@ def demo_pairs() -> dict[str, dict]:
     if MANIFEST.is_file():
         for m in json.loads(MANIFEST.read_text(encoding="utf-8")):
             if m.get("split") == "demo":
+                ref, cand = REPO_ROOT / m["reference_path"], REPO_ROOT / m["candidate_path"]
+                if not (ref.is_file() and cand.is_file()):
+                    continue  # Unavailable media must not be selectable in the demo UI.
                 pairs[f"VideoGameQA-Bench | {m['sample_id']}"] = {
-                    "ref": REPO_ROOT / m["reference_path"], "cand": REPO_ROOT / m["candidate_path"],
+                    "ref": ref, "cand": cand,
                     "rules": m.get("rules", []), "sample_id": m["sample_id"],
                 }
     if FIXTURES.is_dir():
