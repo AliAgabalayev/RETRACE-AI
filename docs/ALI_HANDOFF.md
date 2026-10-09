@@ -4,7 +4,7 @@
 
 **Hazır:** end-to-end prototype, Qwen baseline, C2 raw cross-check, test evidence, pitch/video script, 7-slide PDF/PPTX və 110 s motion draft. **Final acceptance açıqdır:** ayrıca UI-ready SHA, actual C2 ZIP bundle/full captures, final UI recording, second-device check və human submission confirmation.
 
-**17:39 əlavə local UI baxışı:** Ali-nin göstərişi ilə main checkout integration79a0ef7-dir; OpenRouter config ilə http://localhost:8501 açıldı, health200/AppTest0exceptions. Local key auth401-dir, `.env` update gözlənir; generation edilməyib. [UI_LOCAL_OPENROUTER.md](ali/UI_LOCAL_OPENROUTER.md). Final recording gate ayrıca saxlanılır. Main checkout switch-dən sonra deck/PNG copies `artifacts/ali/presentation/`-dadır; tracked docs ayrıca docs branch-də qalır.
+**17:46 əlavə local UI baxışı:** main checkout integration79a0ef7-dir; OpenRouter config ilə http://localhost:8501, health200/AppTest0exceptions. Ali `.env` update ilə initial auth401-i həll etdi: auth200, fresh app process dotenv key istifadə edir; generation edilməyib. [UI_LOCAL_OPENROUTER.md](ali/UI_LOCAL_OPENROUTER.md). Final recording gate ayrıca saxlanılır. Main checkout switch-dən sonra deck/PNG copies `artifacts/ali/presentation/`-dadır; tracked docs ayrıca docs branch-də qalır.
 
 ## Source və runtime identity
 

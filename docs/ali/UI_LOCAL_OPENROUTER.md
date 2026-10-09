@@ -1,4 +1,6 @@
-# Ali local UI self-test — 2026-10-09 17:39 Bakı
+# Ali local UI self-test — 2026-10-09 17:46 Bakı
+
+**Current status17:46:** Ali `.env` key-ini yenilədi; auth-only check **HTTP200/authenticated=true** verdi. Köhnə managed Streamlit process dayandırıldı, yeni process aşağıdakı `env -u` launch ilə başladı. Local UI health **HTTP200/ok**-dır. Key dəyəri göstərilməyib; generation/VLM call edilməyib. Əvvəlki401 aşağıda historical diagnostic kimi saxlanılır.
 
 Ali ayrıca göstəriş verdi: stopped local processes-dən sonra latest merged integration kodunu gətir, UI-ı OpenRouter ilə aç və özünün test edə bilməsi üçün addımları göstər. Bu **local self-test**-dir; Celalın final recording üçün ayrıca UI-ready SHA gate-i saxlanılır.
 
@@ -9,18 +11,18 @@ Ali ayrıca göstəriş verdi: stopped local processes-dən sonra latest merged 
 - Streamlit **http://localhost:8501**, foreground managed terminal process. Sandbox socket bind PermissionError verdi; eyni launch authorized host process-də açıldı.
 - `GET /_stcore/health` → **HTTP200 / ok**.
 - AppTest opening-only → **0 exceptions**; title Rule-aware visual regression; Pair source Upload two images, VLM engine Real(config). Analyze klik edilmədi; model call yoxdur.
-- Local key env presence yoxlandı, dəyər göstərilmədi. Auth-only `GET https://openrouter.ai/api/v1/auth/key` → **HTTP401**. Generation/cost yox idi. İşlək local key lazımdır; key dəyəri chat-a göndərilmir, `.env` içində `OPENROUTER_API_KEY` yenilənir.
+- Initial local key env presence yoxlandı, dəyər göstərilmədi. Auth-only `GET https://openrouter.ai/api/v1/auth/key` → HTTP401 idi; process environment və `.env` fərqli key saxlayırdı və ilkin hər ikisi401 verdi. Ali `.env` update-dən sonra **dotenv auth200** oldu. Global environment dəyişdirilmədi; yalnız yeni app child process-dən köhnə env key çıxarıldı ki, native dotenv loader yeni dəyəri götürsün.
 - C2 saved-run directories bu host-a transfer olunmayıb; canonical run namespace-də saved runs siyahısının boş olması bu mərhələdə expected-dir.
 
 Launch:
 
 ```bash
-GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml .venv/bin/streamlit run app.py \
+env -u OPENROUTER_API_KEY GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml .venv/bin/streamlit run app.py \
   --server.address 127.0.0.1 --server.port 8501 --server.headless true \
   --browser.gatherUsageStats false
 ```
 
-Bu `.env`/key update-dən sonra fresh process ilə yenidən açılmalıdır; cached Judge/proses environment-də köhnə key qalmamalıdır. Əgər error run yaradılıbsa, browser yeni session ilə açılır; eyni page-in rerun/Analyze memoization-u köhnə nəticəni göstərməsin. Root artıq model generation etməyib.
+Bu launch `.env`/key update-dən sonra fresh process ilə yerinə yetirildi; cached Judge/proses environment-də köhnə key qalmır. Əgər əvvəlki error run açıqdırsa, browser yeni session ilə açılır; eyni page-in rerun/Analyze memoization-u köhnə nəticəni göstərməsin. Root model generation etməyib.
 
 ## Ali necə yoxlayır?
 

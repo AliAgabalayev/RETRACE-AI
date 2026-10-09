@@ -2,7 +2,7 @@
 
 ## Current checkpoint — overrides the historical 17:05 update below
 
-- **17:39 local self-test:** Ali-nin əlavə göstərişi ilə main checkout confirmed integration79a0ef7-yə keçirildi, OpenRouter config ilə http://localhost:8501 açıldı; health200/AppTest0exceptions. Local key auth401 verir: `.env` key update gözlənir. Model call edilməyib. Bu local baxış final recording üçün C4 UI-ready SHA gate-i əvəz etmir. [UI_LOCAL_OPENROUTER.md](UI_LOCAL_OPENROUTER.md).
+- **17:46 local self-test:** main checkout integration79a0ef7, OpenRouter config ilə http://localhost:8501; health200/AppTest0exceptions. Initial key401 Ali `.env` update ilə həll edildi: auth200; app fresh process-də `.env` dəyəri ilə yenidən açıldı. Model call edilməyib. Bu local baxış final recording üçün C4 UI-ready SHA gate-i əvəz etmir. [UI_LOCAL_OPENROUTER.md](UI_LOCAL_OPENROUTER.md).
 - Celalın confirmed remote integration SHA-sı **`79a0ef740196cbaa0639579386c6c591d2bfd8ca`** fetch ilə təsdiqləndi. Frozen runtime: OpenRouter / `google/gemini-3.5-flash` / low / prompt v9; config `configs/openrouter_gemini_pilot.yaml`, C hash **`eaa371255716`**, B diagnostic hash `2dfeb64cd673` (namespace paths fərqli).
 - C2 committed raw rows, 80 call/stage records və cost lokal olaraq yoxlanıb: [C2_VERIFICATION.md](C2_VERIFICATION.md), [C2_RECOMPUTED.json](C2_RECOMPUTED.json). B və C: **1 PASS /4 FAIL /7 REVIEW**, coverage **5/12**, bug false-PASS **1/5**, clean PASS **0/7**. C 3 bug FAIL +1 clean false-FAIL; B 2 bug FAIL +2 clean false-FAIL. Ümumi saylar eynidir; iki pair qərarı fərqlidir. B+C provider-reported toplam cost **$0.2871945**, retries 0.
 - Exact frozen SHA-da offline tests **194 passed, 6 skipped**. 193/6 docs-branch nəticəsi və Celalın 186/6-deselected C2 nəticəsi ayrı checkpoint-lərdir.
