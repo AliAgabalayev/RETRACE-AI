@@ -46,7 +46,7 @@ Local Python 3.13 / Streamlit 1.65 environment; Docker pins Python 3.12 / Stream
 - `.venv/bin/python -m pytest -m 'not real_model' -q`: **208 passed, 6 deselected, 23.20s**. Real-model checks excluded; no new inference.
 - Focused UI/deployment checks pass, including local safeguards, public immutable assets, no dotenv/engine/provider calls, absent/corrupt ZIP refusal, matching QA-only archive byte preservation and startup key stripping. QA archive simulations are not original model evidence.
 - Real Brave browser via isolated `/tmp` profile/CDP: desktop 1440×1000, mobile 390×844, separate Streamlit session 1280×900; FAIL/replay label, originals/crops/observations/rules visible; desktop refresh passed; images decoded; horizontal overflow 0; console errors 0.
-- Screenshots/results: `/tmp/retrace-browser-evidence/`; QA record `/tmp/retrace-qa-results.txt`. No key values in logs. Browser downloaded original ZIP/hash verification **not run: original archive unavailable**.
+- Screenshots/results və QA record ignored local `artifacts/retrace-ui-20261009/` daxilində qorunur; temporary browser files `/tmp/retrace-browser-evidence/`-də də var. No key values in logs. Browser downloaded original ZIP/hash verification **not run: original archive unavailable**.
 - Independent code review completed; startup flag whitespace defect found and fixed with parametrized regression.
 - PR CI validates original Render Docker path and additive Vercel public image startup. Actual CI result is recorded in PR/final handoff, not inherited from older runs.
 - Task provider API calls **0**, inference cost **$0**. Hosting cost not measured; no Vercel resources created.

@@ -212,7 +212,8 @@ def test_public_replay_defaults_to_recorded_barrel_and_shows_original_results(pu
         assert judgment["observed_change"] in displayed
         assert judgment["evidence"] in displayed
     assert stored["scene_audit"]["judgment"]["observed_change"] in displayed
-    assert len(app.get("image")) >= 2 + 2 * len(stored["proposals"])
+    image_count = len(app.get("image")) + len(app.get("imgs"))
+    assert image_count >= 2 + 2 * len(stored["proposals"])
     assert not calls
 
 
