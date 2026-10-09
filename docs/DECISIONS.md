@@ -129,3 +129,8 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
   - provider error text is kept to 800 chars so quota details stay visible;
   - `vlm.image_detail: null` omits the OpenAI-only `detail` field.
 - **Blocker:** Gemini free tier = **20 requests/day per model** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`). The 60-pair comparison needs ≈600 requests (E2 ≈ 8/pair, E4 ≈ 2/pair). E2-Gemini was stopped after 1 pair; its quota-error row was dropped (`artifacts/eval/e2g_pipeline_gemini_subset60/dropped_provider_errors.txt`). No Gemini metrics exist yet. Options: enable billing (paid tier) or accept a much smaller sample.
+
+## D17 — A1 result and the single intervention: freeze Qwen build, no vision change (2026-10-09 15:50, owner Ali)
+- dev12, Ali's frozen labels (5 bug / 7 clean), Qwen 2.5-VL 3B, fresh cache: A pixel 12 PASS (5/5 bug false-PASS); B full-frame VLM 8 PASS/4 REVIEW (5/5 bug false-PASS); C hybrid 12 REVIEW (0/5 false-PASS, coverage 0; 9 global-change collapse). Details: docs/ali/A1_diagnostic.md.
+- Root cause on Unity bugs: correct localization, wrong VLM perception (reproducer: same crop+prompt → Gemini 3.5 Flash describes the removal correctly, 2/2).
+- Decision (Ali): freeze the current Qwen build for A3; no vision/prompt/threshold change; A2 goes to report/evidence. Model change is recorded as the evidenced next step; not run at scale (free-tier quota, no new paid provider).

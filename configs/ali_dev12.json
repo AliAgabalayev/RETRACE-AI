@@ -1,0 +1,141 @@
+{
+  "balanced_six": [
+    {
+      "candidate_path": "data/work/vr_a981c1d3/candidate.png",
+      "reference_path": "data/work/vr_a981c1d3/reference.png",
+      "sample_id": "vr_a981c1d3",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_330651ed/candidate.png",
+      "reference_path": "data/work/vr_330651ed/reference.png",
+      "sample_id": "vr_330651ed",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_4255ae09/candidate.png",
+      "reference_path": "data/work/vr_4255ae09/reference.png",
+      "sample_id": "vr_4255ae09",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_4b921c5d/candidate.png",
+      "reference_path": "data/work/vr_4b921c5d/reference.png",
+      "sample_id": "vr_4b921c5d",
+      "source": "UnityCapturesDataset"
+    },
+    {
+      "candidate_path": "data/work/vr_d07179d5/candidate.png",
+      "reference_path": "data/work/vr_d07179d5/reference.png",
+      "sample_id": "vr_d07179d5",
+      "source": "UnityCapturesDataset"
+    },
+    {
+      "candidate_path": "data/work/vr_fec26436/candidate.png",
+      "reference_path": "data/work/vr_fec26436/reference.png",
+      "sample_id": "vr_fec26436",
+      "source": "Youtube-Cutscene"
+    }
+  ],
+  "balanced_six_rule": "first 3 of S0, first 2 of S1, first 1 of S2 in seeded order (predeclared)",
+  "dev12": [
+    {
+      "candidate_path": "data/work/vr_a981c1d3/candidate.png",
+      "reference_path": "data/work/vr_a981c1d3/reference.png",
+      "sample_id": "vr_a981c1d3",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_330651ed/candidate.png",
+      "reference_path": "data/work/vr_330651ed/reference.png",
+      "sample_id": "vr_330651ed",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_4255ae09/candidate.png",
+      "reference_path": "data/work/vr_4255ae09/reference.png",
+      "sample_id": "vr_4255ae09",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_09a066d3/candidate.png",
+      "reference_path": "data/work/vr_09a066d3/reference.png",
+      "sample_id": "vr_09a066d3",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_59af7164/candidate.png",
+      "reference_path": "data/work/vr_59af7164/reference.png",
+      "sample_id": "vr_59af7164",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_41bab231/candidate.png",
+      "reference_path": "data/work/vr_41bab231/reference.png",
+      "sample_id": "vr_41bab231",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_4b921c5d/candidate.png",
+      "reference_path": "data/work/vr_4b921c5d/reference.png",
+      "sample_id": "vr_4b921c5d",
+      "source": "UnityCapturesDataset"
+    },
+    {
+      "candidate_path": "data/work/vr_d07179d5/candidate.png",
+      "reference_path": "data/work/vr_d07179d5/reference.png",
+      "sample_id": "vr_d07179d5",
+      "source": "UnityCapturesDataset"
+    },
+    {
+      "candidate_path": "data/work/vr_c1f47c57/candidate.png",
+      "reference_path": "data/work/vr_c1f47c57/reference.png",
+      "sample_id": "vr_c1f47c57",
+      "source": "UnityCapturesDataset"
+    },
+    {
+      "candidate_path": "data/work/vr_fec26436/candidate.png",
+      "reference_path": "data/work/vr_fec26436/reference.png",
+      "sample_id": "vr_fec26436",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_ef9b073a/candidate.png",
+      "reference_path": "data/work/vr_ef9b073a/reference.png",
+      "sample_id": "vr_ef9b073a",
+      "source": "Youtube-Cutscene"
+    },
+    {
+      "candidate_path": "data/work/vr_43773eb8/candidate.png",
+      "reference_path": "data/work/vr_43773eb8/reference.png",
+      "sample_id": "vr_43773eb8",
+      "source": "Youtube-Cutscene"
+    }
+  ],
+  "input_manifest_sha256_prefix": {
+    "eval_labels": "a10ab8dd2f936ada",
+    "inference_manifest": "245815f5191e6708"
+  },
+  "seed": 20261009,
+  "selection_rule": "dev split only; IDs sorted lexicographically per stratum, then random.Random(seed).sample without replacement, strata in order S0,S1,S2. Strata are formed from (label class, media_source); the label class is used only to form strata (allowed: dev is the development set) and is not stored. Selection made before any model output. Never filled from eval.",
+  "strata": {
+    "S0": {
+      "available": 6,
+      "selected": 6,
+      "source": "Youtube-Cutscene",
+      "wanted": 6
+    },
+    "S1": {
+      "available": 26,
+      "selected": 3,
+      "source": "UnityCapturesDataset",
+      "wanted": 3
+    },
+    "S2": {
+      "available": 8,
+      "selected": 3,
+      "source": "Youtube-Cutscene",
+      "wanted": 3
+    }
+  }
+}

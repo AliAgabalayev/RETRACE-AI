@@ -1,0 +1,13 @@
+sample_id,source,contact_sheet,reference_size_wh,visible_primary_change,valid_comparison_conditions,source_scene,rule_allowed_or_forbidden (A1/D1),approx_bbox_x1y1x2y2_reference_px,uncertainty,out_of_scope,notes
+vr_a981c1d3,Youtube-Cutscene,docs/ali/contact_sheet_vr_a981c1d3.png,1278x715,,,,,,,,
+vr_330651ed,Youtube-Cutscene,docs/ali/contact_sheet_vr_330651ed.png,1279x718,,,,,,,,
+vr_4255ae09,Youtube-Cutscene,docs/ali/contact_sheet_vr_4255ae09.png,1278x718,,,,,,,,
+vr_4b921c5d,UnityCapturesDataset,docs/ali/contact_sheet_vr_4b921c5d.png,3840x2160,,,,,,,,
+vr_d07179d5,UnityCapturesDataset,docs/ali/contact_sheet_vr_d07179d5.png,3840x2160,,,,,,,,
+vr_fec26436,Youtube-Cutscene,docs/ali/contact_sheet_vr_fec26436.png,1120x627,,,,,,,,
+vr_09a066d3,Youtube-Cutscene,docs/ali/contact_sheet_vr_09a066d3.png,1278x718,,,,,,,,
+vr_59af7164,Youtube-Cutscene,docs/ali/contact_sheet_vr_59af7164.png,1139x634,,,,,,,,
+vr_41bab231,Youtube-Cutscene,docs/ali/contact_sheet_vr_41bab231.png,1278x714,,,,,,,,
+vr_c1f47c57,UnityCapturesDataset,docs/ali/contact_sheet_vr_c1f47c57.png,3840x2160,,,,,,,,
+vr_ef9b073a,Youtube-Cutscene,docs/ali/contact_sheet_vr_ef9b073a.png,1273x717,,,,,,,,
+vr_43773eb8,Youtube-Cutscene,docs/ali/contact_sheet_vr_43773eb8.png,1278x574,,,,,,,,

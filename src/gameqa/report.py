@@ -227,7 +227,20 @@ def build_evidence(result: AnalysisResult, run_dir: str | Path | None = None, cf
     if c.scene_audit_ran:
         assessed.append("whole-scene audit ran")
     unjudged = [p.id for p in result.proposals if p.id not in judged_ids]
-    if c.truncated or c.proposals_total > len(result.proposals):
+    # Global-change collapse (D10): one full-frame region with truncated=True means the whole frame
+    # differed, so no localized region check happened. Distinguish it from the max-region cap.
+    global_collapse = (
+        c.truncated
+        and len(result.proposals) == 1
+        and result.proposals[0].area_fraction >= 0.99
+        and c.proposals_total == len(result.proposals)
+    )
+    if global_collapse:
+        not_assessed.append(
+            "global change: the whole frame differed beyond the collapse threshold, so it was collapsed "
+            "into one full-frame region; no localized region-level check was possible"
+        )
+    elif c.truncated or c.proposals_total > len(result.proposals):
         not_assessed.append(
             f"proposals dropped by the region cap: {c.proposals_total - len(result.proposals)}"
         )

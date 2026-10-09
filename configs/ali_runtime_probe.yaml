@@ -1,0 +1,3 @@
+# Runtime probe override (WP0.5): fresh cache namespace so the result is live.
+run:
+  cache_dir: data/cache_ali_fresh

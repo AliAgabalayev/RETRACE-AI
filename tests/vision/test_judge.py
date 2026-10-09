@@ -103,3 +103,30 @@ def test_recovered_retry_leaves_no_judgment_errors(monkeypatch):
     monkeypatch.setattr("gameqa.vision.judge.time.sleep", lambda s: None)
     raw, errors, _ = j._ask([], "p", {}, RULES, False)
     assert raw is not None and errors == [] and calls["n"] == 2
+
+
+def _dump_judge(tmp_path, with_key=True):
+    vlm = {"provider": "mock", "mock_behavior": "allowed"}
+    if with_key:
+        vlm.update(dump_inputs_dir=str(tmp_path / "dump"), dump_tag="s1")
+    return Judge({"vlm": vlm, "run": {"cache_dir": str(tmp_path / "cache")}})
+
+
+def test_dump_inputs_writes_png_prompt_calls(tmp_path):
+    j = _dump_judge(tmp_path)
+    img = np.full((60, 60, 3), 90, np.uint8)
+    j.judge_region(_prop(), img, img.copy(), img, img, RULES)
+    d = tmp_path / "dump" / "s1"
+    assert (d / "R1_stage1_1.png").stat().st_size > 0
+    assert "5" in (d / "R1_stage1_1.txt").read_text()
+    meta = json.loads((d / "R1_stage1_1.json").read_text())
+    assert meta["is_mock"] and meta["cache_hit"] is False and meta["stage"] == "stage1" and meta["raw_reply"]
+    rec = [json.loads(x) for x in (d / "calls.jsonl").read_text().splitlines()]
+    assert rec[0]["is_mock"] is True and rec[0]["model"].startswith("mock:") and rec[0]["cache_hit"] is False
+
+
+def test_dump_unset_writes_nothing(tmp_path):
+    j = _dump_judge(tmp_path, with_key=False)
+    img = np.full((60, 60, 3), 90, np.uint8)
+    j.judge_region(_prop(), img, img.copy(), img, img, RULES)
+    assert j.dump_dir is None and not (tmp_path / "dump").exists()
