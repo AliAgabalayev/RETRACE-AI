@@ -21,6 +21,8 @@ C5: pinned headless runtime, Python 3.12, non-root Dockerfile/ignore, Streamlit 
 
 Final integration PR normal merge üçün yaradılır; latest checks pass olmadan merge/force-push/branch deletion edilmir. Actual final SHA/PR state/checks final delivery-dədir. Incomplete check passing deyil. Public deployment owner addımıdır, `DEPLOYMENT.md` checklist təqdim edir.
 
-C4 prior: **27 passed**, browser replay/rules/FAIL/crops/ZIP/guard, zero API calls. C2 prior: **186 passed /6 deselected**. Bunlar C5 fresh execution kimi təqdim edilmir. Local Docker daemon yoxdur; Linux CI həmin gap-i yoxlayır. C5 verification ayrıca delivery nəticələri ilə tamamlanır.
+C5 offline full suite **198 passed /6 deselected, 30.17 s**. İlk run-da src import path olmadan collection 1 error/6 deselected verdi; explicit PYTHONPATH ilə həmin suite keçdi, code tests üçün dəyişdirilmədi. Credential scan **262 tracked/new files**, secret hits 0, package-də Windows path 0. Git blob/manifest yoxlaması Windows CRLF normalization fərqini tapdı; replay package üçün `-text` attributes exact historical bytes saxlayır. Bu portability fix model davranışını dəyişmir.
+
+C4 prior: **27 passed**, browser replay/rules/FAIL/crops/ZIP/guard, zero API calls. C2 prior: **186 passed /6 deselected**. Bunlar C5 fresh execution kimi təqdim edilmir. Local Docker daemon yoxdur; Linux CI həmin gap-i yoxlayır. C5 browser/CI nəticələri final delivery-dədir.
 
 Known limits: 12-pair development diagnostic, both arms 41.7% coverage, hybrid 1/5 false-PASS, missing pedestal open. Historical 80 calls/$0.2871945. C5 paid inference **0**. Hosted measurements/access control/persistent storage manualdır.
