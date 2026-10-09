@@ -4,8 +4,6 @@ import hashlib
 import json
 import zipfile
 
-import pytest
-
 from gameqa.contracts import Verdict
 from gameqa.pipeline import analyze
 from gameqa.report import build_evidence, render_report, write_evidence
@@ -99,7 +97,6 @@ def test_cache_disabled_in_config_is_live(pair, cfg, patch_vision):
     assert ev["cache"]["status"].startswith("live") and ev["identity"]["reasoning_effort"] == "low"
 
 
-@pytest.mark.xfail(reason="needs additive storage.export_report/pipeline hook to call write_evidence", strict=True)
 def test_plain_export_report_writes_evidence(pair, cfg, patch_vision):
     r = analyze(pair, cfg, judge=FakeJudge(), extractor=FakeExtractor())
     run_dir = pair_dir(cfg, r)

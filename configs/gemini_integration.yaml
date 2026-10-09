@@ -1,0 +1,16 @@
+# Ali's successful provider/model identity; bounded single-run retry budget.
+# No prompts, proposal thresholds, crop sizes or decision policy are changed.
+vlm:
+  provider: openai
+  model: gemini-3.5-flash
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+  api_key_env: GEMINI_API_KEY
+  timeout_s: 60
+  max_attempts: 1
+  transient_retries: 0
+  image_detail: null
+  reasoning_effort: low
+run:
+  cache_dir: data/cache_gemini_integration_20261009
+  artifacts_dir: artifacts/gemini-integration-20261009/runs
+  references_dir: artifacts/gemini-integration-20261009/references
