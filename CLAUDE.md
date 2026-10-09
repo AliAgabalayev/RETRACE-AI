@@ -6,17 +6,18 @@
 
 Full requirements: `docs/PROJECT_BRIEF.md` (read it before starting any task). Agent roster and ownership: `AGENTS.md`.
 
-**Resuming work:** read `docs/status/senior-pm.md` (current state, done items, next actions) and `docs/DECISIONS.md` before doing anything else.
+**Resuming work:** read `HANDOFF.md` (current state, results, next tasks), `docs/status/senior-pm.md` and `docs/DECISIONS.md` (D1–D14) before doing anything else.
 
 ## Key facts from the brief
 
 - **Hypothesis to test, not assume:** DINOv2 patch-feature proposals help a VLM do rule-aware comparison. No accuracy target and no claim of beating the paper.
-- **Stack:** Python, Streamlit, PyTorch, OpenCV, Pillow, NumPy, Pydantic, pytest; one VLM client using existing credentials. One process, local files, small CLI. Proposed commands (`streamlit run app.py`, `python -m pytest`) are unverified until actually run.
-- **Inference only:** frozen DINOv2 ViT-S/14 (`dinov2_vits14`), no training or fine-tuning, no new paid providers or hardware.
+- **Stack:** Python, Streamlit, PyTorch, OpenCV, Pillow, NumPy, Pydantic, pytest. One process, local files, small CLI. Always use `.venv/bin/python` / `.venv/bin/streamlit`. Verified: `.venv/bin/streamlit run app.py`, `.venv/bin/python -m pytest -q`.
+- **VLM providers (D10, D14):** default is local Ollama `qwen2.5vl:3b` (runs on CPU, needs ~9 GB free RAM; run one VLM job at a time). Optional OpenAI-compatible API (`configs/openai.yaml`, `configs/openrouter.yaml`) selected via `GAMEQA_CONFIG` or CLI `--config`; keys live only in the git-ignored `.env` (template `.env.example`). Never print, log or commit key values.
+- **Inference only:** frozen DINOv2 ViT-S/14 (`dinov2_vits14`), no training or fine-tuning, no new hardware. Paid APIs only as the owner-approved optional OpenAI-compatible VLM (D14).
 - **Out of scope:** video, game-playing agent, Unity/Unreal plugin, auth, cloud deployment, microservices, external issue trackers, automatic reference replacement.
 - **Priorities:** P0 working end-to-end flow and handoff; P1 held-out smoke evaluation vs classical baseline, cache, diagnostics; P2 polish. P2 never delays P0.
 - **Decision policy:** reliable forbidden change -> `FAIL`; all stages complete and only allowed changes -> `PASS`; uncertainty, rule conflict, unreliable alignment, model error, timeout, truncation -> `NEEDS REVIEW`. A component error never turns a proven `FAIL` into `PASS`.
-- **Bounds:** max 8 regions + 1 whole-scene audit; 30 s request timeout, max 2 attempts; configurable end-to-end deadline.
+- **Bounds:** max 8 regions + 1 whole-scene audit; request timeout 75 s for the CPU-resident Qwen (brief default 30 s, changed in D10; 60 s in the API configs), max 2 attempts; configurable end-to-end deadline.
 - **Box format:** `[x1, y1, x2, y2]` in original reference pixel coordinates, right/bottom exclusive.
 - **Data:** VideoGameQA-Bench (CC BY 4.0), visual-regression subset (~250 samples). Metadata-first; download only selected images, never the full 33.4 GB repository. Labels live only in an evaluation-only manifest and never reach inference. Verify actual schema, counts and paths; do not guess.
 - **Honesty:** mocks are always labelled and never shown as real inference. Degraded modes are reported as degraded, not as "full AI prototype complete".
@@ -31,9 +32,10 @@ Full requirements: `docs/PROJECT_BRIEF.md` (read it before starting any task). A
 
 ## Git rules
 
-- Git is used **locally only** for now. Do not add a remote, push, open PRs, or run any command that contacts a remote, unless the user explicitly asks.
+- Remote: `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton (branch `master`). **Push, open PRs, or change repo settings only when the user explicitly asks.** Never force-push.
+- Before any push, scan the commits being pushed for secrets; `.env`, `data/raw`, `data/work`, `data/cache`, `artifacts/`, `references/` must never be committed.
 - **All git operations (commits, branching, merging, rebasing, history cleanup) go through the `git-workflow-master` agent.** Do not run `git commit` or other history-changing commands directly; delegate them to that agent.
-- Commits are allowed at any time without asking (checkpoints, finished tasks, integration points). They still go through `git-workflow-master` and stay local.
+- Local commits are allowed at any time without asking (checkpoints, finished tasks, integration points). They still go through `git-workflow-master`; pushing them still needs an explicit request.
 - Default branch is `master`.
 
 ## Project agents
