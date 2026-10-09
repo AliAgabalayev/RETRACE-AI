@@ -16,7 +16,19 @@ Date: 2026-10-09, Baku. Branch `feat/hackathon-vision-evidence`. Owner: Ali (vis
 | B full-frame VLM | 8 / 0 / 4 | 8/12 | **5/5** | 3/7 | none |
 | C hybrid | 0 / 0 / 12 | 0/12 | **0/5** | 0/7 | 9 global-change collapse, 3 none |
 
-Engineering targets (not promised): 0/6 bug false-PASS → only C meets it; ≥4/6 clean PASS → no arm safely (A/B pass everything incl. bugs); coverage ≥6/12 → only A/B, which are unsafe; 10/12 correct observations → **not scored** (obs_review.csv not marked in time). Raw rows: `docs/ali/a1_evidence/predictions_{A,B,C}.jsonl`, `score_raw.md`.
+Engineering targets (not promised): 0/6 bug false-PASS → only C meets it; ≥4/6 clean PASS → no arm safely (A/B pass everything incl. bugs); coverage ≥6/12 → only A/B, which are unsafe; 10/12 correct primary observations → **not met** (see Observation accuracy below). Raw rows: `docs/ali/a1_evidence/predictions_{A,B,C}.jsonl`, `score_raw.md`.
+
+## Observation accuracy (stage-1 text vs Ali's labels; scored 16:10)
+Ali marked each model observation y (main change described) / p (partial: secondary real change, or right object with wrong description) / n (wrong or invented). Raw: `a1_evidence/obs_review.csv`.
+
+| Arm | y | p | n | y+p |
+|---|---|---|---|---|
+| B full-frame VLM | 1 | 3 | 8 | 4/12 |
+| C hybrid (region crops + audit) | 1 | 8 | 3 | 9/12 |
+
+- Strict target (10/12 'y') is not met by either arm.
+- Region crops move the VLM from mostly wrong to mostly partially right (n 8 → 3). This is the one measured signal that DINOv2 proposals help the VLM's *perception*; it does not yet translate into correct automatic decisions.
+- Caveats: n = 12; partial credit is a judgment call; Ali's marks closely match an example string shown in chat before scoring (possible anchoring); Claude independently reviewed all 24 rows and disagrees on one (#24 vr_43773eb8 C: y rather than p), which would make C 2 y / 7 p.
 
 ## Failure split (C, hybrid)
 - **Global-change collapse (9/12, all cutscene pairs):** whole-frame lighting/clothing/pose differences exceed the collapse fraction → one full-frame region, truncated → REVIEW by policy. Safe, but zero coverage on cutscenes.
