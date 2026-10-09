@@ -4,7 +4,7 @@
 
 - Fetched integration **`487f2028461b47013138be124ebf700b86a1c9f1`**; final docs bu source üzərinə reconcile edilib. Combined offline pytest **199 passed, 6 skipped, 11.20 s**; model/policy/config unchanged-dir. Əvvəlki685 C4 checkpoint və197suite historical-dır.
 - Compact barrel replay +4 saved provider captures **`deploy/replay/barrel/`**-də artıq local/tracked mövcuddur. Bütün12C2ZIP/complete pedestal bundle transfer-i tamamlandığı iddia edilmir. Ali activeUI hələ79-dadır.
-- Existing integration→master PR **#4** istifadə edilir; duplicate master PR yoxdur. Ali-nin qalan işi üçün bir docs→integration PR hazırlanır. Actual Git status/commands [GIT_FINALIZATION.md](GIT_FINALIZATION.md)-dədir; final review/CI/remote merge və19:30submission pending-dir. Latest user explicit PR-open request verib; permission policy bypass edilmir.
+- Integration→master PR **#4 audit zamanı externally MERGED oldu**; agent merge etmədi. Ali-nin qalan işi üçün docs→integration PR hazırlanır; onun reviewed merge-indən sonra yeni integration→master follow-up PR tələb olunur. Actual Git status/commands [GIT_FINALIZATION.md](GIT_FINALIZATION.md)-dədir; Ali docs review/remote merge və19:30submission pending-dir. Latest user explicit PR-open request verib; permission policy bypass edilmir.
 
 ## C4 və repository consolidation — current checkpoint
 

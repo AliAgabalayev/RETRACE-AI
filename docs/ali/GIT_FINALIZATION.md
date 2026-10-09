@@ -1,6 +1,6 @@
 # Git finalization — Ali docs → Celal integration → master
 
-9 oktyabr 2026, Bakı. Bu audit zamanı fetched integration **`487f2028461b47013138be124ebf700b86a1c9f1`**, `master` **`b7aa8b8a2155cdbe2f71f9598fd25c3f50ed5683`**-dir. Integration `master`-dən **35 commit ahead**, 0 behind-dir. C4 readiness checkpoint `6850189`, C4 UI code `be1ea0a` və C2 raw verification source `79a0ef7` historical identity kimi saxlanılır; bunlar current integration HEAD deyil.
+9 oktyabr 2026, Bakı. Ali docs QA/reconciliation base **`487f2028461b47013138be124ebf700b86a1c9f1`**-dir. Son fetch-də integration **`9d7a391e0f363d319b784de87ea00ac0f8326e71`**, remote `master` **`7f93c0204b44f8e41cc5c1a688a135ea0f133e88`**-dir. Integration remote `master`-də contained-dir; `master` iki merge commit ahead-dir. Son integration follow-up yalnız `docs/DEPLOYMENT.md` və `docs/FINAL_GITHUB_STATE.md`-ni dəyişir; runtime/app/config source dəyişmir. C4 readiness checkpoint `6850189`, C4 UI code `be1ea0a` və C2 raw verification source `79a0ef7` historical identity kimi saxlanılır.
 
 Ali-nin final docs/pitch branch-i **`docs/ali-final-pitch`**, worktree `/tmp/ali-final-pitch.pX8qSQ/checkout`-dur. Own unpublished branch latest fetched integration üzərinə conflict olmadan rebase edilib. Main checkout və işləyən `:8501` UI **`79a0ef7`**-də qorunub; orada yalnız dörd əvvəlki `data/cache_ali_*` untracked directory var. Credentials, caches, model weights, native artifacts və reference history stage/delete edilməyib. Yeni model/VLM job yoxdur.
 
@@ -10,20 +10,21 @@ Ali-nin final docs/pitch branch-i **`docs/ali-final-pitch`**, worktree `/tmp/ali
 
 | Branch / ref | Audited SHA | Unique | Action |
 |---|---|---:|---|
-| `origin/feat/hackathon-demo-integration` | `487f202` | 0 | Current integration / PR #4 head at fetch |
-| local `feat/hackathon-demo-integration` | `79a0ef7` | 0 | Active UI checkout; 7 commits behind, switch edilməyib |
+| `origin/feat/hackathon-demo-integration` | `9d7a391` | 0 | Current integration; runtime code remains `487f202` |
+| local `feat/hackathon-demo-integration` | `79a0ef7` | 0 | Active UI checkout; 8 commits behind, switch edilməyib |
 | local + remote `feat/hackathon-vision-evidence` | `74f84cf` | 0 | Already contained; PR #3 merged |
 | local `feature/gemini-provider` | `08a0c3f` | 0 | Already contained |
 | `origin/feat/hackathon-runtime-eval` | `7e7bb5d` | 0 | Already contained |
 | `origin/docs/team-git-workflow` | `3fcab35` | 0 | Already contained; PR #1 merged |
-| local + remote `master` | `b7aa8b8` | 0 | No direct commit/push; reviewed PR #4 target |
+| local `master` | `b7aa8b8` | 0 | Preserved; no local switch/direct commit/push |
+| `origin/master` | `7f93c02` | 2 | Includes externally merged PR #4/#5; integration ancestor |
 | `docs/ali-final-pitch` | Exact final HEAD in delivery message / PR | Final docs commits | One new PR into integration |
 | `docs/ali-next-session` | `2d0140d` | 3 | Superseded docs; keep backup, no stale merge |
 | `docs/ali-final-pitch-checkpoint` | `28f338b` | 4 | Keep backup |
 | `docs/ali-final-pitch-pre-c4` | `15e9119` | 3 | Keep backup |
 | `docs/ali-final-pitch-pre-deploy` | `1bb06ff` | 5 | Pre-rebase preservation checkpoint; keep backup |
 
-`origin/HEAD` points to `origin/master`. PR #1 and #3 are MERGED; #2 is CLOSED. **Existing [PR #4](https://github.com/AliAgabalayev/neuroscience-hackhaton/pull/4) is OPEN: integration → master. Do not create a duplicate master PR.** At the `487f202` read it was MERGEABLE/UNSTABLE with no submitted reviews or review requests; prior `a6a8c8a` checks passed, latest-head checks still need confirmation. Mergeability/check status is time-dependent and must be read again after the docs merge.
+`origin/HEAD` points to `origin/master`. PR #1 and #3 are MERGED; #2 is CLOSED. **[PR #4](https://github.com/AliAgabalayev/neuroscience-hackhaton/pull/4) was externally merged** by `celalthedon` at **2026-10-09 14:14:07Z**, head `487f202`, merge commit **`19b348dc11eceedff80ee6f0ab47f1f81634928b`**. Latest checks, container and GitGuardian were SUCCESS; GitHub returned no submitted reviews. The Git owner did not approve/merge/edit this PR. PR #5 subsequently merged the docs-only `9d7a391` follow-up into remote `master @7f93c02`. These completed PRs cannot include Ali commits created afterward.
 
 ## Review evidence and limits
 
@@ -37,9 +38,9 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/ali-final-pitch.pX8qSQ/checkout/src /h
 
 C5 compact `deploy/replay/barrel` package is now tracked, including sanitized historical four-call captures and source inputs. It is a replay seed, not fresh inference or the full twelve-run C2 ZIP bundle. Local Ali C5 browser/export reproduction and the complete C2 archive/input audit are separate acceptance work. The model/prompt/policy/canonical config hash **`eaa371255716`** and historical C2 measurements remain frozen.
 
-Ali branch changes comprise verified pitch PNG/PDF/PPTX, evidence JSON/docs, local rendering scripts, and the original cache-ignore/resume-link housekeeping. Explicit paths are staged; `.env`, `data/`, `artifacts/`, `references/` are never added. Changed text/commit messages are checked for credential patterns and forbidden attribution trailers before push. No force-push or branch deletion is required.
+Ali branch changes comprise verified pitch PNG/PDF/PPTX, evidence JSON/docs, local rendering scripts, and the original cache-ignore/resume-link housekeeping. The exact generated PDF is marked `binary` in `.gitattributes`: ReportLab's PDF object/xref spaces are valid binary content, and its bytes are preserved. This metadata lets the full-range text whitespace check inspect actual text changes. Explicit paths are staged; `.env`, `data/`, `artifacts/`, `references/` are never added. Changed text/commit messages are checked for credential patterns and forbidden attribution trailers before push. No force-push or branch deletion is required.
 
-## Two sequential reviewed PRs
+## Ali docs review and final propagation
 
 Ali explicitly authorized opening the docs PR. The Git owner may attempt the explicit branch push and PR creation through the normal permission path. If the environment rejects that action, Ali runs these exact commands in a separate terminal. They work from the main repo without switching its active UI branch:
 
@@ -63,21 +64,21 @@ gh pr merge docs/ali-final-pitch --merge --match-head-commit FINAL_DOCS_SHA
 
 Do not use `--admin` or `--delete-branch`. No merge has been performed by this handoff task.
 
-**Step 2:** Reuse PR #4 after Step 1. Its head changes when Ali docs enter integration; the earlier `487f202` HEAD is therefore not a valid final merge guard. Celal reviews the updated complete diff, latest checks and local acceptance limits. Read the new exact head and rerun/revalidate against it:
+**Step 2:** PR #4/#5 are already merged, so they cannot be reused after Step 1. Ali docs must first enter integration through their reviewed PR. A later integration → master follow-up is needed to propagate those docs; it is not created or merged by this task. Before opening it, check for an existing open follow-up and inspect the updated exact integration head:
 
 ```bash
 git fetch --prune origin
-gh pr view 4 --json url,headRefOid,baseRefName,reviewDecision,reviews,mergeable,mergeStateStatus,statusCheckRollup
-gh pr checks 4
+gh pr list --state open --base master --head feat/hackathon-demo-integration
+git rev-parse origin/feat/hackathon-demo-integration origin/master
 ```
 
-`/tmp/ali-integration-master-pr-body.md` contains supplemental Ali review notes for the existing PR; this task does not edit Celal's PR description. Only after teammate review, latest-head checks and Ali's explicit merge approval may the human use:
+`/tmp/ali-integration-master-pr-body.md` contains local Ali review notes for that follow-up. This task does not edit Celal's completed PR descriptions. If no follow-up exists, the human can create it after Step 1:
 
 ```bash
-gh pr merge 4 --merge --match-head-commit UPDATED_REVIEWED_INTEGRATION_SHA
+gh pr create --base master --head feat/hackathon-demo-integration --title 'docs: deliver reviewed Ali pitch and final handoff' --body-file /tmp/ali-integration-master-pr-body.md
 ```
 
-Merge commits preserve the freeze/source ancestry used by the evidence. After merge, verify PR #4 state/merge commit and fetch `origin/master`; report actual final SHA then. Direct `master` push, forced history changes, automatic integration/backup deletion and unreviewed merge are outside these steps.
+Celal reviews the follow-up and latest-head checks. Only after that review and Ali's explicit merge approval may the human use `gh pr merge FOLLOW_UP_NUMBER --merge --match-head-commit UPDATED_REVIEWED_INTEGRATION_SHA`. Merge commits preserve the freeze/source ancestry used by the evidence. Then verify actual PR state/merge SHA and fetch `origin/master`. Direct `master` push, forced history changes, automatic integration/backup deletion and unreviewed merge are outside these steps.
 
 ## Evidence outside Git
 
