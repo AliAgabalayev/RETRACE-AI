@@ -6,6 +6,8 @@
 
 Full requirements: `docs/PROJECT_BRIEF.md` (read it before starting any task). Agent roster and ownership: `AGENTS.md`.
 
+**Resuming Ali's hackathon work:** start from `docs/ali/NEXT_TASKS.md` (remaining tasks).
+
 **Resuming work:** read `HANDOFF.md` (current state, results, next tasks), `docs/status/senior-pm.md` and `docs/DECISIONS.md` (D1–D14) before doing anything else.
 
 ## Key facts from the brief
