@@ -1,5 +1,7 @@
 # Ali local UI self-test — 2026-10-09 17:46 Bakı
 
+**C5 consolidation update:** fetched integration487f202 + Ali docs reconcile edilib; compact `deploy/replay/barrel/` package/captures indi localdır. Aşağıdakı launch/auth/health **17:46source79** nəticələridir; Ali currentprocess həmin checkpoint-də saxlanılıb. C5 UI fresh launch/export locally verified kimi təqdim edilmir. [Current Git plan](GIT_FINALIZATION.md), [Celal C5 evidence](../FINAL_GITHUB_STATE.md).
+
 **Current status17:46:** Ali `.env` key-ini yenilədi; auth-only check **HTTP200/authenticated=true** verdi. Köhnə managed Streamlit process dayandırıldı, yeni process aşağıdakı `env -u` launch ilə başladı. Local UI health **HTTP200/ok**-dır. Key dəyəri göstərilməyib; generation/VLM call edilməyib. Əvvəlki401 aşağıda historical diagnostic kimi saxlanılır.
 
 Ali ayrıca göstəriş verdi: stopped local processes-dən sonra latest merged integration kodunu gətir, UI-ı OpenRouter ilə aç və özünün test edə bilməsi üçün addımları göstər. Bu **local self-test**-dir; Celalın final recording üçün ayrıca UI-ready SHA gate-i saxlanılır.

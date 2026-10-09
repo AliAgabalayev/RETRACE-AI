@@ -1,5 +1,7 @@
 # Motion video — presentation draft
 
+**C5 consolidation update:** fetched integration487f202 + Ali docs offline199passed6skipped. Compact barrel replay/captures local/tracked-dir; all12C2ZIP və final UI footage pending-dir. Aşağıdakı transfer/readiness qeydləri historical checkpoint-ə aiddir. Motion draft dəyişdirilməyib; ignored MP4 Git push ilə backup edilmir. [Current Git plan](GIT_FINALIZATION.md).
+
 Bu artifact product implementation və ya yeni model experiment deyil. Mövcud pitch PNG-lərindən **110 saniyəlik, 1920×1080, H.264, silent evidence walkthrough** hazırlanır. Final UI footage Celalın ayrıca UI-ready SHA-sı gələndən sonra çəkilməlidir. `79a0ef740196cbaa0639579386c6c591d2bfd8ca` implementation freeze identity-dir; UI-ready acceptance demək deyil.
 
 **C4 update:** UI-ready code `be1ea0acce271df994b516f6fa297118e981a3dd`, delivery `68501897746bf674d582fd810cd9d7e2cfb943e6` [repo runbook](../FINAL_DEMO_RUNBOOK.md)-da READY-dir. Əvvəlki UI-ready waiting qeydləri historical-dır; Ali local C4 launch/bundle pre-flight, final UI footage və voice-over hələ pending-dir. Mövcud silent motion draft dəyişdirilməyib və bu repository cleanup task-da render edilməyib.
