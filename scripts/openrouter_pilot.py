@@ -30,7 +30,7 @@ def main():
     args = ap.parse_args()
     from gameqa.config import load_config, config_hash
     from gameqa.pipeline import analyze, build_engines
-    from gameqa.vision.judge import Judge, build_judge
+    from gameqa.vision.judge import Judge
     from gameqa.storage import load_run, run_dir_for, export_report
 
     key = os.environ.get('OPENROUTER_API_KEY', '')
@@ -166,7 +166,7 @@ def main():
         else:
             todo=[sid for sid in ids if sid not in done]
         extractor, _ = build_engines(cfg) if arm=='C' else (None,None)
-        ctx={'cfg':cfg,'analyze':analyze,'extractor':extractor,'build_judge':build_judge,'b_input':'aligned'}
+        ctx={'cfg':cfg,'analyze':analyze,'extractor':extractor,'build_judge':Judge,'b_input':'aligned'}
         save(OUT/arm/'identity.json',{'code_sha':ali.git_commit(),'cfg':cfg,'config_hash':cfgid,'arm':arm,
              'ali_tooling_commit':'cac62c7693abdf74b8b9e2b6455c82f148ee0493',
              'ali_tooling_sha256':hashlib.sha256(ali_path.read_bytes()).hexdigest(),
