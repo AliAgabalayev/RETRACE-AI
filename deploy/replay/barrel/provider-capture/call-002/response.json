@@ -1,0 +1,54 @@
+{
+  "id": "gen-1791549444-kvYaAUHtiBMHigDXo927",
+  "object": "chat.completion",
+  "created": 1791549444,
+  "model": "google/gemini-3.5-flash",
+  "provider": "Google",
+  "system_fingerprint": null,
+  "service_tier": "provisioned",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "STOP",
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"verdict\": \"forbidden\",\n  \"rule_ids\": [\n    \"D1\"\n  ],\n  \"evidence\": \"The large wooden barrel has disappeared from the wooden stand, leaving only a couple of small wooden blocks.\"\n}",
+        "refusal": null,
+        "reasoning": "**Observing Structural Changes**\n\nI'm noting a significant alteration to the scene's geometry. A substantial wooden barrel is no longer present on its stand; only small blocks remain. This implies a critical element has been removed, a scenario not currently accounted for.\n\n",
+        "reasoning_details": [
+          {
+            "type": "reasoning.text",
+            "text": "**Observing Structural Changes**\n\nI'm noting a significant alteration to the scene's geometry. A substantial wooden barrel is no longer present on its stand; only small blocks remain. This implies a critical element has been removed, a scenario not currently accounted for.\n\n",
+            "format": "google-gemini-v1",
+            "index": 0
+          }
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 573,
+    "completion_tokens": 164,
+    "total_tokens": 737,
+    "cost": 0.0023355,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0023355,
+      "upstream_inference_prompt_cost": 0.0008595,
+      "upstream_inference_completions_cost": 0.001476
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 109,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

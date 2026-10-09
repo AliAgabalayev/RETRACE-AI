@@ -142,3 +142,18 @@ def test_frozen_demo_uses_inventory_rules_and_blocks_changed_inputs(app, monkeyp
     assert any("hash does not match" in e.value for e in app.error)
     assert next(b for b in app.button if b.label == "Analyze").disabled
     assert app.calls["n"] == 0
+
+
+def test_missing_live_key_blocks_analyze_but_allows_saved_replay(app, monkeypatch):
+    _analyze_fixture(app)
+    calls = app.calls["n"]
+    monkeypatch.setenv("GAMEQA_CONFIG", str(Path(__file__).resolve().parents[2] / "configs/openrouter_gemini_pilot.yaml"))
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    app.run()
+    assert not app.exception
+    assert next(b for b in app.button if b.label == "Analyze").disabled
+    assert any("Live analysis requires OPENROUTER_API_KEY" in w.value for w in app.warning)
+    next(b for b in app.sidebar.button if b.label == "Load saved run").click().run()
+    assert not app.exception
+    assert any(e.value == "Saved run replay — no new inference" for e in app.info)
+    assert app.calls["n"] == calls

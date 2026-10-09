@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import re
 import tempfile
 import zipfile
@@ -21,7 +22,7 @@ import streamlit as st
 from PIL import Image
 
 from gameqa import pipeline
-from gameqa.config import REPO_ROOT, config_hash, load_config
+from gameqa.config import REPO_ROOT, config_hash, load_config, load_env_file
 from gameqa.contracts import AnalysisResult, FinalDecision, PairInput
 from gameqa.report import draw_boxes
 from gameqa.rules import RulesError, dump_rules, load_rules, rules_from_dicts
@@ -263,6 +264,7 @@ def main() -> None:
                "NEEDS_REVIEW: uncertain or incomplete assessment. "
                "Development diagnostic; uncertain cases go to human review.")
     cfg_default = load_config()
+    load_env_file()
     state = st.session_state
     state.setdefault("runs_by_hash", {})
 
@@ -348,6 +350,12 @@ def main() -> None:
         st.error(rules_err)
 
     ready = ref_bytes is not None and cand_bytes is not None and rules is not None
+    if mock is None and cfg_default["vlm"]["provider"] == "openai":
+        key_env = cfg_default["vlm"].get("api_key_env", "OPENAI_API_KEY")
+        credential = os.environ.get(key_env, "")
+        if not credential or credential.startswith("mock-"):
+            st.warning(f"Live analysis requires {key_env} in host secrets. Saved run replay remains available.")
+            ready = False
     if ref_bytes and cand_bytes:
         s1, s2 = st.columns(2)
         s1.image(ref_bytes, caption="Reference")
