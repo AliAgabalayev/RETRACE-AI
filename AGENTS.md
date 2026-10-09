@@ -36,4 +36,4 @@ The brief lists a **Data Engineer** (metadata preparation, media selection, mani
 - No training, fine-tuning, new paid providers, or new hardware.
 - Box format is `[x1, y1, x2, y2]` in original reference pixel coordinates, right/bottom exclusive.
 - No background processes in commands (never append `&`).
-- Git: local only; all git operations go through `git-workflow-master`. See `CLAUDE.md`.
+- Git: 2-person team; one feature per branch, merged into `master` only via a reviewed PR; all git operations go through `git-workflow-master`. Full rules in `CLAUDE.md` → "Git rules".
