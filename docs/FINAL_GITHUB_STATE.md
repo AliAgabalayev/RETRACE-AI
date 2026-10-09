@@ -1,6 +1,8 @@
 # Final GitHub consolidation — C5
 
-9 oktyabr 2026. Incoming baseline **feat/hackathon-demo-integration @68501897746bf674d582fd810cd9d7e2cfb943e6**. Frozen config **eaa371255716** dəyişmir. Bu sənəd merge üçün snapshot-dır; exact final default SHA final PR `mergeCommit` və final delivery ilə müəyyən edilir (commit öz gələcək merge SHA-sını daxil edə bilməz).
+**READY — repository deployment preparation; public hosting hələ owner tərəfindən edilməlidir.** 9 oktyabr 2026. Incoming baseline **feat/hackathon-demo-integration @68501897746bf674d582fd810cd9d7e2cfb943e6**. Frozen config **eaa371255716** dəyişmir.
+
+Final implementation PR **#4 MERGED**, 2026-10-09 **14:14:07 UTC /18:14:07 Bakı**. Verified default **master @19b348dc11eceedff80ee6f0ab47f1f81634928b**. Implementation head **487f2028461b47013138be124ebf700b86a1c9f1**; exact-head merge guard və normal merge commit istifadə edildi. Incoming integration baseline default-un ancestor-udur; feature working tree clean. Bu post-merge record documentation-only follow-up ilə çatdırılır; onun gələcək merge SHA-sı final delivery/GitHub mergeCommit-dədir.
 
 ## Verified starting state
 
@@ -19,7 +21,7 @@ C5: pinned headless runtime, Python 3.12, non-root Dockerfile/ignore, Streamlit 
 
 ## Delivery gate
 
-Final integration PR normal merge üçün yaradılır; latest checks pass olmadan merge/force-push/branch deletion edilmir. Actual final SHA/PR state/checks final delivery-dədir. Incomplete check passing deyil. Public deployment owner addımıdır, `DEPLOYMENT.md` checklist təqdim edir.
+Final integration PR latest checks success olduqdan sonra normal merge edildi. Force-push, branch deletion, unrelated merge, bypass, public deployment və billing dəyişməsi edilmədi. PR #1/#3 merged, #2 closed; relevant implementation üçün unmerged PR qalmadı. Documentation follow-up checks də merge-dən əvvəl success olmalıdır. Public deployment owner addımıdır, `DEPLOYMENT.md` checklist təqdim edir.
 
 C5 offline full suite **198 passed /6 deselected, 30.17 s**. İlk run-da src import path olmadan collection 1 error/6 deselected verdi; explicit PYTHONPATH ilə həmin suite keçdi, code tests üçün dəyişdirilmədi. Credential scan **262 tracked/new files**, secret hits 0, package-də Windows path 0. Git blob/manifest yoxlaması Windows CRLF normalization fərqini tapdı; replay package üçün `-text` attributes exact historical bytes saxlayır. Bu portability fix model davranışını dəyişmir.
 
@@ -35,5 +37,8 @@ C4 prior: **27 passed**, browser replay/rules/FAIL/crops/ZIP/guard, zero API cal
 - Yeni seed regression **1 passed, 3.11 s**: keyless real historical package export, FAIL və repeated startup-da ZIP preservation. Full suite mövcud Ali selection test-in tracked config hash prefixes yazdığını aşkar etdi. Original seçim dəyişmədi; generated output audit logs-a preserve edildi, yalnız verified test mutation geri qaytarıldı. Test indi temporary output-a yazır; frozen manifest/policy dəyişmir. CI həm whitespace, həm clean working tree tələb edir.
 - Local Docker daemon unavailable; local container build edilmədi. Linux GitHub CI real build/smoke bu gap-i bağladı. Hosted Render deployment/performance hələ unverified-dir.
 - Logs/screenshot local ignored `artifacts/c5-deployment-20261009/`; browser `keyless-replay.png`. Compact replay package Git-dədir. Current AI config hash **eaa371255716**. Final default SHA/ancestry/PR/CI post-merge verification final delivery-də faktiki nəticə kimi verilir.
+
+- Latest implementation CI [37942370335](https://github.com/AliAgabalayev/neuroscience-hackhaton/actions/runs/37942370335): checks, container və GitGuardian **SUCCESS**. Clean-checkout gate pass; Docker image measured **1,695,667,558 bytes (~1.58 GiB)**. Focused local final follow-up **10 passed, 12.07 s**. İlk failed runs historical olaraq görünür; latest success onları gizlətmir.
+- C5 implementation commits: **451b23c6bd9811f48a7e5ed0457c68a0f1a7438a**, **3d2d681cfbfd59bdeffcfced6b539c43c1eb8bdb**, **a6a8c8af763915dde89c5108da79322591b45808**, **487f2028461b47013138be124ebf700b86a1c9f1**. Final docs follow-up ayrıca commit-dir. No duplicate Ali import. Frozen source/config diff empty.
 
 Known limits: 12-pair development diagnostic, both arms 41.7% coverage, hybrid 1/5 false-PASS, missing pedestal open. Historical 80 calls/$0.2871945. C5 paid inference **0**. Hosted measurements/access control/persistent storage manualdır.

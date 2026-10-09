@@ -19,7 +19,7 @@ docker run --rm -p 8501:8501 -e OPENROUTER_API_KEY gameqa-demo
 
 `.env.example` placeholder-only-dir. Docker context `.env`, secrets.toml, Git, local caches/weights/history-ni istisna edir. Non-root `gameqa` user, writable `/app/artifacts` və `/app/references`. Default storage ephemeral-dir. History retention üçün persistent mount/backup owner tərəfindən qurulmalıdır. Boş mount-da barrel seed bərpa edilir; mövcud run overwrite edilmir. Multiple replicas/shared approvals yoxlanılmayıb.
 
-Build public DINO source **7764ea0f912e53c92e82eb78a2a1631e92725fc8** və `dinov2_vits14_pretrain.pth` pre-cache edir. Weight SHA256 **b938bf1bc15cd2ec0feacfe3a1bb553fe8ea9ca46a7e1d8d00217f29aef60cd9**, **88,283,115 bytes**. Source-un 156 runtime Python faylı əvvəlki local frozen cache ilə Git blob hash üzrə eynidir. Weights Git-ə daxil edilmir. CPU wheels ilə image yüzlərlə MB ola bilər; final ölçü build-də ölçülməlidir. Replay startup DINO/VLM yükləmir; model live Analyze və CI load check-də yüklənir. Hosted CPU latency/concurrency C5-də ölçülməyib.
+Build public DINO source **7764ea0f912e53c92e82eb78a2a1631e92725fc8** və `dinov2_vits14_pretrain.pth` pre-cache edir. Weight SHA256 **b938bf1bc15cd2ec0feacfe3a1bb553fe8ea9ca46a7e1d8d00217f29aef60cd9**, **88,283,115 bytes**. Source-un 156 runtime Python faylı əvvəlki local frozen cache ilə Git blob hash üzrə eynidir. Weights Git-ə daxil edilmir. Linux CI Docker image measured **1,695,667,558 bytes (~1.58 GiB)**. Replay startup DINO/VLM yükləmir; model live Analyze və CI load check-də yüklənir. Hosted CPU latency/concurrency C5-də ölçülməyib.
 
 ## Portable replay
 
