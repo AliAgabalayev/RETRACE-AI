@@ -1,0 +1,9 @@
+{
+  "attempts": 80,
+  "reported_cost_usd": 0.2871945,
+  "unknown_cost_calls": 0,
+  "reserve_per_call_usd": 2.162688,
+  "stopped": false,
+  "max_attempts": 120,
+  "max_spend_usd": 5
+}

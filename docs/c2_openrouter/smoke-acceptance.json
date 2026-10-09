@@ -1,0 +1,7 @@
+{
+  "accepted": true,
+  "human_review": "missing-barrel observation agrees with inspected original C1 barrel images; actual output reviewed",
+  "zip_verified": true,
+  "source": "current OpenRouter result, not direct-Gemini reference",
+  "reuse_in_C": true
+}

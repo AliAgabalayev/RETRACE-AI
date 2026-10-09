@@ -1,0 +1,334 @@
+{
+  "arms": {
+    "C": {
+      "frozen": {
+        "completed": 12,
+        "counts": {
+          "FAIL": 4,
+          "NEEDS_REVIEW": 7,
+          "PASS": 1
+        },
+        "decision_coverage": 0.4166666666666667,
+        "bug_count": 5,
+        "bug_FAIL": 3,
+        "bug_REVIEW": 1,
+        "bug_false_PASS": 1,
+        "clean_count": 7,
+        "clean_PASS": 0,
+        "clean_REVIEW": 6,
+        "clean_false_FAIL": 1,
+        "confusion": {
+          "D1": {
+            "PASS": 1,
+            "FAIL": 3,
+            "NEEDS_REVIEW": 1
+          },
+          "A1": {
+            "PASS": 0,
+            "FAIL": 1,
+            "NEEDS_REVIEW": 6
+          }
+        }
+      },
+      "subtitle_clean_sensitivity": {
+        "completed": 12,
+        "counts": {
+          "FAIL": 4,
+          "NEEDS_REVIEW": 7,
+          "PASS": 1
+        },
+        "decision_coverage": 0.4166666666666667,
+        "bug_count": 4,
+        "bug_FAIL": 3,
+        "bug_REVIEW": 0,
+        "bug_false_PASS": 1,
+        "clean_count": 8,
+        "clean_PASS": 0,
+        "clean_REVIEW": 7,
+        "clean_false_FAIL": 1,
+        "confusion": {
+          "D1": {
+            "PASS": 1,
+            "FAIL": 3,
+            "NEEDS_REVIEW": 0
+          },
+          "A1": {
+            "PASS": 0,
+            "FAIL": 1,
+            "NEEDS_REVIEW": 7
+          }
+        }
+      },
+      "missing_ids": [],
+      "per_source": {
+        "UnityCapturesDataset": {
+          "completed": 3,
+          "counts": {
+            "FAIL": 2,
+            "PASS": 1
+          },
+          "decision_coverage": 1.0,
+          "bug_count": 3,
+          "bug_FAIL": 2,
+          "bug_REVIEW": 0,
+          "bug_false_PASS": 1,
+          "clean_count": 0,
+          "clean_PASS": 0,
+          "clean_REVIEW": 0,
+          "clean_false_FAIL": 0,
+          "confusion": {
+            "D1": {
+              "PASS": 1,
+              "FAIL": 2,
+              "NEEDS_REVIEW": 0
+            },
+            "A1": {
+              "PASS": 0,
+              "FAIL": 0,
+              "NEEDS_REVIEW": 0
+            }
+          }
+        },
+        "Youtube-Cutscene": {
+          "completed": 9,
+          "counts": {
+            "NEEDS_REVIEW": 7,
+            "FAIL": 2
+          },
+          "decision_coverage": 0.2222222222222222,
+          "bug_count": 2,
+          "bug_FAIL": 1,
+          "bug_REVIEW": 1,
+          "bug_false_PASS": 0,
+          "clean_count": 7,
+          "clean_PASS": 0,
+          "clean_REVIEW": 6,
+          "clean_false_FAIL": 1,
+          "confusion": {
+            "D1": {
+              "PASS": 0,
+              "FAIL": 1,
+              "NEEDS_REVIEW": 1
+            },
+            "A1": {
+              "PASS": 0,
+              "FAIL": 1,
+              "NEEDS_REVIEW": 6
+            }
+          }
+        }
+      },
+      "review_causes_nonexclusive": {
+        "unreliable_alignment": [
+          "vr_ef9b073a"
+        ],
+        "global_change_collapse": [
+          "vr_a981c1d3",
+          "vr_330651ed",
+          "vr_4255ae09",
+          "vr_09a066d3",
+          "vr_59af7164",
+          "vr_41bab231",
+          "vr_ef9b073a"
+        ],
+        "actual_region_cap": [],
+        "uncertain_region_judgment": [
+          "vr_330651ed",
+          "vr_4255ae09"
+        ],
+        "scene_uncertainty_or_invalid": [
+          "vr_330651ed",
+          "vr_ef9b073a"
+        ],
+        "scene_extra_changes": [
+          "vr_a981c1d3"
+        ],
+        "provider_error": []
+      },
+      "error_rows": [
+        "vr_4255ae09",
+        "vr_d07179d5",
+        "vr_fec26436",
+        "vr_ef9b073a",
+        "vr_43773eb8"
+      ],
+      "median_seconds": 39.99005,
+      "attempts": 56,
+      "reported_cost_usd": 0.1934625,
+      "cache_hits": 0,
+      "stages": 56,
+      "smoke_reused_ids": [
+        "vr_4b921c5d"
+      ]
+    },
+    "B": {
+      "frozen": {
+        "completed": 12,
+        "counts": {
+          "NEEDS_REVIEW": 7,
+          "FAIL": 4,
+          "PASS": 1
+        },
+        "decision_coverage": 0.4166666666666667,
+        "bug_count": 5,
+        "bug_FAIL": 2,
+        "bug_REVIEW": 2,
+        "bug_false_PASS": 1,
+        "clean_count": 7,
+        "clean_PASS": 0,
+        "clean_REVIEW": 5,
+        "clean_false_FAIL": 2,
+        "confusion": {
+          "D1": {
+            "PASS": 1,
+            "FAIL": 2,
+            "NEEDS_REVIEW": 2
+          },
+          "A1": {
+            "PASS": 0,
+            "FAIL": 2,
+            "NEEDS_REVIEW": 5
+          }
+        }
+      },
+      "subtitle_clean_sensitivity": {
+        "completed": 12,
+        "counts": {
+          "NEEDS_REVIEW": 7,
+          "FAIL": 4,
+          "PASS": 1
+        },
+        "decision_coverage": 0.4166666666666667,
+        "bug_count": 4,
+        "bug_FAIL": 2,
+        "bug_REVIEW": 1,
+        "bug_false_PASS": 1,
+        "clean_count": 8,
+        "clean_PASS": 0,
+        "clean_REVIEW": 6,
+        "clean_false_FAIL": 2,
+        "confusion": {
+          "D1": {
+            "PASS": 1,
+            "FAIL": 2,
+            "NEEDS_REVIEW": 1
+          },
+          "A1": {
+            "PASS": 0,
+            "FAIL": 2,
+            "NEEDS_REVIEW": 6
+          }
+        }
+      },
+      "missing_ids": [],
+      "per_source": {
+        "UnityCapturesDataset": {
+          "completed": 3,
+          "counts": {
+            "FAIL": 1,
+            "NEEDS_REVIEW": 1,
+            "PASS": 1
+          },
+          "decision_coverage": 0.6666666666666666,
+          "bug_count": 3,
+          "bug_FAIL": 1,
+          "bug_REVIEW": 1,
+          "bug_false_PASS": 1,
+          "clean_count": 0,
+          "clean_PASS": 0,
+          "clean_REVIEW": 0,
+          "clean_false_FAIL": 0,
+          "confusion": {
+            "D1": {
+              "PASS": 1,
+              "FAIL": 1,
+              "NEEDS_REVIEW": 1
+            },
+            "A1": {
+              "PASS": 0,
+              "FAIL": 0,
+              "NEEDS_REVIEW": 0
+            }
+          }
+        },
+        "Youtube-Cutscene": {
+          "completed": 9,
+          "counts": {
+            "NEEDS_REVIEW": 6,
+            "FAIL": 3
+          },
+          "decision_coverage": 0.3333333333333333,
+          "bug_count": 2,
+          "bug_FAIL": 1,
+          "bug_REVIEW": 1,
+          "bug_false_PASS": 0,
+          "clean_count": 7,
+          "clean_PASS": 0,
+          "clean_REVIEW": 5,
+          "clean_false_FAIL": 2,
+          "confusion": {
+            "D1": {
+              "PASS": 0,
+              "FAIL": 1,
+              "NEEDS_REVIEW": 1
+            },
+            "A1": {
+              "PASS": 0,
+              "FAIL": 2,
+              "NEEDS_REVIEW": 5
+            }
+          }
+        }
+      },
+      "review_causes_nonexclusive": {
+        "unreliable_alignment": [],
+        "global_change_collapse": [],
+        "actual_region_cap": [],
+        "uncertain_region_judgment": [],
+        "scene_uncertainty_or_invalid": [
+          "vr_330651ed",
+          "vr_4255ae09",
+          "vr_d07179d5"
+        ],
+        "scene_extra_changes": [
+          "vr_a981c1d3",
+          "vr_330651ed",
+          "vr_4255ae09",
+          "vr_09a066d3",
+          "vr_59af7164",
+          "vr_41bab231",
+          "vr_d07179d5"
+        ],
+        "provider_error": []
+      },
+      "error_rows": [],
+      "median_seconds": 19.7196,
+      "attempts": 24,
+      "reported_cost_usd": 0.093732,
+      "cache_hits": 0,
+      "stages": 24,
+      "smoke_reused_ids": []
+    }
+  },
+  "usage": {
+    "attempts": 80,
+    "reported_cost_usd": 0.2871945,
+    "unknown_cost_calls": [],
+    "retry_attempts": 0,
+    "prompt_tokens": 75681,
+    "completion_tokens": 19297,
+    "reasoning_tokens": 11781,
+    "upstream_cached_prompt_tokens": 0,
+    "providers": {
+      "Google": 46,
+      "Google AI Studio": 34
+    },
+    "returned_models": {
+      "google/gemini-3.5-flash": 80
+    },
+    "http_status": {
+      "200": 80
+    }
+  },
+  "warning": "Development diagnostic; incomplete rows/missing IDs explicit; observation correctness requires human review."
+}
