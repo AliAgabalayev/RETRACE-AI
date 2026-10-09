@@ -14,7 +14,8 @@ models
 data/raw
 data/work
 data/cache*
-data
+/data
+**/*.egg-info
 docs
 tests
 .github
