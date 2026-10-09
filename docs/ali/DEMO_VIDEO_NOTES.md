@@ -1,99 +1,102 @@
-# Demo video notes (target 105 s, hard limits 90-120 s)
+# Demo video notes — target 113 s, hard limit 90–120 s
 
-Status: shot list only. Nothing here has been recorded. All numbers come from `docs/ali/A1_diagnostic.md`, `docs/ali/a1_evidence/` and `docs/ali/A3_review.md` (cited per shot). A3 reproduced A1 exactly (36/36 rows, 80 fresh calls, 0 cache hits), so it is a determinism / regression check, not a second sample: say "replicated", never "two experiments". Build under demo = the frozen Qwen build (decision D17 in `docs/DECISIONS.md`): local Ollama `qwen2.5vl:3b`, prompt v9, `configs/ali_a1_qwen.yaml`.
+Status: **shot list hazırlanıb; UI video çəkildiyi və ya final video file yaradıldığı iddia edilmir**. Recording owner **Ali**, final slide assembly owner **Celal**. Motion evidence draft ayrıca artifact-dir; onun mövcudluğu UI recording və final acceptance tamamlandığını göstərmir. Video/slides deadline 18:45, daxili submission **19:30**, rəsmi deadline 20:00 Asia/Baku. **17:30-dan sonra feature, model experiment və threshold tuning yoxdur.**
 
-## Ground rules for the recording
-- Do NOT say FAIL for vr_4b921c5d. Today's build returns NEEDS REVIEW there (`predictions_C.jsonl`, reason "Needs review: R1: uncertain.").
-- Do NOT say "fine-tuned", "production-ready" or "reduces QA workload". Do NOT claim DINOv2 is better than a plain VLM.
-- Whenever false-PASS is spoken or shown, show coverage next to it: C 0/5 at 0/12, A 5/5 at 12/12, B 5/5 at 8/12 (`A3_review.md` sec 3).
-- vr_330651ed: never say the rule forbids text changes (its rules.yaml has no text rule, QA-D1). Say it is an ambiguous label.
-- Localization: never say "my own independent label" (QA-D2). 4 of 5 bug labels were Claude-proposed corrections confirmed by Ali after model outputs existed.
-- Every segment taken from a saved run, a cached result or a pre-made file carries an on-screen label: `REPLAY (saved run <run_id>)` or `PRERECORDED`. Live segments carry `LIVE`.
-- Live wall time is NOT read from the video. Measure separately (section "Live timing" below). Cuts in the video must be visible (cut marker or a "time cut" caption). Measured per-pair wall time in A1 (CPU Ollama): B about 38-48 s, C about 69-160 s (`A1_diagnostic.md`), so a live C run does not fit in 120 s without a visible cut.
-- Mocks are never shown as real inference. Do not select the "MOCK" engine.
+Final runtime **C2 OpenRouter / google/gemini-3.5-flash**, reasoning low, prompt v9. Final code delivery SHA **79a0ef740196cbaa0639579386c6c591d2bfd8ca**, canonical C config hash **eaa371255716**. C2 raw rows exact fetched checkout-dan QA tərəfindən **independently recompute edilib**. Actual ignored C2 ZIP bytes və Ali host-da browser replay/export hələ verified deyil. **UI recording Celalın ayrıca UI-ready SHA-sını gözləyir**; Qwen vision branch-dəki UI istifadə edilmir. [Pitch evidence](PITCH_EVIDENCE.md).
 
-## Prep (before recording; not part of the video)
-1. Ollama running with `qwen2.5vl:3b` pulled (runtime notes: `docs/ali/runtime_inventory.md`, RAM was a blocker for larger Qwen).
-2. Inputs for the three pairs live in `data/work/<sample_id>/reference.png` and `candidate.png` (paths from `data/manifests/inference_manifest.json`; these pairs are `split: dev`, so they do NOT appear in the UI "Demo pair" list, which only shows `split == "demo"` plus synthetic fixtures; use "Upload two images").
-3. Rules: the UI needs the pair's A1 (allow) and D1 (deny) text. The per-run `rules.yaml` is saved inside each existing run dir, e.g. `artifacts/20261009T112802Z-c4530d/rules.yaml`; upload or paste that. (How to paste rules in the UI form: not re-verified by me; check the sidebar when preparing.)
-4. Saved A1 runs (arm C, fresh cache, all calls were live when created, 2026-10-09):
+## Recording pre-flight — tamamlanma iddiası deyil
 
-| Pair | run_id (saved dir under `artifacts/`) | Final decision |
-|---|---|---|
-| vr_4b921c5d | `20261009T112802Z-c4530d` | NEEDS_REVIEW |
-| vr_330651ed | `20261009T112407Z-355ff0` | NEEDS_REVIEW |
-| vr_09a066d3 | `20261009T113543Z-8a257e` | NEEDS_REVIEW |
+- [ ] Celalın **UI-ready SHA** confirmation-u alınıb; app həmin checkout-dan açılır. Final code freeze SHA ilə UI-ready SHA ayrıca qeyd edilir. Köhnə :8501 owner instance təxminən 11:30-da başlayıb: recording-dən əvvəl reconciled integration kodundan restart edilməlidir.
+- [ ] Canonical runtime açıq seçilib: **GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml**. Sidebar/version identity config hash eaa371255716 ilə uyğun gəlir. Credentials ekranda görünmür.
+- [ ] C2 barrel saved run **20261009T123704Z-8e4e19**, pedestal **20261009T124621Z-0b0c2b**, outfit **20261009T123947Z-584a66** həmin UI host-da mövcuddur və açılır. Raw rows-un mövcudluğu ignored artifact binaries-in Ali host-da mövcudluğunu sübut etmir.
+- [ ] UI-exported ZIP-də report.md, analysis.json, **evidence.json**, rules.yaml, images və crops açılır; decision/hash identity yoxlanır. C2 source ZIPs ignored-dir; Ali host-da local ZIP/download verification pending-dir.
+- [ ] Saved-run Rules editor page-in current rules-ını göstərə bilər. Shot-da **run-un stored rules.yaml / report rules** göstərilir; current editor avtomatik loaded run rules kimi təqdim edilmir.
+- [ ] Bütün saved/cached/prerecorded segment-lərin caption-u hazırdır; UI replay-i özü label etmirsə overlay əlavə edilir.
+- [ ] .env, API key və terminal environment recording-də görünmür; mock engine seçilmir.
+- [ ] Final video file metadata ilə **90–120 s** təsdiqlənir; cut markers, caveat-lər və submission package yoxlanır.
 
-   Source: `docs/ali/a1_evidence/predictions_C.jsonl`. Loading one of these in the UI is a REPLAY of a stored result, not a new inference; label it so.
+App launch (repo root-dan; bu sənəd özü launch etmiş sayılmır):
 
-## Shot list
+    GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml .venv/bin/streamlit run app.py
 
-| Time | Shot | Say (short) | Segment type |
+Bu command yalnız config-i ehtiva edən **UI-ready integration checkout**-da istifadə olunur. Saved-run replay üçün Analyze basmaq lazım deyil; recording üçün yeni model job və batch rerun yoxdur.
+
+## 113 saniyəlik shot list
+
+Caption-lar segment ərzində oxunaqlı qalır. C2 metrics **raw records-dan verified** kimi göstərilə bilər; actual UI replay/export verification isə ayrıca UI-ready gate-dir.
+
+| Time | Ekran / artifact | Azerbaijani voice-over | Segment label |
 |---|---|---|---|
-| 0:00-0:12 | Title card, then two screenshots side by side (any pair) | "After every game build, QA compares screenshots by eye. Some differences are allowed (lighting, clothing), some are bugs (a missing object). We test whether a rule-aware pipeline can help." | PRERECORDED slide |
-| 0:12-0:40 | vr_4b921c5d: reference vs candidate, then the region box and crop | "Real bug from the VideoGameQA benchmark: one barrel is missing. DINOv2 proposes region R1 [2484,1400,3049,1966]; the label, corrected after an abs-diff check and confirmed by me, is [2540,1500,3000,2050]; overlap IoU 0.60. Four of the five bug labels were Claude-proposed corrections that I confirmed after model outputs existed, so this agreement is not fully independent." Then show the VLM text and the decision. "The small local VLM described it as a texture and lighting change, so the region verdict is uncertain. Note the whole-scene audit said 'allowed' here, which is wrong. The region guard caught that contradiction, and the final result is NEEDS REVIEW, not FAIL. It abstains rather than guess." (On screen: the bug ZIP `report.md` line 'Whole-scene audit: allowed', QA-D5.) | REPLAY of run `20261009T112802Z-c4530d` |
-| 0:40-1:00 | vr_09a066d3 (outfit change, allowed A1) | "Allowed change: outfit changed. Full-frame VLM (arm B) says PASS. The hybrid (arm C) says NEEDS REVIEW: the whole frame changed, so proposals collapsed into one full-frame region and the policy refuses to auto-decide. So the hybrid gives no automatic PASS here." | REPLAY (C run `20261009T113543Z-8a257e`); B result shown from `predictions_B.jsonl` (no saved UI run for B), label it |
-| 1:00-1:12 | vr_330651ed (subtitle language EN to PT) | "Ambiguous label: only the subtitle language changed. This pair's own rules do not clearly cover a text change, and my label uncertainty is high. The system returns NEEDS REVIEW and a human decides." (Do NOT say D1 forbids text; the rules.yaml in `ambiguous_vr_330651ed_C_20261009T112407Z-355ff0.zip` has no text rule, QA-D1.) | REPLAY (`20261009T112407Z-355ff0`) |
-| 1:12-1:28 | Report ZIP: unzip, show `report.md`, `evidence.json`, `crops/`, `images/` | "Each run exports a ZIP: inputs with SHA-256, rules, region crops, the VLM's own words marked as unverified, scope (including 'not assessed: global change collapsed into one full-frame region'), final decision and reason, model and prompt identity." | PRERECORDED (made by `scripts/ali_export_evidence.py`, see below) |
-| 1:28-1:45 | A1 table (slide) | "On 12 development pairs, 5 bug and 7 clean by my labels: pixel diff passes all 5 bugs at 12/12 coverage, full-frame VLM passes all 5 bugs at 8/12 coverage, hybrid passes 0 of 5 bugs but gives REVIEW on all 12, coverage 0/12. A fresh-cache rerun reproduced these exactly; that is a replication, not a second sample. Counting the ambiguous pair as clean gives 4/4, 4/4, 0/4, same conclusion. Development diagnostic, not held-out." | PRERECORDED slide from `A1_diagnostic.md` and `A3_review.md` sec 2-4 |
-| (optional, 5 s, fold into the row above) | Observation-accuracy line on the same slide | "I marked the models' descriptions: with region crops 9 of 12 are right or partly right, full-frame 4 of 12; strict-correct is 1 of 12 for both. One rater, n = 12, possible anchoring. It did not become correct decisions." | PRERECORDED, source `a1_evidence/obs_review.csv`, `A1_diagnostic.md` |
-| 1:45-1:55 | Qwen vs Gemini slide with the two crop images | "Next step: same crop and prompt sent to a stronger VLM. It names the missing barrel and the missing booth roof, 2 of 2. Two cases are a reproducer, not a measurement." | PRERECORDED slide from `stage1_qwen_vs_gemini.json` |
-| 1:55-2:00 | Closing | "Honest status: localization works on Unity bugs; perception is the bottleneck." | -- |
+| 0:00–0:10 | Reference/candidate və title | “Yeni game build-də QA screenshot-ları müqayisə edir. İşıq dəyişə bilər; scene object-in yoxa çıxması isə bug ola bilər. Qaydaları vizual sübutla yoxlayan prototype qurduq.” | **PRERECORDED — real benchmark inputs** |
+| 0:10–0:24 | Flow: screenshots + rules → proposals → observation → rule verdict → code decision | “Frozen DINOv2 və pixel diff region-ları seçir. VLM əvvəl rules olmadan görünüşü təsvir edir, sonra rules ilə hökm verir. Final PASS, FAIL və REVIEW-u deterministic code seçir.” | **PRERECORDED — pipeline slide** |
+| 0:24–0:48 | Barrel before/after, R1 crop, stored D1, C2 FAIL; Qwen REVIEW yanında | “Burada barrel itib. C2 Gemini R1-də və scene audit-də D1 violation tapıb: FAIL. Eyni pair-də local Qwen bunu lighting kimi təsvir edib, REVIEW verib. Ekranda saxlanmış real nəticələri replay edirik.” | **REPLAY — C2 20261009T123704Z-8e4e19**; Qwen **REPLAY — A1 20261009T112802Z-c4530d** |
+| 0:48–1:04 | [Pedestal zoom](a3_evidence/vr_c1f47c57_pedestal_zoom_ref_vs_cand.png), C2 PASS | “Əsas failure budur: statue-nin altındakı stone pedestal itib. Həm full-frame, həm hybrid yanlış PASS verib. Bu, allowed-change success deyil; bug-a verilmiş false-PASS-dir.” | **REPLAY — C2 20261009T124621Z-0b0c2b**; visual **PRERECORDED — real pedestal evidence** |
+| 1:04–1:16 | Outfit vr_09a066d3, C2 saved REVIEW | “Allowed outfit change-i model görür, amma global-change collapse REVIEW yaradır. Genuine clean PASS əldə olunmayıb. C2-də yeganə PASS də bug-dur.” | **REPLAY — C2 20261009T123947Z-584a66** |
+| 1:16–1:31 | Verified UI export/download, unzip: report, evidence.json, rules, crops | “Report ZIP input hashes, rules, crop-lar, scope, model identity və final reason saxlayır. VLM-in mətni unverified kimi göstərilir. Bu saved-run export-dur; yeni inference vaxtı deyil.” | **REPLAY — report from actual run_id; no new inference**; əvvəl çəkilibsə əlavə **PRERECORDED** |
+| 1:31–1:48 | Qwen baseline + C2 tables, false-PASS yanında coverage | “12 development pair-də Qwen hybrid 0/5 false-PASS ilə 0/12 coverage verir. Gemini 3/5 bug-a FAIL verir: false-PASS 1/5, coverage 5/12. B və C aggregate counts-u eynidir; hybrid advantage göstərilməyib.” | **PRERECORDED — dev12 comparison, raw counts verified** |
+| 1:48–1:53 | Closing + limitations | “Perception əsas bottleneck-dir. Fresh held-out pilot və ayrıca ablation növbəti addımlardır.” | **PRERECORDED — limitations** |
 
-If the total exceeds 120 s, cut the vr_330651ed shot first, then shorten the title.
+113 s plan real edit-in müddəti deyil: export olunan file duration ayrıca yoxlanır. 120 s aşılırsa outfit shot və title qısaldılır; **pedestal failure, false-PASS + coverage, replay labels və label provenance çıxarılmır**.
 
-## Reproduce each shot
+UI-ready və artifact transfer recording-ə çatmasa, UI shots əvəzinə **PRERECORDED — motion evidence draft, screenshots + saved raw results; UI recording pending** təqdim edilə bilər. Bu variant fresh UI Analyze/download claim-i vermir; submission capability öz actual statusu ilə göstərilir.
 
-### Shared: start the UI
-```
-cd /home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton
-.venv/bin/streamlit run app.py
-```
-(`.venv/bin/streamlit run app.py` is the project's launch command; I did not launch it while writing these notes, so it is unverified in this session.)
+## Comparison slide üçün exact rəqəmlər
 
-### Shot 2, 3, 4: replay a saved run
-Sidebar -> "Open a saved run" (selectbox, `app.py` ~line 230) -> pick the run_id from the table above -> "Load saved run". Overlay caption `REPLAY - saved run <run_id>`. The page shows what was stored at A1 time.
+Qwen A1/A3: Ollama qwen2.5vl:3b, prompt v9. A1 config hash **3a144cfcbb67**, A3 **642b6e26f39d**. [Raw score](a1_evidence/score_raw.md), [A3 review](A3_review.md).
 
-### Shot 2, 3, 4: fresh live run (only for the timing measurement or if replay is not wanted)
-UI: "Pair source" -> "Upload two images" -> upload `data/work/<id>/reference.png` and `candidate.png`; engine "Real (config)"; config must be `configs/ali_a1_qwen.yaml`. Whether the UI picks that config is NOT verified; the CLI form below is the exact one:
-```
-.venv/bin/python -m gameqa.cli analyze --config configs/ali_a1_qwen.yaml \
-  --reference data/work/vr_4b921c5d/reference.png \
-  --candidate data/work/vr_4b921c5d/candidate.png \
-  --rules artifacts/20261009T112802Z-c4530d/rules.yaml --sample-id vr_4b921c5d
-```
-(Subcommand name `analyze` and flags are from `src/gameqa/cli.py` argparse; the module invocation `-m gameqa.cli` is unverified. A repeat run on `data/cache_ali_a1` will hit the cache; it is then a REPLAY of cached model answers. Use a new `run.cache_dir` in a copy of the config for a truly fresh run.)
+| Qwen baseline | PASS / FAIL / REVIEW | Bug false-PASS | Coverage | Clean PASS |
+|---|---|---|---|---|
+| A pixel | 12 / 0 / 0 | 5/5 | 12/12 | 7/7 |
+| B full-frame VLM | 8 / 0 / 4 | 5/5 | 8/12 | 3/7 |
+| C hybrid | 0 / 0 / 12 | 0/5 | 0/12 | 0/7 |
 
-### Full A/B/C reproduction (all 12 pairs, source of the table)
-```
-.venv/bin/python scripts/ali_a1_run.py --config configs/ali_a1_qwen.yaml --ids dev12 --arms A,B,C
-.venv/bin/python scripts/ali_a1_score.py
-```
-Takes roughly 20-30 min of CPU Ollama time (sum of per-pair times above; estimate, not measured as one block).
+| C2 final runtime — raw counts independently verified | PASS / FAIL / REVIEW | Bug false-PASS | Coverage | Clean PASS / false-FAIL |
+|---|---|---|---|---|---|
+| B Gemini via OpenRouter | 1 / 4 / 7 | 1/5 | 5/12 (41.7%) | 0/7 / 2/7 |
+| C Gemini via OpenRouter | 1 / 4 / 7 | 1/5 | 5/12 (41.7%) | 0/7 / 1/7 |
 
-### Shot 5: ZIP with evidence.json
-The three demo ZIPs already exist in `artifacts/ali/demo_zips/` and were regenerated after the report-scope fix (QA-D6):
-- `allowed_vr_09a066d3_C_20261009T113543Z-8a257e.zip`
-- `ambiguous_vr_330651ed_C_20261009T112407Z-355ff0.zip`
-- `bug_vr_4b921c5d_C_20261009T112802Z-c4530d.zip`
+**Counts eynidir, pair-level results fərqlidir:** booth vr_d07179d5 C FAIL / B REVIEW; frozen-clean vr_ef9b073a C REVIEW / B FAIL. Buna görə “B və C bütün nəticələrdə eynidir” deyilmir. Frozen-clean vr_43773eb8 hər ikisində FAIL alır; visible subtitle absence ilə frozen A1 label arasında scope conflict var, frozen scoring-də false-FAIL saxlanılır.
 
-QA unzipped and checked them (report.md, analysis.json, evidence.json, rules.yaml, images/, crops/ present; evidence.json sha256 matches the files; decisions agree across files; `docs/ali/A5_acceptance.md`, "Demo ZIPs"). The two collapsed runs now state "NOT assessed: global change ... collapsed into one full-frame region" in `report.md` (my grep after regeneration). Cache status reads "unknown (replay possible)" by design. Before filming, still run `unzip -l` on the ZIP shown on screen. Source of these ZIPs: `scripts/ali_export_evidence.py` (bridge). Whether the normal UI/CLI export writes `evidence.json` is a separate question owned by Celal's hook and was not verified by me.
+Slide footer: **“dev12, n=12, 5 bug/7 clean; not held-out. Labels finalized after A1 began; 4/5 bug labels assistant-proposed, Ali-confirmed.”** C2 aggregate counts eynidir, amma **10/12 pair-level equality** var. C **3/5 bug FAIL**, B **2/5 bug FAIL**; həmin sayları “4 real bugs caught” kimi dəyişmək olmaz.
 
-### Shot 6: A1 table
-Static slide copied from `docs/ali/A1_diagnostic.md`. Raw rows: `docs/ali/a1_evidence/predictions_{A,B,C}.jsonl`, `score_raw.md`.
+C2 **80 fresh calls, 0 cache hits, 0 retries, HTTP 200 80/80** və **provider-reported cost $0.2871945** raw records-dan independently recompute edilib; invoice independently verified deyil. C cost **$0.1934625 / 56 calls**, B **$0.0937320 / 24 calls**. Exact final delivery checkout-da QA actual suite **194 passed, 6 skipped, 5.14 s** alıb. Historical C2 **186 passed, 6 deselected, 0 skipped** Celalın execution report-udur; current test count deyil. Tests model accuracy ölçmür. C ZIP checks Celal host-da edilib; local actual archive checks və full request/image capture audit ayrıca pending-dir. [Raw C](../c2_openrouter/C_predictions.jsonl), [raw B](../c2_openrouter/B_predictions.jsonl), [calls](../c2_openrouter/calls.jsonl), [independent QA recompute](C2_RECOMPUTED.json).
 
-### Shot 7: Qwen vs Gemini
-Show `docs/ali/a1_evidence/vr_4b921c5d_R1_vlm_input.png` and `vr_d07179d5_R1_vlm_input.png`, plus the quotes in `stage1_qwen_vs_gemini.json`. Gemini model used: `gemini-3.5-flash`, free tier, cache off, 1 call each (latencies 3.4 s and 2.6 s in the file). Re-running needs `GEMINI_API_KEY` in the environment (name only; never show it) and `configs/gemini.yaml`/`ali_runtime_probe_gemini.yaml`; free tier is 20 requests/day/model (D16), so do not rerun on camera.
+A3 **36/36 rows** A1 ilə eynidir; A3 **80 fresh calls**, 0 cache hits. “Determinism check, same 12 pairs” yazılır; “second sample” deyil. Observation line əlavə edilərsə: **B y+p 4/12, C 9/12; strict y 1/12 each; one rater, partial credit, possible anchoring**. Bu crop perception signal-ıdır, DINOv2 advantage claim-i deyil.
 
-## Live timing (measured separately, not from the video)
-1. Use a stopwatch or `time` around the CLI command above on a new empty cache dir, with no other load on Ollama.
-2. Record per pair: B (full-frame) and C (hybrid) wall time, machine, model. Report as measured values with n; A1 reference values are B about 38-48 s, C about 69-160 s (CPU).
-3. State in the video or slide: "recorded segments were shortened; live wall time was measured separately: <value, n>". Until measured: unknown.
+## Artifact identity və fallback
 
-## Claims that must NOT appear
-- "FAIL" for vr_4b921c5d, or any claim that the system caught the barrel.
-- "Hybrid beats full-frame" or "DINOv2 improves accuracy": the data show hybrid 0/5 bug false-PASS but 0/12 coverage; B and A pass all 5 bugs (5/5 at 8/12 and 12/12). No superiority claim.
-- Observation accuracy as a success: the 10/12 strict target is NOT met (1/12 y for B and C). Only the y+p numbers (B 4/12, C 9/12) may be quoted, with the one-rater / n = 12 / anchoring caveat.
-- "A3 confirms" as if it were new evidence: A3 = A1 exactly, a replication.
-- "Rule D1 forbids text changes" for vr_330651ed (QA-D1).
-- Any generalization claim: n = 12 dev pairs, mixed sources, not held-out.
+| Shot | Exact identity | Verification sərhədi |
+|---|---|---|
+| C2 barrel FAIL | 20261009T123704Z-8e4e19; R1 [2484,1400,3049,1966]; region və SCENE forbidden/D1 | Committed raw C row oxunub; UI replay/export **UI-ready gate pending** |
+| C2 pedestal false-PASS | 20261009T124621Z-0b0c2b; [pedestal zoom](a3_evidence/vr_c1f47c57_pedestal_zoom_ref_vs_cand.png) | Actual bug; C2 PASS real failure, allowed success deyil |
+| C2 outfit REVIEW | 20261009T123947Z-584a66 | Model blue→gray outfit change-i təsvir edir; coverage/global collapse səbəbi açıq göstərilir |
+| C1 barrel FAIL fallback | 20261009T115633Z-83936b; direct Google gemini-3.5-flash, v9, config hash 6cfbba559386 | **Celal host-da** fresh CLI + browser replay/download verified; Ali host-da archive pending; OpenRouter C2 kimi göstərilmir |
+| Qwen barrel REVIEW | 20261009T112802Z-c4530d; [barrel crop](a1_evidence/vr_4b921c5d_R1_vlm_input.png) | [Ali browser replay](UI_BROWSER_CHECK.md), [raw C rows](a1_evidence/predictions_C.jsonl) |
+| Qwen fallback ZIP | artifacts/ali/demo_zips/bug_vr_4b921c5d_C_20261009T112802Z-c4530d.zip | [QA](A5_acceptance.md) members/hashes yoxlayıb; **REVIEW ZIP**, Gemini FAIL kimi göstərilməməlidir |
+
+C2 runtime identity: exact model **google/gemini-3.5-flash**, OpenRouter; prompt v9; C hash **eaa371255716**, B diagnostic hash **2dfeb64cd673** (paths/namespace fərqi). Historical C2 execution code SHA **c917532ac3161a0886f626985c53307eb2d477d8**; C3 implementation freeze SHA **bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3**; final delivery **79a0ef740196cbaa0639579386c6c591d2bfd8ca**. Bunlar future UI-ready SHA ilə əvəzlənmir.
+
+UI: sidebar → **Open a saved run** → actual run_id → **Load saved run**. Overlay **REPLAY — saved run <run_id>**. Download fresh inference deyil. ZIP göstərilməzdən əvvəl actual archive members yoxlanır. Raw rows-da mövcud olan B-vr_<sample> IDs native UI AnalysisResult saved runs və ZIPs deyil; **B üçün native report ZIP claim-i yoxdur**.
+
+## Live timing — video müddətindən ayrı
+
+Recording üçün yeni batch və model experiment yoxdur. Əldə olan measurements istifadə olunur:
+
+| Runtime | Measured wall | Pipeline | Scope / source |
+|---|---|---|---|
+| C2 OpenRouter barrel | 31.520 s orchestration | 30.2167 s | Celal host, fresh C2 raw row, n=1; UI latency deyil |
+| C2 C / B median | 39.99005 s / 19.7196 s | Wall field-dən | Eyni 12 dev pairs, Celal host; saved raw wall fields, UI latency deyil |
+| Qwen barrel | 100.1 s CLI | 83.7 s | Ali host, fresh empty-cache CLI, resident CPU model; [UI_BROWSER_CHECK](UI_BROWSER_CHECK.md) |
+| C1 direct Gemini barrel | 25.4442 s CLI | 18.4305 s | **Celal host**, n=1, 4 live calls; [C1 gate](../CELAL_C1_DEMO_GATE.md) |
+
+Caption: **“Saved results replayed; wall time measured separately. C2 barrel 31.5 s on Celal host; Qwen barrel 100.1 s on Ali host; n=1 each, different hosts.”** Bu latency superiority measurement deyil. Video gözləmə hissəsini kəsirsə **TIME CUT** caption-u göstərilir; replay loading fresh inference timing kimi yazılmır. **LIVE** yalnız həqiqətən yeni inference gedən shot üçün istifadə edilir. Ayrı explicit job tələb olunarsa əvvəl artifacts/ali/vlm.lock götürülür; bir VLM job-dan artıq işləməz.
+
+## Wording guardrails
+
+- C2 barrel region **və scene forbidden**-dur. C1 fallback-da **scene uncertain** qalır, reliable R1/D1 FAIL yenə keçərlidir; bu iki run qarışdırılmır.
+- **Qwen barrel FAIL** demək olmaz; Qwen nəticəsi REVIEW-dur.
+- Pedestal PASS **false-PASS failure**-dır; C2-nin yeganə PASS-i genuine allowed change kimi göstərilmir.
+- B=C yalnız aggregate counts-a aiddir. “Hybrid beats full-frame”, “DINOv2 improves accuracy”, “fine-tuned”, “production-ready”, “reduces QA workload” və generalization claim-ləri yoxdur.
+- vr_330651ed subtitle case-i göstərilərsə **ambiguous** deyilir: cutscene rules-da text change rule-u yoxdur. Frozen labels dəyişdirilmir.
+- **4/5 bug label assistant-proposed, Ali-confirmed**-dir; localization box agreement tam independent deyil. Pedestal proposals **classical**-dır, DINOv2 detection deyil.
+- Hər replay/cached/prerecorded segment label daşıyır; mock real inference kimi göstərilmir. Native report cache status **unknown (replay possible)** qalır; freshness sübutu ayrıca provider records/calls.jsonl-dandır.

@@ -1,84 +1,100 @@
-# Pitch evidence (technical, concise)
+# Pitch evidence — Ali, 9 oktyabr 2026
 
-Scope: development diagnostic on 12 pairs ("dev12"), 5 bug and 7 clean by Ali's labels, local `qwen2.5vl:3b` (prompt v9, temperature 0). n = 12 is small, mixed-source and was used for the tuning decision D17; it is NOT held-out. The 60-case eval set is a historical regression set only, not a measurement of this build.
+Final demo runtime **C2: Gemini 3.5 Flash via OpenRouter**-dır; **Qwen A1/A3 baseline** kimi qalır. QA exact final integration SHA **79a0ef740196cbaa0639579386c6c591d2bfd8ca** checkout-undan C2 raw rows, frozen labels, per-call records və identities-i **local olaraq independently recompute** edib. Runtime **google/gemini-3.5-flash**, reasoning low, prompt v9; canonical C config hash **eaa371255716**. **Actual C2 ZIP binaries və browser replay/export Ali host-da hələ yoxlanmayıb**. Recording Celalın ayrıca **UI-ready SHA** confirmation-unu gözləyir.
 
-Raw sources (cited per claim as short keys):
-- A1 = `docs/ali/A1_diagnostic.md`; P = `docs/ali/a1_evidence/predictions_{A,B,C}.jsonl`; S = `docs/ali/a1_evidence/score_raw.md`; O = `docs/ali/a1_evidence/obs_review.csv`
-- A3 = `docs/ali/A3_review.md` (+ `artifacts/ali/a3/{A,B,C}/predictions.jsonl`); REG = `docs/ali/EXPERIMENT_REGISTRY.md`
-- LA = `docs/ali/labels_audit.md`; L = `docs/ali/labels_ali.csv`; QA = `docs/ali/A5_acceptance.md`; D17 = `docs/DECISIONS.md`
+Scope: **development diagnostic on 12 pairs**, Ali-nin frozen labels-ı ilə **5 bug / 7 clean**. dev12 mixed-source-dur və **held-out deyil**. Labels A1 başlayandan sonra **15:38:44**-də finalized olub; **5 bug label-dan 4-ü assistant-proposed correction, Ali-confirmed**-dir. Bu caveat metric slide-da görünməlidir. [Label audit](labels_audit.md), [A3 review](A3_review.md).
 
-## 0. A3 is a replication, not a second sample
-A fresh-cache rerun (A3, config `configs/ali_a3_qwen.yaml`, namespace `data/cache_ali_a3`) reproduced A1 on all 36 rows (12 per arm A/B/C): same decision, n_proposals, truncation cause, region boxes and region verdicts; stage-1 text identical in 24/24 VLM rows; 80 fresh VLM calls, 0 cache hits (A3 sec 1-2; REG). Only wall-clock fields differ. Read it as a determinism / regression check (n = 2 runs, same host, temperature 0), not as additional evidence: the effective sample stays 12 pairs. No number below changes between A1 and A3.
+## 1. Final runtime: C2 — raw rows independently verified
 
-## 1. What frozen DINOv2 contributes (operationally)
-- Role: localization only. A frozen DINOv2 ViT-S/14 (inference only, no training) compares patch features of reference and aligned candidate and, with a pixel-difference signal, proposes regions (`source: dinov2` or `union` in P).
-- Measured on two Unity bug pairs: vr_4b921c5d proposal R1 [2484,1400,3049,1966] vs label [2540,1500,3000,2050]; vr_d07179d5 R1 [1936,1094,2612,2053] vs [1950,1200,2520,2120] (A1 "Failure split"; P arm C). QA-computed IoU 0.60 and 0.71 (QA, "Recompute" table).
-- **Independence caveat (QA-D2):** 4 of the 5 bug labels (vr_4b921c5d, vr_d07179d5, vr_c1f47c57, vr_330651ed) were Claude-proposed or Claude-corrected from an abs-diff after balanced-six model outputs existed, and then confirmed by Ali (LA "Independence caveat"; L `label_provenance`). So the IoU 0.60 / 0.71 agreement is not fully independent evidence of localization quality. Say "box agreement with a label that was corrected after an abs-diff check", never "my own independent label".
-- Limit: on 9 of 12 pairs (all cutscenes) whole-frame lighting/clothing/pose changes made proposals collapse into one full-frame region ("global-change collapse"; S, A3 sec 3). There DINOv2 gives no useful localization.
+Coverage = (PASS + FAIL) / 12. False-PASS həmişə coverage ilə yanaşı göstərilir; REVIEW denominator-dan çıxarılmır.
 
-## 2. What the VLM does
-- For each proposed region it receives paired before/after crops with context and the rules and returns structured JSON (observed change, verdict, rule ids). A second scene-audit call looks at the whole frame. Its text is "VLM-reported, unverified" in the report.
-- Measured weakness: on the two Unity bugs Qwen 2.5-VL 3B misdescribed the change ("different texture and lighting effect on the barrels"; "booth replaced by a red mirror") (A1; P).
+| Arm | PASS / FAIL / REVIEW | Bug false-PASS | Coverage | Bug FAIL | Clean PASS | Clean false-FAIL |
+|---|---|---|---|---|---|---|
+| B full-frame, Gemini via OpenRouter | 1 / 4 / 7 | 1/5 | 5/12 (41.7%) | 2/5 | 0/7 | 2/7 |
+| C hybrid, Gemini via OpenRouter | 1 / 4 / 7 | 1/5 | 5/12 (41.7%) | 3/5 | 0/7 | 1/7 |
 
-### Observation accuracy (new signal, with its caveats)
-Ali marked the 24 stage-1 observations (12 per arm) y / p / n against the labels (O; A1 "Observation accuracy"):
+Mənbə: [B raw predictions](../c2_openrouter/B_predictions.jsonl), [C raw predictions](../c2_openrouter/C_predictions.jsonl), frozen [labels](labels_ali.csv), [local independent recompute](C2_RECOMPUTED.json). Hər arm 12 unique IDs-dir; missing/duplicate/extra yoxdur. C2 hybrid **3/5 bug-a FAIL** verib; barrel **vr_4b921c5d** və booth **vr_d07179d5** bu uğurlara daxildir. Missing stone pedestal **vr_c1f47c57** isə **B və C-də yanlış PASS** alıb. Hər arm-ın yeganə PASS-i həmin bug-dur: **clean PASS 0/7**. Genuine allowed-change PASS əldə olunmayıb.
 
-| Arm | y (strict) | p | n | y+p |
+Aggregate counts eyni olsa da **pair-level qərarlar 10/12-də eynidir**: booth **vr_d07179d5 C FAIL / B REVIEW**, frozen-clean **vr_ef9b073a C REVIEW / B FAIL**. C-də 4 FAIL-in 3-ü frozen bug, 1-i frozen clean-dir; B-də 2 bug və 2 clean FAIL-dir. Frozen-clean **vr_43773eb8** hər ikisində FAIL alır; actual subtitle absence ilə frozen A1 label arasında scope conflict var və scoring-də false-FAIL saxlanılır. [C2 report](../CELAL_C2_OPENROUTER_PILOT.md).
+
+| C2 runtime məlumatı | Dəyər | Sübut statusu |
+|---|---|---|
+| Model / provider / prompt | OpenRouter / google/gemini-3.5-flash / v9 / reasoning low | Raw identities və config ilə **verified** |
+| Inputs / rules / policy | Same dev12 və inventory rules; frozen policy | Raw IDs/identity/config independently checked. Exact inventory rules və labels-in prompts-a verilməməsi **Celal report + implementation provenance**-dir; full request/image capture audit pending |
+| Calls / retries | 80 fresh calls / 0 cache hits / 0 retries / HTTP 200 80/80 | Calls + stages **independently verified**; inference burada rerun edilməyib |
+| Total cost | $0.2871945 (slaydda təxminən $0.287) | Per-call **provider-reported usage cost** Decimal ilə recompute edilib; invoice independently verified deyil |
+| Call/cost split | C 56 / $0.1934625; B 24 / $0.0937320 | Per-call records-dan verified |
+| Pinned current tests | **194 passed, 6 skipped, 5.14 s** | QA exact delivery checkout-da actual .venv pytest execution |
+| Historical C2 tests | **186 passed, 6 deselected, 0 skipped** | Celalın C2 execution report-u; current test run deyil |
+| C evidence ZIPs / scans | 12 verification records, Celal host-da checks | Records raw IDs ilə match; **actual ZIP bytes Ali host-da absent**, local unzip/download verified deyil |
+| Final integration SHA / C config hash | 79a0ef740196cbaa0639579386c6c591d2bfd8ca / eaa371255716 | Exact fetched checkpoint və identity verified |
+| B diagnostic config hash | 2dfeb64cd673 | Same settings, ayrı output/cache namespace |
+| C2 barrel run / timing | 20261009T123704Z-8e4e19; wall 31.520 s / pipeline 30.2167 s | C raw row; Celal host n=1; UI timing deyil |
+| UI-ready SHA | Pending, Celal ayrıca göndərəcək | Recording gate açılmayıb |
+
+Pitch cümləsi: “12 development pair-də daha güclü VLM ilə hybrid **3/5 bug-a FAIL** verir; coverage **5/12**, bug false-PASS **1/5**-dir. Qwen hybrid **0/12 coverage, 0/5 false-PASS** ilə hamısında abstain edir. Gemini B və C aggregate counts-u eynidir; bu diagnostic-də DINOv2-hybrid advantage sübut edilməyib.”
+
+Coverage artımı false-PASS və clean false-FAIL riskini də gətirir; təhlükəsizlik və ya ümumi accuracy zəmanəti deyil. Bu dev comparison-dan generalization və QA-workload claim-i çıxmır. Stronger model bəzi bug-larda useful FAIL gətirib, perception və coverage problemləri qalır.
+
+Identity mənbələri: [C identity](../c2_openrouter/C_identity.json), [B identity](../c2_openrouter/B_identity.json), [usage records](../c2_openrouter/calls.jsonl), [stages](../c2_openrouter/stages.jsonl), [ZIP verification records](../c2_openrouter/zip-verification.json). Historical C2 execution SHA **c917532ac3161a0886f626985c53307eb2d477d8**, C3 implementation freeze SHA **bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3**, final delivery **79a0ef740196cbaa0639579386c6c591d2bfd8ca** ayrı identities-dir. [Freeze](../FINAL_IMPLEMENTATION_FREEZE.md). B raw helper AnalysisResult ZIP yaratmır; B üçün native ZIP claim-i yoxdur.
+
+## 2. Konkret barrel FAIL: C1 fallback, Qwen REVIEW ilə yanaşı
+
+[Celal C1 gate](../CELAL_C1_DEMO_GATE.md) bir selected dev bug-un fresh end-to-end nəticəsini sənədləşdirir. C1 **Google OpenAI-compatible endpoint** istifadə edib; C2 OpenRouter batch metric-i deyil.
+
+| Field | C1 Gemini barrel | Qwen A1 baseline, eyni pair |
+|---|---|---|
+| Sample | vr_4b921c5d | vr_4b921c5d |
+| run_id | 20261009T115633Z-83936b | 20261009T112802Z-c4530d |
+| Model / prompt / config hash | gemini-3.5-flash / v9 / 6cfbba559386 | qwen2.5vl:3b / v9 / 3a144cfcbb67 |
+| Region | R1 [2484,1400,3049,1966], source=union | Eyni R1 box |
+| Observation | Barrel disappeared, stand empty | Texture / lighting kimi yanlış təsvir |
+| Region / final | forbidden / D1 → **FAIL: R1 (D1)** | uncertain → **NEEDS_REVIEW** |
+| Scene audit | uncertain; reliable region FAIL qalır | Yanlış allowed; region uncertainty PASS-i bloklayır |
+| Verification | **Celal host-da** fresh CLI, browser saved replay və ZIP download verified | [Raw C rows](a1_evidence/predictions_C.jsonl), [Ali browser check](UI_BROWSER_CHECK.md) |
+
+C1: **4 live calls**, retries 0; **CLI wall 25.4442 s**, **pipeline 18.4305 s**, n=1 — Celalın measured values. C1 archive Ali host-da yoxlanmayıb; local replay/download verified claim-i edilmir. Saved run-un ekranda göstərilməsi **REPLAY**-dir. Bir selected dev demo uğuru model accuracy ölçüsü deyil.
+
+## 3. Qwen A1/A3 baseline — verified counts
+
+Local Ollama **qwen2.5vl:3b** (CPU), prompt **v9**, temperature 0. A1 config **configs/ali_a1_qwen.yaml**, hash **3a144cfcbb67**; A3 config **configs/ali_a3_qwen.yaml**, hash **642b6e26f39d**. Config yalnız dump tag və cache namespace ilə fərqlənir. [Registry](EXPERIMENT_REGISTRY.md), [A3 integrity](A3_review.md).
+
+| Arm | PASS / FAIL / REVIEW | Bug false-PASS | Coverage | Clean PASS |
 |---|---|---|---|---|
-| B full-frame VLM | 1/12 | 3 | 8 | 4/12 |
-| C hybrid (region crops + audit) | 1/12 | 8 | 3 | 9/12 |
+| A pixel (dev-tuned threshold 0.782) | 12 / 0 / 0 | 5/5 | 12/12 | 7/7 |
+| B full-frame VLM | 8 / 0 / 4 | 5/5 | 8/12 | 3/7 |
+| C hybrid | 0 / 0 / 12 | 0/5 | 0/12 | 0/7 |
 
-- Strict target (10/12 y) is met by neither arm.
-- Reading: with region crops the VLM moves from mostly wrong (n 8) to mostly partially right (n 3). This is the only measured signal in favour of DINOv2 proposals, and only for the VLM's *observation* text.
-- Caveats: one rater (Ali); partial credit is a judgment call; possible anchoring (Ali's marks closely match an example string shown in chat before scoring); n = 12; Claude's independent review disagrees on one row (vr_43773eb8 C: y instead of p, which would make C 2 y / 7 p) (A1; A3 sec 3). Scored on A1 text; A3 text is identical row by row, so the marks carry over by identity, not by a new rating.
-- **It did not turn into correct decisions:** C still returns 0 PASS and 0 FAIL (table in section 4). This is not a claim that DINOv2 improves accuracy.
+Mənbə: [A1 diagnostic](A1_diagnostic.md), [raw score](a1_evidence/score_raw.md), [A3 independent recompute](A3_review.md). Qwen hybrid **safe but abstains**: false-PASS **0/5**, coverage **0/12**; 12/12 REVIEW. **9/12 global-change collapse**, hamısı cutscene. Üç Unity bug-da localization var, perception səhvləri və guards REVIEW yaradır.
 
-## 3. What code decides
-- `src/gameqa/decision.py` `decide()` is deterministic. Policy (D6-D10, `CLAUDE.md`): reliable forbidden change -> FAIL; all stages complete and only allowed changes -> PASS; uncertainty, rule conflict, unreliable alignment, model error, timeout, truncation -> NEEDS REVIEW. A component error never turns a proven FAIL into PASS. The VLM never outputs the final decision.
-- Effect visible in the data: the hybrid abstained on all 12 (P arm C; A3 sec 3).
+A3 A1-i **36/36 rows** üzrə təkrarlayıb; stage-1 text **24/24 VLM rows** üzrə eynidir. A3 **80 fresh calls, 0 cache hits** ilə işləyib. Bu eyni 12 pair və eyni host-da **determinism / regression check**-dir; ikinci sample və ya ikinci accuracy measurement deyil. Effective n=12 qalır. [A3 determinism](A3_review.md).
 
-## 4. Measured comparison (n = 12; 5 bug / 7 clean; S, A1, A3 sec 3; identical in A1 and A3)
-False-PASS is always read together with coverage.
+Sensitivity: ambiguous **vr_330651ed** clean sayılsa 4 bug / 8 clean olur. A false-PASS **4/4**, coverage **12/12**; B **4/4**, coverage **8/12**; C **0/4**, coverage **0/12**. Nəticə dəyişmir. Bu pair-də subtitle language dəyişib; cutscene rules text change-i ayrıca əhatə etmir. [Label audit](labels_audit.md).
 
-| Arm | PASS / FAIL / REVIEW | Coverage (PASS+FAIL)/12 | Bug false-PASS (of 5) | Clean PASS (of 7) |
-|---|---|---|---|---|
-| A pixel diff (threshold 0.782 tuned on dev) | 12 / 0 / 0 | 12/12 | 5/5 | 7/7 |
-| B full-frame VLM | 8 / 0 / 4 | 8/12 | 5/5 | 3/7 |
-| C hybrid (DINOv2 + VLM + decide) | 0 / 0 / 12 | 0/12 | 0/5 | 0/7 |
+## 4. AI və code-un ayrı rolları
 
-In one line: C 0/5 false-PASS at 0/12 coverage; A 5/5 at 12/12; B 5/5 at 8/12. C is "safe" only because it abstains on everything.
+Frozen **DINOv2 ViT-S/14** alignment-dən sonra reference/candidate spatial patch distances çıxarır; pixel-diff proposals ilə region crops seçilir. Bu operational localization-dır, bug probability və final verdict deyil. Max 8 regions; global-change collapse full-frame region və truncated=True yaradır. Box **[x1,y1,x2,y2]** original reference pixels-dədir, right/bottom exclusive. [A3 visual review](A3_review.md).
 
-Sensitivity, vr_330651ed counted as clean (4 bug / 8 clean; LA; A3 sec 4):
+VLM **two-stage** işləyir: stage 1 BEFORE/AFTER composite-dən observation çıxarır, **rules və labels prompt-a daxil edilmir**; stage 2 observation + rules-dan allowed / forbidden / uncertain, rule IDs və evidence verir. Whole-scene audit də two-stage-dir. Labels inference-in heç bir mərhələsinə verilmir. Report model mətnini **VLM-reported, unverified** kimi saxlayır. Implementation: vision/prompts.py, VLMJudge._two_stage().
 
-| Arm | Bug false-PASS | Clean PASS | Coverage |
-|---|---|---|---|
-| A | 4/4 | 8/8 | 12/12 |
-| B | 4/4 | 4/8 | 8/12 |
-| C | 0/4 | 0/8 | 0/12 |
+**decision.decide() deterministic code**-dur: reliable forbidden evidence → **FAIL**; bütün yoxlamalar tamamlanıb allowed olduqda → **PASS**; uncertainty, invalid output, mock, error, bad alignment və truncation reliable FAIL yoxdursa → **NEEDS_REVIEW**. C1-də uncertain scene audit reliable R1/D1 FAIL-i ləğv etmir. PASS heuristic-dir, bütün bug-ların yoxluğunun sübutu deyil.
 
-Conclusion unchanged under the sensitivity: only C avoids false-PASS, at zero coverage. Uncertainty (Clopper-Pearson 95%, A3 sec 3): A/B false-PASS 5/5 lower bound 0.48; C false-PASS 0/5 upper bound 0.52; C coverage 0/12 upper bound 0.26.
+Barrel/booth proposal boxes labels ilə uyğun gəlir (QA IoU **0.60 / 0.71**); labels abs-diff inspection-dən sonra assistant correction ilə dəyişdiyi üçün bu **tam independent localization evidence deyil**. Pedestal proposals **classical**-dır; onları DINOv2 detection kimi təqdim etmək olmaz. [A3 visual review](A3_review.md), [provenance](labels_audit.md).
 
-Reading: no arm meets all engineering targets (0 bug false-PASS, clean PASS >= 4, coverage >= 6/12, observations 10/12). The two arms with coverage pass every bug; the arm without false-PASS has no coverage. No claim that the hybrid beats the simpler methods.
+Ali-nin one-rater observation marks-ı: B **y+p 4/12**, C **y+p 9/12**; strict y **1/12 hər ikisində**. Partial credit, possible anchoring, n=12; A1 text-də scored-dir, A3-də text identity ilə carry-over olur. Region crops perception-a kömək edən signal verir; automatic decision advantage və ya DINOv2 superiority sübut etmir. [Marks](a1_evidence/obs_review.csv), [A3 caveats](A3_review.md).
 
-## 5. Failure example
-vr_4b921c5d (Unity, one barrel missing; label D1). Arm C: correct region, VLM says "different texture and lighting effect", verdict uncertain -> `NEEDS_REVIEW: "Needs review: R1: uncertain."` (P, run `20261009T112802Z-c4530d`; same in A3). Arm B on the same pair: PASS ("lighting ... brighter", P arm B). Visual evidence: `docs/ali/a1_evidence/vr_4b921c5d_R1_vlm_input.png`.
-- Scene-audit contradiction (QA-D5, in the bug ZIP `report.md`): the whole-scene audit said `allowed` ("barrels ... in a different position", extra changes False) which is wrong for this bug; the region-level verdict was `uncertain`; the region guard caught the contradiction and the final result is NEEDS REVIEW, not FAIL (QA, "Demo ZIPs" remarks and D5).
+## 5. Qorunan failure və limitations
 
-## 6. Missing cases (state openly)
-- No allowed-change PASS from the hybrid: 0/7 clean pairs reached PASS. Example vr_09a066d3 (outfit change): B = PASS, C = REVIEW (global-change collapse) (P).
-- No FAIL from any arm on this set: 0/5 bugs produced FAIL.
-- Ambiguous case vr_330651ed: the subtitle language changed. This pair's own rules.yaml (cutscene rules) has no text rule, so the label D1 is weakly supported; the rule does not clearly cover the change and label uncertainty is high (QA-D1; LA; ZIP `ambiguous_vr_330651ed_C_20261009T112407Z-355ff0.zip`). It is REVIEW in C, PASS in B and A. Do not describe it as "forbidden by the rules".
-- Label caveat: 5 label rows were Claude-proposed corrections confirmed by Ali (3 Unity, vr_330651ed, overlay note on vr_4255ae09); labels were frozen at 15:38 after the first model outputs at 15:21 (S warning; A1 "Limitations"; L). Unity pairs are all bugs, so source is confounded with class.
-- Not measured: held-out generalization, live wall-time distribution (CPU reference values: B 37-49 s, C 63-161 s per pair, REG), human usability.
-- Report scope: for collapsed runs the demo ZIPs (regenerated after the QA-D6 fix, `artifacts/ali/demo_zips/`) now list "NOT assessed: global change ... collapsed into one full-frame region" in the Scope section (checked by grep of `report.md` in two ZIPs: vr_09a066d3, vr_330651ed).
+Əsas failure **missing stone pedestal vr_c1f47c57**-dir: reference-də statue altında pedestal var, candidate-də yoxdur; **D1 qalır**. [Pedestal zoom](a3_evidence/vr_c1f47c57_pedestal_zoom_ref_vs_cand.png). Qwen A3 C **REVIEW**, run **20261009T121824Z-157529**. **C2 B/C PASS raw rows-dan verified**-dir; C run **20261009T124621Z-0b0c2b**. Allowed-change success kimi deyil, yanlış avtomatik təsdiq kimi göstərilir.
 
-## 7. Next pilot
-- Change one thing: the VLM. Same crop and same stage-1 prompt sent to Gemini `gemini-3.5-flash` described the removal correctly on 2 of 2 pairs (barrel missing; booth roof and TELEPHONE sign missing) vs Qwen 0 of 2 (`stage1_qwen_vs_gemini.json`). n = 2 is a reproducer, not a measurement.
-- Blocker: free tier 20 requests/day/model; B+C on 12 pairs needs about 80-120 (D16, D17). Needs a quota/billing decision, not run today.
-- Set pass criteria before running (bug false-PASS and coverage on dev12, then a fresh held-out set).
+Qwen hybrid və C2 B/C genuine clean PASS verməyib (**0/7**, verified). Same-crop Gemini reproducer barrel və booth-u **2/2** düzgün təsvir edib; **n=2 reproducer**, accuracy measurement deyil. [Reproducer](a1_evidence/stage1_qwen_vs_gemini.json).
 
-## Wording to use (experiment-tracker's recommended framing, A3 sec 5)
-- Supported (dev12, n = 12, one model): localization on the Unity bug pairs matches the labelled boxes (not fully independent labels); the binding constraint is VLM perception; the abstention policy is safe on this set but gives no automatic decision; region crops improve the VLM's partial observation accuracy (9/12 y+p vs 4/12), which has not become better decisions.
-- Not supported: that the hybrid improves accuracy, coverage or decisions over the simpler arms; any generalization beyond dev12; any speed-up or QA-workload claim.
-- Say: "frozen DINOv2 for localization", "development diagnostic on 12 pairs", "abstains to human review", "A3 replicated A1 exactly".
-- Never say: "fine-tuned", "production-ready", "reduces QA workload", "beats the paper", "DINOv2 improves accuracy / is better than a plain VLM".
+Data **VideoGameQA-Bench, CC BY 4.0**, pinned revision **2afbfdcc9cb84318845f348c023bb2e92b942e29**; manifest-lər dəyişdirilmir. dev12 labels exposed-dur, Unity source yalnız bug-lardan ibarətdir. Historical eval60 bu build-in evaluation-u deyil. Held-out generalization, QA workload reduction və live latency distribution ölçülməyib. [Project brief](../PROJECT_BRIEF.md), [A3 limitations](A3_review.md).
+
+## 6. Qalan verification və təhvil gate
+
+Tamamlanan gate: [raw predictions və calls recompute](C2_RECOMPUTED.json), frozen-label counts, B/C pairwise differences, config/model identity, per-call freshness/cost və exact pinned checkout-da tests. Qalan gate: actual ignored C2 ZIP binaries-in transfer/unzip/hash check-i, full input/request/image capture audit; **UI-ready SHA**, browser saved replay və UI-exported evidence.json; final video duration, second-device acceptance və 19:30 submission confirmation. Celalın ZIP verification records-u local actual archive check-i əvəz etmir.
+
+**17:30-dan sonra yeni feature, experiment və threshold tuning yoxdur.** Video/slides 18:45; acceptance 19:15; daxili submission **19:30**, rəsmi deadline 20:00 Asia/Baku. **Recording UI-ready SHA gələnədək gözləyir**; Qwen vision-branch UI istifadə edilmir. Final code freeze SHA ayrıca saxlanılır. [Task list](NEXT_TASKS.md).
+
+Wording: “development diagnostic on 12 pairs”, “safe but abstains”, “localization works, perception is the bottleneck”, “a stronger model is the evidenced next step”. Sonrakı pilot fresh pre-labelled held-out scene groups və DINOv2 contribution üçün ayrıca ablation-dır; bu gün run edilmir. “Fine-tuned”, “production-ready”, “reduces QA workload”, “DINOv2 beats …” və generalization claim-ləri yoxdur.

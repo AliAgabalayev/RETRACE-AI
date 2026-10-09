@@ -1,0 +1,246 @@
+{
+  "status": "verified_raw",
+  "source_integration_sha": "79a0ef740196cbaa0639579386c6c591d2bfd8ca",
+  "c2_raw_historical_sha": "c917532ac3161a0886f626985c53307eb2d477d8",
+  "implementation_freeze_sha": "bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3",
+  "c_config_hash": "eaa371255716",
+  "b_config_hash": "2dfeb64cd673",
+  "model": "google/gemini-3.5-flash",
+  "provider": "OpenRouter via OpenAI-compatible adapter",
+  "reasoning_effort": "low",
+  "prompt_version": "v9",
+  "canonical_config_file_sha256": "2e781b544b6d177f7955218babb51103dde684b9a70eb164a1dab0249d26274f",
+  "label_sha256": "524583859358b6dcea8250325f88fbc12077cf5f0e3516fbe05f2e94a86bb96d",
+  "dev12_sha256": "28c9f46420320a96845690084a1309ee5ea82e81bd2b097c0965a2a7c14fb030",
+  "n_pairs": 12,
+  "n_bug": 5,
+  "n_clean": 7,
+  "arms": {
+    "B": {
+      "PFR": [
+        1,
+        4,
+        7
+      ],
+      "counts": {
+        "PASS": 1,
+        "FAIL": 4,
+        "NEEDS_REVIEW": 7
+      },
+      "coverage": {
+        "decided": 5,
+        "total": 12,
+        "fraction": 0.4166666666666667
+      },
+      "bug_false_PASS": {
+        "count": 1,
+        "total_bugs": 5
+      },
+      "bug_FAIL": 2,
+      "bug_REVIEW": 2,
+      "clean_PASS": {
+        "count": 0,
+        "total_clean": 7
+      },
+      "clean_false_FAIL": {
+        "count": 2,
+        "total_clean": 7
+      },
+      "clean_REVIEW": 5,
+      "ids_unique_equal_dev12": true,
+      "decisions": {
+        "vr_a981c1d3": "NEEDS_REVIEW",
+        "vr_330651ed": "NEEDS_REVIEW",
+        "vr_4255ae09": "NEEDS_REVIEW",
+        "vr_09a066d3": "NEEDS_REVIEW",
+        "vr_59af7164": "NEEDS_REVIEW",
+        "vr_41bab231": "NEEDS_REVIEW",
+        "vr_4b921c5d": "FAIL",
+        "vr_d07179d5": "NEEDS_REVIEW",
+        "vr_c1f47c57": "PASS",
+        "vr_fec26436": "FAIL",
+        "vr_ef9b073a": "FAIL",
+        "vr_43773eb8": "FAIL"
+      },
+      "run_ids": {
+        "vr_a981c1d3": "B-vr_a981c1d3",
+        "vr_330651ed": "B-vr_330651ed",
+        "vr_4255ae09": "B-vr_4255ae09",
+        "vr_09a066d3": "B-vr_09a066d3",
+        "vr_59af7164": "B-vr_59af7164",
+        "vr_41bab231": "B-vr_41bab231",
+        "vr_4b921c5d": "B-vr_4b921c5d",
+        "vr_d07179d5": "B-vr_d07179d5",
+        "vr_c1f47c57": "B-vr_c1f47c57",
+        "vr_fec26436": "B-vr_fec26436",
+        "vr_ef9b073a": "B-vr_ef9b073a",
+        "vr_43773eb8": "B-vr_43773eb8"
+      },
+      "row_errors": 0,
+      "semantic_guard_error_bearing_ids": [],
+      "global_change_collapse_count": 0,
+      "calls": 24,
+      "provider_reported_cost_usd": "0.0937320",
+      "median_orchestration_wall_s": 19.7196
+    },
+    "C": {
+      "PFR": [
+        1,
+        4,
+        7
+      ],
+      "counts": {
+        "PASS": 1,
+        "FAIL": 4,
+        "NEEDS_REVIEW": 7
+      },
+      "coverage": {
+        "decided": 5,
+        "total": 12,
+        "fraction": 0.4166666666666667
+      },
+      "bug_false_PASS": {
+        "count": 1,
+        "total_bugs": 5
+      },
+      "bug_FAIL": 3,
+      "bug_REVIEW": 1,
+      "clean_PASS": {
+        "count": 0,
+        "total_clean": 7
+      },
+      "clean_false_FAIL": {
+        "count": 1,
+        "total_clean": 7
+      },
+      "clean_REVIEW": 6,
+      "ids_unique_equal_dev12": true,
+      "decisions": {
+        "vr_4b921c5d": "FAIL",
+        "vr_a981c1d3": "NEEDS_REVIEW",
+        "vr_330651ed": "NEEDS_REVIEW",
+        "vr_4255ae09": "NEEDS_REVIEW",
+        "vr_09a066d3": "NEEDS_REVIEW",
+        "vr_59af7164": "NEEDS_REVIEW",
+        "vr_41bab231": "NEEDS_REVIEW",
+        "vr_d07179d5": "FAIL",
+        "vr_c1f47c57": "PASS",
+        "vr_fec26436": "FAIL",
+        "vr_ef9b073a": "NEEDS_REVIEW",
+        "vr_43773eb8": "FAIL"
+      },
+      "run_ids": {
+        "vr_4b921c5d": "20261009T123704Z-8e4e19",
+        "vr_a981c1d3": "20261009T123834Z-c48717",
+        "vr_330651ed": "20261009T123852Z-72dbc0",
+        "vr_4255ae09": "20261009T123921Z-3c8b6a",
+        "vr_09a066d3": "20261009T123947Z-584a66",
+        "vr_59af7164": "20261009T124102Z-bc1521",
+        "vr_41bab231": "20261009T124150Z-27b831",
+        "vr_d07179d5": "20261009T124304Z-580c0b",
+        "vr_c1f47c57": "20261009T124621Z-0b0c2b",
+        "vr_fec26436": "20261009T124803Z-8da9b8",
+        "vr_ef9b073a": "20261009T124839Z-312535",
+        "vr_43773eb8": "20261009T124923Z-38587e"
+      },
+      "row_errors": 0,
+      "semantic_guard_error_bearing_ids": [
+        "vr_4255ae09",
+        "vr_d07179d5",
+        "vr_fec26436",
+        "vr_ef9b073a",
+        "vr_43773eb8"
+      ],
+      "global_change_collapse_count": 9,
+      "calls": 56,
+      "provider_reported_cost_usd": "0.1934625",
+      "median_orchestration_wall_s": 39.99005
+    }
+  },
+  "B_C_aggregate_counts_equal": true,
+  "B_C_pairwise_differences": {
+    "vr_d07179d5": {
+      "B": "NEEDS_REVIEW",
+      "C": "FAIL"
+    },
+    "vr_ef9b073a": {
+      "B": "FAIL",
+      "C": "NEEDS_REVIEW"
+    }
+  },
+  "B_C_identity_cfg_equal_except_output_cache_paths": true,
+  "calls": {
+    "actual_records": 80,
+    "unique_generation_ids": 80,
+    "HTTP_200": 80,
+    "application_cache_hits": 0,
+    "retry_records": 0,
+    "unknown_cost_calls": 0,
+    "provider_reported_cost_usd": "0.2871945",
+    "invoice_verified": false,
+    "per_arm": {
+      "C": 56,
+      "B": 24
+    },
+    "providers": {
+      "Google": 46,
+      "Google AI Studio": 34
+    },
+    "prompt_tokens": 75681,
+    "completion_tokens": 19297,
+    "reasoning_tokens": 11781,
+    "cached_prompt_tokens": 0
+  },
+  "stages": {
+    "records": 80,
+    "application_cache_hits": 0,
+    "semantic_guard_error_bearing_records": 0,
+    "counts": {
+      "observation": 40,
+      "rule_judgment": 40
+    }
+  },
+  "C_ZIP_records": {
+    "count": 12,
+    "raw_run_ids_and_decisions_match": true,
+    "Celal_documented_member_hash_checks": 80,
+    "locally_verified_zip_bytes": false,
+    "native_B_ZIP_exists": false
+  },
+  "source_file_sha256": {
+    "B_predictions.jsonl": "8c685662df373b8c944e2e7de8e378ca270b3cf7da117b10221d8b7e3f591490",
+    "C_predictions.jsonl": "b4557db78ad907975984e9699d05308f6fb9bdf3490222386062612593d03145",
+    "calls.jsonl": "e93a6abee85b88ce6ffe7e0bec0f70bf5f616e12ea0c5921c6b9c58ef3809d26",
+    "stages.jsonl": "426a6813397beb151caac04669f9f02ce4ddd3b4b3c19878db7cacb1fb54b066",
+    "B_identity.json": "b0d7fd3f0058dbe17ef84f104c4dfa35a45929b24cd815cb4d4afc8b0727cc0d",
+    "C_identity.json": "86e6c290361a39e829a54392340284692fc339ea5b59a1d5aad1cc6d27483c23",
+    "usage-summary.json": "be634b3ec117e44ef6f6c15cfd3470702458d43893ee75eaf42b10642fcedbc2",
+    "zip-verification.json": "da68370ef6eb64b02e7312ae99b6907cee597cf90002ca102f254299552f1c72"
+  },
+  "tests": {
+    "source_sha": "79a0ef740196cbaa0639579386c6c591d2bfd8ca",
+    "passed": 194,
+    "skipped": 6,
+    "seconds": 5.14,
+    "real_model_calls": 0
+  },
+  "verified_checks": [
+    "committed_raw_ID_integrity",
+    "frozen_label_counts",
+    "PFR_and_denominators",
+    "per_pair_decisions",
+    "model_prompt_config_identity_records",
+    "80_call_and_stage_records",
+    "provider_reported_cost_sum",
+    "freshness_record_fields",
+    "ZIP_verification_record_correspondence"
+  ],
+  "pending": [
+    "actual_C_ZIP_CRC_member_hash_checks",
+    "actual_UI_exported_ZIP",
+    "full_request_image_captures_label_input_audit",
+    "separate_Celal_UI_ready_SHA",
+    "second_device",
+    "final_video_and_submission_confirmation"
+  ]
+}
