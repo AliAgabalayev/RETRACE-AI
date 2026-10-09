@@ -286,3 +286,82 @@ def test_public_rejects_untrusted_archive_without_replacing_it(public_replay):
                for e in list(app.error) + list(app.warning))
     assert archive.read_bytes() == before
     assert not calls
+
+
+def _qa_reconstructed_export(public_replay, *, omitted_asset=None, changed_asset=None):
+    """QA-only fallback: preserve original bundled bytes, label rebuilt metadata."""
+    app, run, stored, calls = public_replay
+    manifest = json.loads((run / "package.json").read_text())
+    archive = run.parent / "barrel-replay.zip"
+    provenance = {"kind": "reconstructed_replay_export", "run_id": stored["run_id"],
+                  "original_source_zip_sha256": manifest["source_zip_sha256"],
+                  "note": "QA replay fixture; report and evidence index reconstructed, original ZIP unavailable."}
+    with zipfile.ZipFile(archive, "w") as zipped:
+        prefix = stored["run_id"] + "/"
+        for relative in manifest["files"]:
+            if relative != omitted_asset:
+                data = (run / relative).read_bytes()
+                if relative == changed_asset:
+                    data = b"QA-only changed original asset: must be rejected"
+                zipped.writestr(prefix + relative, data)
+        zipped.writestr(prefix + "package.json", (run / "package.json").read_bytes())
+        zipped.writestr(prefix + "report.md", "QA reconstructed replay report; not the original report.")
+        zipped.writestr(prefix + "evidence.json", json.dumps({
+            "run_id": stored["run_id"], "decision": {"final": "FAIL"}, "provenance": provenance}))
+        zipped.writestr(prefix + "export-provenance.json", json.dumps(provenance))
+    descriptor = {**provenance, "archive_name": archive.name,
+                  "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
+    (run.parent / "barrel-replay-export.json").write_text(json.dumps(descriptor))
+    return archive
+
+
+def test_public_reconstructed_replay_download_is_labelled_and_immutable(public_replay):
+    app, run, stored, calls = public_replay
+    archive = _qa_reconstructed_export(public_replay)
+    before = _file_hashes(run.parent)
+    app.run()
+    app.run()
+    assert not app.exception, app.exception
+    assert any(e.label == "Download evidence ZIP" for e in app.get("download_button"))
+    messages = "\n".join(e.value for e in list(app.caption) + list(app.warning) + list(app.info))
+    assert "original run files preserved" in messages.lower()
+    assert "report and evidence index reconstructed" in messages.lower()
+    assert "original zip unavailable" in messages.lower()
+    assert any(e.value.startswith("**FAIL") for e in app.error)
+    assert _file_hashes(run.parent) == before
+    assert not calls
+    with zipfile.ZipFile(archive) as zipped:
+        manifest = json.loads((run / "package.json").read_text())
+        for relative, expected in manifest["files"].items():
+            assert hashlib.sha256(zipped.read(stored["run_id"] + "/" + relative)).hexdigest() == expected
+
+
+def test_public_reconstructed_replay_rejects_archive_hash_mismatch(public_replay):
+    app, run, stored, calls = public_replay
+    archive = _qa_reconstructed_export(public_replay)
+    archive.write_bytes(archive.read_bytes() + b"QA-only archive corruption")
+    before = _file_hashes(run.parent)
+    app.run()
+    assert not app.exception, app.exception
+    assert not app.get("download_button")
+    assert any("checksum" in e.value.lower() or "hash" in e.value.lower() for e in app.error)
+    assert _file_hashes(run.parent) == before
+    assert not calls
+
+
+@pytest.mark.parametrize("omitted_asset,changed_asset", [
+    ("images/candidate.png", None), (None, "rules.yaml"),
+])
+def test_public_reconstructed_replay_rejects_missing_or_changed_original_asset(
+        public_replay, omitted_asset, changed_asset):
+    app, run, stored, calls = public_replay
+    _qa_reconstructed_export(public_replay, omitted_asset=omitted_asset, changed_asset=changed_asset)
+    before = _file_hashes(run.parent)
+    app.run()
+    assert not app.exception, app.exception
+    assert not app.get("download_button")
+    assert any("asset" in e.value.lower() or "checksum" in e.value.lower()
+               or (omitted_asset is not None and omitted_asset in e.value)
+               for e in app.error)
+    assert _file_hashes(run.parent) == before
+    assert not calls

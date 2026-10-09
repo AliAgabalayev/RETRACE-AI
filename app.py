@@ -162,6 +162,52 @@ def load_public_replay() -> tuple[AnalysisResult, Path]:
 
 
 # ---------- result rendering ----------
+def reconstructed_replay_zip(result: AnalysisResult, run_dir: Path) -> bytes:
+    """Read the explicitly labelled, immutable portable export without rebuilding it."""
+    try:
+        manifest = json.loads((run_dir / "package.json").read_text(encoding="utf-8"))
+        descriptor = json.loads((run_dir.parent / "barrel-replay-export.json").read_text(encoding="utf-8"))
+        if (descriptor["kind"] != "reconstructed_replay_export"
+                or descriptor["run_id"] != result.run_id
+                or descriptor["archive_name"] != "barrel-replay.zip"
+                or descriptor["original_source_zip_sha256"] != manifest["source_zip_sha256"]):
+            raise StorageError("Portable replay export provenance does not match the recorded run.")
+        data = (run_dir.parent / descriptor["archive_name"]).read_bytes()
+        if hashlib.sha256(data).hexdigest() != descriptor["archive_sha256"]:
+            raise StorageError("Portable replay export archive checksum mismatch.")
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            prefix = f"{result.run_id}/"
+            if len(archive.namelist()) != len(set(archive.namelist())):
+                raise StorageError("Portable replay export contains duplicate archive entries.")
+            for name, expected in manifest["files"].items():
+                try:
+                    original = archive.read(prefix + name)
+                except KeyError as exc:
+                    raise StorageError(f"Portable replay export original asset is missing: {name}") from exc
+                if hashlib.sha256(original).hexdigest() != expected:
+                    raise StorageError(f"Portable replay export original asset checksum mismatch: {name}")
+            if archive.read(prefix + "package.json") != (run_dir / "package.json").read_bytes():
+                raise StorageError("Portable replay export original package manifest does not match.")
+            analysis = json.loads(archive.read(prefix + "analysis.json"))
+            evidence = json.loads(archive.read(prefix + "evidence.json"))
+            provenance = json.loads(archive.read(prefix + "export-provenance.json"))
+            archive.getinfo(prefix + "report.md")
+            if (analysis["run_id"] != result.run_id
+                    or evidence["run_id"] != result.run_id
+                    or analysis["final_decision"] != result.final_decision.value
+                    or evidence["decision"]["final"] != result.final_decision.value):
+                raise StorageError("Portable replay export decision does not match the recorded run.")
+            for metadata in (provenance, evidence["provenance"]):
+                if any(metadata[key] != descriptor[key] for key in (
+                        "kind", "run_id", "original_source_zip_sha256")):
+                    raise StorageError("Portable replay export reconstructed provenance does not match.")
+        return data
+    except StorageError:
+        raise
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        raise StorageError(f"Portable replay export is incomplete or invalid: {exc}") from exc
+
+
 def evidence_zip(result: AnalysisResult, run_dir: Path, *, public_replay: bool = False) -> bytes:
     """Reuse a matching saved export; reruns must preserve original evidence ZIPs."""
     path = zip_path_for(run_dir)
@@ -186,6 +232,8 @@ def evidence_zip(result: AnalysisResult, run_dir: Path, *, public_replay: bool =
         except (OSError, KeyError, ValueError, zipfile.BadZipFile):
             pass
     if public_replay:
+        if not path.is_file() and (run_dir.parent / "barrel-replay-export.json").is_file():
+            return reconstructed_replay_zip(result, run_dir)
         raise StorageError("The original evidence ZIP is unavailable or does not match this run. "
                            "The public replay cannot regenerate recorded evidence.")
     export_report(result, run_dir)
@@ -279,8 +327,12 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
     st.caption("Saved analysis, recorded observations, rules, original images and region crops.")
     try:
         archive = evidence_zip(result, run_dir, public_replay=public_replay)
+        reconstructed = public_replay and not zip_path_for(run_dir).is_file()
+        if reconstructed:
+            st.caption("Portable replay export — original run files preserved; report and evidence index "
+                       "reconstructed. Original ZIP unavailable.")
         st.download_button("Download evidence ZIP", archive,
-                           file_name=f"{result.run_id}.zip", mime="application/zip",
+                           file_name=f"{result.run_id}{'-replay' if reconstructed else ''}.zip", mime="application/zip",
                            key=f"export_{result.run_id}", on_click="ignore", type="primary")
     except StorageError as exc:
         st.error(str(exc))

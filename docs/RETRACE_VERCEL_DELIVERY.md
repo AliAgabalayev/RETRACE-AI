@@ -1,63 +1,57 @@
 # RETRACE UI və Vercel delivery
 
-9 October 2026, Asia/Baku. **BLOCKED — public deployment və original evidence download tamamlanmayıb.** UI/build success READY demək deyil.
+9 October 2026, Asia/Baku. **IN PROGRESS — public preview/production acceptance pending.** Build success READY demək deyil.
 
-## Actual state
+## Source və access
 
-İş qovluğu Windows handoff yolu əvəzinə `/home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton`-dur. Private GitHub giriş `AliAgabalayev` hesabı ilə verified-dir. Başlanğıc fresh master `7f93c0204b44f8e41cc5c1a688a135ea0f133e88`; iş zamanı sənədləşmə merge-i ilə son master `3d7dbf7db57e244846546cf99b360ae760710e2c` oldu. Feature `feat/retrace-vercel-ui` həmin son master üzərinə rebase edilir. User cache-ləri qorunur; repo private qalır.
+Ali iş qovluğu `/home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton`-dur. Private GitHub giriş `AliAgabalayev` hesabı ilə verified-dir. Başlanğıc master `7f93c0204b44f8e41cc5c1a688a135ea0f133e88`; feature `feat/retrace-vercel-ui` current master `3d7dbf7db57e244846546cf99b360ae760710e2c` üzərinə rebase edilib. [PR #9](https://github.com/AliAgabalayev/neuroscience-hackhaton/pull/9) draft-dır; initial head `a1214b645e6694d7bb0c1028095eba1997f86a6d` checks/container/GitGuardian SUCCESS. Latest export follow-up CI və reviewed merge pending-dir. User changes/cache-lər qorunub; repo private qalır.
 
-Verified public URL: **yoxdur**. Deployed SHA: **yoxdur**. Owner Vercel hesabını `aliagabalazade00-2183`, team adını `octopus` olaraq bildirdi və browser login etdi. Codex Vercel plugin-i hələ connected deyil; CLI login ayrıca hazırlanır. Actual account/plan/project access hələ verified deyil; preview və production yaradılmayıb. Portfolio dəyişdirilməyib; hosting plan/domain/storage alınmayıb.
+Vercel CLI **63.1.0** login verified: `aliagabalazade00-2183`, team **octopus-e236** (Octopus), **Hobby**. New project **retrace-visual-qa**, ID `prj_2B36gpL9pecZOFDZADJ6bFtzQS0j`. Portfolio dəyişdirilməyib. Plan/domain/storage alınmayıb. Verified public URL və deployed SHA: **pending**.
 
 ## Implemented behavior
 
-Native Streamlit dark theme: near-black, warm off-white, thin dividers, orange accent. Large RETRACE wordmark; screenshot comparison → final decision/observations → region crops/stored rules → evidence export → compact limitations. `celalibr.win` ayrıca browser profilində vizual yoxlanılıb.
+Native Streamlit dark theme: #090909 background, warm #F5F4F0 text, #303030 dividers, #E66B38 accent. Large RETRACE wordmark; comparison → final decision/observations → crops/stored rules → evidence export → compact limitations. `celalibr.win` isolated real browser-də vizual yoxlanılıb. Native controls və semantic CSS istifadə olunur.
 
-`GAMEQA_PUBLIC_REPLAY=1` yalnız immutable `deploy/replay/barrel` package-i oxuyur; every manifest-listed file checksum yoxlanır. Default `20261009T123704Z-8e4e19`, sample `vr_4b921c5d`, original **FAIL**, label **“Recorded model run — replay, no new inference.”** Public rejim `.env` oxumur, engines/inference/uploads/mocks və reference approval açmır. Startup provider key-i child environment-dən çıxarır. Persistent history və evidence write yoxdur. Local analysis/approval safeguards qalır; existing Render-compatible Dockerfile dəyişmir.
+`GAMEQA_PUBLIC_REPLAY=1` yalnız immutable `deploy/replay/barrel` package-i oxuyur və every manifest-listed checksum-u yoxlayır. Default run `20261009T123704Z-8e4e19`, sample `vr_4b921c5d`, recorded **FAIL**, label **“Recorded model run — replay, no new inference.”** Public rejim `.env` oxumur; engines/inference/uploads/mocks və persistent reference approval açmır. Startup provider key-i child environment-dən çıxarır. Runtime evidence/history yazılmır. Local analysis/approval safeguards və existing Render Dockerfile qalır.
 
-OpenRouter / `google/gemini-3.5-flash` / low / prompt v9 / config `eaa371255716` unchanged. Source model/runtime identity və bütün **20** original package asset hash-ları unchanged. Missing pedestal false PASS limitation açıq göstərilir. Video/autonomous gameplay future features olaraq qalır.
+OpenRouter / `google/gemini-3.5-flash` / low / prompt v9 / config hash `eaa371255716` unchanged. Original observations, runtime identity və bütün **20** original asset hash-ları unchanged. Missing pedestal false PASS limitation görünür. Video/autonomous gameplay future features-dir.
 
-## Original evidence blocker
+## Explicitly labelled portable evidence export
 
-Known original ZIP path `artifacts/c2-openrouter-20261009/runs-C/20261009T123704Z-8e4e19.zip` bu Ali checkout-da yoxdur. Portable package original inputs/crops/rules/analysis/captures/runtime identity saxlayır, amma original `report.md`, `evidence.json` və ZIP-i daxil etmir. Legacy local startup reconstructed export yaradır; bu original ZIP kimi təqdim edilmir və public startup bu yolu işləmir.
+Original `artifacts/c2-openrouter-20261009/runs-C/20261009T123704Z-8e4e19.zip`, original report.md/evidence.json Ali checkout-da yoxdur. Relevant local paths, GitHub releases və Actions artifacts yoxlanıldı; archive tapılmadı. Historical ZIP SHA256: `b739b23a055fd70937dcf741c9595acd2587d13b1ea289fbb56ea81539bd2554`.
 
-Expected original ZIP SHA256: `b739b23a055fd70937dcf741c9595acd2587d13b1ea289fbb56ea81539bd2554`. Original arxiv owner tərəfindən veriləndə secret scan və checksum yoxlamasından sonra **exact bytes** `deploy/replay/barrel.zip` kimi əlavə edilə bilər. Public UI yalnız həmin hash-ə uyğun archive-i və required analysis/evidence/report entries-i qəbul edir. Original report/evidence archive daxilində qorunmalıdır; regeneration və missing-asset fabrication yoxdur. Archive yoxdursa UI açıq error verir, download göstərmir.
+Owner **“Etiketli replay ZIP ilə davam et”** seçimini təsdiqlədi. `scripts/build_replay_export.py` offline stdlib builder bütün original bytes/package.json-u saxlayır; report.md, evidence.json və export-provenance.json açıq reconstruction metadata-sıdır. No model import, new inference və runtime regeneration yoxdur. `deploy/replay/barrel-replay.zip` **19,478,122 bytes**, SHA256 `7399de171e5c1514a057a466e4b3bc0535a24e2b2a56bee0a1d418a6c1942e9b`. Descriptor `deploy/replay/barrel-replay-export.json` archive və source identity-ni bağlayır.
 
-## Native Vercel path — prepared, account-unverified
+UI caption: **“Portable replay export — original run files preserved; report and evidence index reconstructed. Original ZIP unavailable.”** Filename `20261009T123704Z-8e4e19-replay.zip`. UI archive checksum, all 20 source hashes, manifest bytes, identity/decision/provenance-ni doğrulayır. Original ZIP sonra exact bytes olaraq `deploy/replay/barrel.zip`-ə bərpa edilərsə native archive üstün tutulur; corrupt native archive fallback ilə gizlədilmir. Bu replay ZIP historical original ZIP kimi təqdim edilmir.
 
-Current official [Container Images](https://vercel.com/docs/functions/container-images) sənədi `Dockerfile.vercel` auto-detection, OCI HTTP server, project setting ilə **PORT=8501**, stdout/stderr logs və Fluid Compute göstərir. Additive Dockerfile existing dependency/CPU DINO package-i saxlayır, public replay default-u əlavə edir. `.vercelignore` credentials, caches, local artifacts/history və unrelated docs/tests/data-ni upload-dan çıxarır. Runtime image yalnız explicit Docker COPY-ları daxil edir.
+## Vercel configuration və constraints
 
-Official [WebSocket docs](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections) native support-un public beta/all plans olduğunu bildirir. Connection bir instance-a pin olunur, max duration-da bağlanır; reconnect yeni instance-a düşə bilər. Immutable package hər instance-da olduğuna görə replay persistent storage istəmir. Actual Streamlit reconnect/media/download routing preview-də yoxlanmalıdır.
+Current official [Container Images](https://vercel.com/docs/functions/container-images) docs `Dockerfile.vercel` auto-detection və OCI HTTP server göstərir. Additive Dockerfile existing full CPU dependency/DINO cache path-ni saxlayır. Project **PORT=8501** və **GAMEQA_PUBLIC_REPLAY=1**, preview/production config variables. **OPENROUTER_API_KEY yoxdur.** `.vercelignore`/`.dockerignore` credentials, .vercel metadata, caches/artifacts-ni çıxarır; explicit COPY runtime assets. CLI link-in yaratdığı `.env.local` OIDC credential gitignored-dir, upload edilmir.
 
-Official [Function limits](https://vercel.com/docs/functions/limitations): Hobby 2 GB/1 CPU və 300s; Pro/Enterprise max 4 GB/2 CPU və 800s, bəzi runtimes üçün extended 1800s beta. Bunlar account capability və measured RETRACE requirement deyil. Local public image actual uncompressed size **1,695,774,470 bytes (~1.58 GiB)**; compressed registry layer ölçməsi deyil. [VCR limits](https://vercel.com/kb/guide/how-to-use-vercel-container-registry): compressed layer 500 MB, image 15 GB. Cold starts/hosted RAM ölçülməyib. Production idle scale-down 5min, preview 30s; SIGTERM 30s grace. Filesystem persistence gözlənilmir; public startup package-i read-only oxuyur.
+[WebSocket docs](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections) native support public beta/all plans deyir. Session bir instance-a pin olunur; max duration-da connection bağlanır, reconnect fərqli instance-a gedə bilər. Immutable package persistence istəmir. Actual Streamlit hosted reconnect/media/download preview-də yoxlanmalıdır.
 
-ZIP/images üçün response-size gate də lazımdır: standard Function response limit 4.5 MB; [official guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions) streaming responses-in limitdən azad olduğunu deyir. Container/Streamlit media yolu ilə original full download-un işləməsi **unverified**-dir. External storage və rewrite başlanmayıb. Actual feature, filesystem və response behavior hesab/preview olmadan verified kimi təqdim edilmir.
+[Function limits](https://vercel.com/docs/functions/limitations): Hobby 2 GB/1 CPU, 300s; Pro/Enterprise max 4 GB/2 CPU, 800s (bəzi runtimes extended 1800s beta). Bunlar measured RETRACE requirement deyil. Initial local public image uncompressed **1,695,774,470 bytes (~1.58 GiB)**, Python 3.12.15 / Streamlit 1.61.1; reconstructed export follow-up build pending. [Registry limits](https://vercel.com/kb/guide/how-to-use-vercel-container-registry): compressed layer 500 MB, image 15 GB. Production idle scale-down 5min, preview 30s, SIGTERM 30s grace; filesystem persistence gözlənilmir.
+
+Standard Function response limit 4.5 MB; [streaming guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions) streaming responses istisnasını göstərir. Full 19.5 MB Streamlit download actual hosted acceptance gate-dir. External storage/another host/framework rewrite başlanmayıb.
 
 ## Actual verification
 
-Local command (keyless, no new inference):
-
 ```sh
-cd /home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton
 env -u OPENROUTER_API_KEY GAMEQA_PUBLIC_REPLAY=1 PYTHONPATH=src PORT=8531 .venv/bin/python scripts/start_deployment.py
+.venv/bin/python -m pytest -m 'not real_model' -q
 ```
 
-Local Python 3.13 / Streamlit 1.65 environment; public Docker image **Python 3.12.15 / Streamlit 1.61.1** ilə ayrıca build və browser yoxlamasından keçib. Image ID `sha256:240c4e298da035213397f5e106ac7e701650796b9b3aac270d4c565c20a5c9d8`. Hosted Vercel behavior hələ verified deyil.
+- Latest offline suite: **212 passed, 6 deselected, 32.50s**; focused UI **14 passed**. Real-model checks excluded; no new inference.
+- Independent review: all 20 original hashes, ZIP CRC/provenance, unchanged judgments/runtime identity pass; no credential patterns. Runtime reads existing archive bytes.
+- Before export follow-up, real Brave/CDP both local (Streamlit 1.65) and pinned Docker (1.61.1): desktop 1440×1000, mobile 390×844, separate Streamlit session 1280×900, refresh; FAIL/replay label, originals/crops/observations/rules visible, images decoded, overflow 0, console errors 0. Docker no key/.env/generated artifacts; frozen config verified. Latest export browser-download and hosted checks pending.
+- Ignored screenshots/results: `artifacts/retrace-ui-20261009/`. No key values logged.
+- GitHub OAuth token lacks `workflow` scope. Proposed extra container CI job removed from unpublished commits; existing workflow unchanged. Existing offline/Render-container CI passed; public Docker separately built/browser-tested locally. No force push/bypass.
+- New provider API calls **0**; inference cost **$0**. No paid hosting plan change. Hosted resource usage not yet measured.
 
-- `.venv/bin/python -m pytest -m 'not real_model' -q`: post-rebase **208 passed, 6 deselected, 23.60s**. Real-model checks excluded; no new inference.
-- Focused UI/deployment checks pass, including local safeguards, public immutable assets, no dotenv/engine/provider calls, absent/corrupt ZIP refusal, matching QA-only archive byte preservation and startup key stripping. QA archive simulations are not original model evidence.
-- Real Brave browser via isolated `/tmp` profile/CDP, both local and pinned Docker runtime: desktop 1440×1000, mobile 390×844, separate Streamlit session 1280×900; FAIL/replay label, originals/crops/observations/rules visible; desktop refresh passed; images decoded; horizontal overflow 0; console errors 0. Docker checks confirm no key/.env/generated artifacts and frozen config hash.
-- Screenshots/results və QA record ignored local `artifacts/retrace-ui-20261009/` daxilində qorunur; temporary browser files `/tmp/retrace-browser-evidence/`-də də var. No key values in logs. Browser downloaded original ZIP/hash verification **not run: original archive unavailable**.
-- Independent code review completed; startup flag whitespace defect found and fixed with parametrized regression.
-- GitHub rejected the first push because configured OAuth token lacks `workflow` scope for `.github/workflows/ci.yml`. Proposed additional container CI was preserved locally at `artifacts/retrace-ui-20261009/proposed-vercel-container-ci.patch` and removed from unpublished commits. Existing CI remains byte-identical to master: offline tests plus original Render Docker path. Additional public image was built and browser-tested locally. No force push, workflow permission bypass or credentials extraction.
-- Task provider API calls **0**, inference cost **$0**. Hosting cost not measured; no Vercel resources created.
+## Remaining gates və rollback
 
-## Remaining release gates and rollback
+1. Deploy preview, verify actual Streamlit session/FAIL/rules/observations/images/crops and full ZIP containing evidence.json. Match downloaded original assets to manifest hashes; verify refresh, separate anonymous session, desktop/mobile, no console errors/secrets/inference, cold start/reconnect.
+2. Latest CI green + independent review, normal PR merge; deploy exact merged commit to production. Repeat HTTPS verification without Vercel login wall; record final URL, SHA/settings/results here.
+3. Rollback: promote previous verified deployment in this RETRACE project; if none exists, disable the new deployment and fix on feature branch. Source changes through reviewed revert PR, no force push. Existing portfolio remains untouched.
 
-1. Owner connects Vercel account/team with current-plan container access and supplies original ZIP location. Do not put provider key in Vercel.
-2. Verify original archive identity/asset hashes and secret scan; commit only exact relevant original evidence. Keep public Analyze/approval disabled.
-3. Create a **new RETRACE** project, repo private, `Dockerfile.vercel`, `PORT=8501`, Fluid Compute; preview first. Preserve existing portfolio.
-4. Browser verify Streamlit session/FAIL/rules/observations/original images/crops, complete ZIP containing evidence.json and manifest-matching assets, refresh, independent anonymous session, desktop/mobile, reconnect after max duration/cold start, no console error/secrets/API inference. Check normal HTTPS access without Vercel login wall.
-5. Reviewed PR + all required checks green; merge normally, then deploy verified merged SHA to production and repeat unauthenticated URL/download verification. Record project, plan/settings, URL, deployed SHA and actual results here.
-6. Rollback after a verified deployment: promote the previous verified deployment from Vercel project Deployments; if none exists, disable the new RETRACE deployment and fix on a branch. Source rollback through reviewed revert PR; no force push. No existing deployment was changed in this session.
-
-If account features or actual Streamlit/large-download checks fail, stop and present the exact error. Smallest approved-scope alternative is an owner-authorized existing container host using the unchanged Dockerfile. It requires separate owner authorization; no host/storage purchase or framework rewrite is implied.
+If native hosted container/Streamlit/download fails, document exact platform error and request approval for the smallest alternative before architecture/hosting changes.
