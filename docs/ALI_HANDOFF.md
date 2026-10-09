@@ -1,83 +1,110 @@
-# ALI_HANDOFF - Ali-nin bu gunku hissesi (2026-10-09, yenilənib A3-dən sonra)
+# Ali handoff — final evidence və təqdimat
 
-Bu sened yalniz Ali-nin hissəsini (A0-A3, evidence workflow, demo/pitch materialları) əhatə edir. Celal-in hissəsi (final scoring, slide assembly) burada yoxdur. Branch: `feat/hackathon-vision-evidence`. Mən git əmri işlətməmişəm (yalnız read-only `git log` / `git branch -vv`).
+9 oktyabr 2026, Bakı, ~18:02 checkpoint. Submission **19:30**, rəsmi deadline **20:00**. Implementation freeze qüvvədədir; presentation, docs, verification və submission qalır.
 
-Qısa nəticə: kod dondurulub (D17). Pipeline end-to-end işləyir və bütün 12 dev cütündə REVIEW verir. Bug-ların hamısını PASS edən sadə metodlar (A, B) təhlükəlidir; hybrid (C) təhlükəsizdir, amma coverage 0/12. A3 yenidən-run A1-i 36/36 sətirdə eyni təkrarladı: bu *replication*-dır, ikinci nümunə deyil.
+**C5 consolidation update — supersedes tip/transfer status below:** fetched integration **`487f2028461b47013138be124ebf700b86a1c9f1`** üzərinə Ali final docs reconcile edilib. Actual combined offline suite **199 passed, 6 skipped, 11.20 s**. Vision/model/policy/final config dəyişmir; C4/code685/be1 və C2/source79 historical identities olaraq qalır. Compact **barrel replay + 4 saved provider captures** artıq tracked `deploy/replay/barrel/`-də local mövcuddur; bu bütün12C2ZIP bundle deyil. [Current Git plan](ali/GIT_FINALIZATION.md), [Celal C5 state](FINAL_GITHUB_STATE.md). PR **#4 audit zamanı externally MERGED oldu**; agent merge etmədi. Ali docs əvvəl integration-a reviewed PR ilə daxil olmalıdır; sonra yeni integration→master docs follow-up PR tələb olunur. Ali docs remote merge/submission və local fresh C5 UI hələ pending-dir.
 
-## 1. Commit zənciri (read-only `git log`, vaxtlar Baku)
+**Hazır:** end-to-end prototype, Qwen baseline, C2 raw cross-check, C4 UI-ready repo checkpoint, test evidence, pitch/video script, 7-slide PDF/PPTX və 110 s motion draft. **Final acceptance açıqdır:** Ali local C4 pre-flight, actual C2 ZIP bundle/full captures, final UI recording, second-device check və human submission confirmation.
 
-| Commit | Vaxt | Mənası |
-|---|---|---|
-| `08a0c3f` | - | Gemini provider (OpenAI-compatible), 429/503 backoff, `reasoning_effort` |
-| `cf861f1` | 14:47 | A0: dev12 seçimi (seeded, inference-dən əvvəl), image inventory, labeling sheets |
-| `667925f` | 14:48 | `evidence.json` sidecar (`gameqa.report.build_evidence` / `write_evidence`) və evidence ZIP exporter |
-| `0b75b8a` | 14:53 | A0 status və runtime inventory (Qwen RAM blocker, Gemini probe). A1 run-ları bu kodla edilib |
-| `e844aab` | 15:38 | Ali-nin human label-ları dondurulub (`docs/ali/labels_ali.csv`) |
-| `cac62c7` | 15:39 | A1 alətləri: VLM input dump (per-call cache provenance), A/B/C runner, scorer |
-| `a502c2d` | 15:48 | A1 diagnostic sənədi, Qwen-vs-Gemini reproducer, qərar D17 |
-| `a5590a5` | 15:52 | Post-freeze label audit, demo video notes, pitch evidence, ilk Ali handoff. A3 run-ı bu kodla edilib |
-| `04559f4` | 16:15 | A1 observation accuracy (Ali-nin marks), status board, A3 frozen config |
-| `3b794aa` | 16:27 | Report scope "global-change collapse" adlandırır (QA-D6), label audit düzəlişləri (QA-D2..D4), QA pre-A3 acceptance, A3 evidence |
+**Repository consolidation:** latest fetched integration delivery **`68501897746bf674d582fd810cd9d7e2cfb943e6`**, runnable C4 UI code **`be1ea0acce271df994b516f6fa297118e981a3dd`**. [Runbook](FINAL_DEMO_RUNBOOK.md) və [verification](C4_DEMO_VERIFICATION.json) Celal host-da replay/browser export readiness göstərir; fresh C4 inference yoxdur. Independent offline C4 suite **197 passed, 6 skipped, 8.79 s**. Model/policy/config unchanged-dir. Ali final docs latest integration-a reconcile olunur; sonra reviewed PR ilə `master`-ə toplamaq Ali tərəfindən istənilib. [Git finalization](ali/GIT_FINALIZATION.md). Remote merge/submission hələ edilməyib.
 
-**Push vəziyyəti (`git branch -vv`):** local `3b794aa`, `origin/feat/hackathon-vision-evidence` ondan **1 commit geridədir** (`ahead 1`). Yəni `3b794aa` hələ push olunmayıb; push-u Ali əlləri ilə edir (agentlər push etmir). Bu fayl, `PITCH_EVIDENCE.md`, `DEMO_VIDEO_NOTES.md` və `docs/ali/A3_review.md`, `EXPERIMENT_REGISTRY.md`, `configs/ali_a3_qwen.yaml` kimi yeni fayllar `git status`-a görə untracked/dəyişilmiş ola bilər; onları commit etmək `git-workflow-master` ilə olur, sonra Ali push edir. Cache qovluqları (`data/cache_ali_a1`, `data/cache_ali_a3`, `data/cache_ali_fresh`) commit olunmur. Commit-lərin hamısı master-ə merge olunmayıb; PR draft qalır.
+**17:46 əlavə local UI baxışı:** main checkout integration79a0ef7-dir; OpenRouter config ilə http://localhost:8501, health200/AppTest0exceptions. Ali `.env` update ilə initial auth401-i həll etdi: auth200, fresh app process dotenv key istifadə edir; generation edilməyib. [UI_LOCAL_OPENROUTER.md](ali/UI_LOCAL_OPENROUTER.md). Final recording gate ayrıca saxlanılır. Main checkout switch-dən sonra deck/PNG copies `artifacts/ali/presentation/`-dadır; tracked docs ayrıca docs branch-də qalır.
 
-## 2. A1 / A3 nəticəsi (n = 12 dev, 5 bug / 7 clean - Ali-nin label-ları)
+## Source və runtime identity
 
-| Arm | PASS/FAIL/REVIEW | Coverage | Bug false-PASS | Clean PASS |
+| Identity | Dəyər |
+|---|---|
+| Confirmed integration branch | `feat/hackathon-demo-integration` |
+| C2 raw verification source SHA | `79a0ef740196cbaa0639579386c6c591d2bfd8ca` |
+| Latest fetched integration delivery SHA | `68501897746bf674d582fd810cd9d7e2cfb943e6` — Ali active UI still79a0ef7 |
+| Freeze implementation code SHA | `bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3` |
+| Historical C2 inference code SHA | `c917532ac3161a0886f626985c53307eb2d477d8` — raw identity dəyişdirilməyib |
+| Runtime | OpenRouter / `google/gemini-3.5-flash` / low / prompt v9 |
+| Canonical config | `configs/openrouter_gemini_pilot.yaml`, merged hash **`eaa371255716`** |
+| B diagnostic config hash | `2dfeb64cd673` — output/cache namespace paths fərqli |
+| Ali vision freeze | `3591f7b`; fetched `74f84cf` əvvəlki integration merge-dir |
+| Report scope fix | `3b794aa` PR #3 history-dədir və final source-da saxlanılıb |
+| C4 UI-ready code SHA | `be1ea0acce271df994b516f6fa297118e981a3dd`; delivery6850189. Celal replay/browser checks READY; Ali local pre-flight pending |
+
+Git-workflow-master exact delivery SHA-nı fetch ilə təsdiqləyib. `3591f7b` ancestor-dur; vision/report source frozen checkpoint ilə byte-for-byte eynidir. Detached verification checkout `/tmp/ali-c2-79a0ef7.ROajGB/checkout`-dur. Presentation/docs local hazırlanır; push/PR agent tərəfindən edilmir.
+
+## C2 — final development runtime evidence
+
+Independent recompute: [C2_VERIFICATION.md](ali/C2_VERIFICATION.md), [C2_RECOMPUTED.json](ali/C2_RECOMPUTED.json). Mənbə exact `79a0ef7`-də `docs/c2_openrouter/` raw predictions, calls, stages, identities, usage və ZIP verification records-dur. 12 unique dev pair, 5 bug/7 clean; missing/duplicate IDs yoxdur.
+
+| Arm | PASS /FAIL /REVIEW | Coverage | Bug false-PASS | Bug FAIL | Clean PASS | Clean false-FAIL |
+|---|---|---|---|---|---|---|
+| C2 B full-frame VLM |1 /4 /7|5/12 (41.7%)|1/5|2/5|0/7|2/7|
+| C2 C hybrid |1 /4 /7|5/12 (41.7%)|1/5|3/5|0/7|1/7|
+
+**4 FAIL = 4 düzgün bug detection deyil.** C-də 3 bug FAIL və 1 clean false-FAIL var. B/C aggregate sayları eynidir, 10/12 pair eyni qərardır; booth C FAIL/B REVIEW, `vr_ef9b073a` C REVIEW/B FAIL. DINOv2 advantage ayrıca ablation ilə göstərilməyib.
+
+- **Missing pedestal `vr_c1f47c57`: hər iki arm yanlış PASS verir.** D1 label qalır; post-freeze audit small table object təsvirini missing stone pedestal kimi düzəldib. Bu main failure video/pitch-də saxlanılır.
+- Genuine clean PASS yoxdur: **0/7** hər iki arm-da. Outfit `vr_09a066d3` REVIEW-dur.
+- 80 fresh call/stage records, 0 application cache hits, 0 retries, HTTP200 80/80. **B+C provider-reported total $0.2871945**; C $0.1934625/56 calls, B $0.0937320/24 calls. Invoice independently verified deyil.
+- Celal host-da median orchestration wall C39.99005 s, B19.7196 s. Bunlar UI timing deyil; Ali Qwen host-u ilə hardware-controlled speed comparison sayılmır.
+- Raw-level config/model/prompt/usage checks verified-dir. Exact inventory rules və labels-in inference-dən uzaq tutulması Celalın execution report/implementation provenance-ına əsaslanır; full request/image capture audit bundle gələndə tamamlanır.
+
+## Qwen A1/A3 — baseline comparison
+
+Qwen 2.5-VL3B, prompt v9; A1 hash `3a144cfcbb67`, A3 `642b6e26f39d` (dump/cache namespace fərqi).
+
+| Arm | PASS /FAIL /REVIEW | Coverage | Bug false-PASS | Clean PASS |
 |---|---|---|---|---|
-| A pixel | 12/0/0 | 12/12 | 5/5 | 7/7 |
-| B full-frame VLM | 8/0/4 | 8/12 | 5/5 | 3/7 |
-| C hybrid | 0/0/12 | 0/12 | 0/5 | 0/7 |
+| A pixel |12 /0 /0|12/12|5/5|7/7|
+| B full-frame |8 /0 /4|8/12|5/5|3/7|
+| C hybrid |0 /0 /12|0/12|0/5|0/7|
 
-Mənbə: `docs/ali/A1_diagnostic.md`, `docs/ali/a1_evidence/score_raw.md`, A3 üçün `docs/ali/A3_review.md` (sec 3) və `artifacts/ali/a3/{A,B,C}/predictions.jsonl`. False-PASS həmişə coverage ilə birlikdə deyilir: C 0/5 at 0/12; A 5/5 at 12/12; B 5/5 at 8/12.
+C bütün pair-lərdə abstain edir; 9/12 global-change collapse-dir. A3 A1-i 36/36 semantic row-da təkrarlayıb, 80 fresh calls; **determinism check**, yeni sample deyil. Observation marks B y+p4/12, C9/12; strict y1/12 hər ikisi. Bir rater, partial credit və possible anchoring caveat saxlanılır.
 
-Həssaslıq (vr_330651ed clean sayılsa, 4 bug / 8 clean; `docs/ali/labels_audit.md`, `A3_review.md` sec 4): A 4/4 at 12/12; B 4/4 at 8/12 (clean PASS 4/8); C 0/4 at 0/12. Nəticə dəyişmir.
+**Label limitations:** labels A1 başladıqdan sonra dondurulub; 4/5 bug label assistant təklifi/düzəlişi + Ali təsdiqindən gəlib. Dev12 mixed-source development diagnostic-dir, held-out deyil; Unity samples hamısı bug-dur. `vr_330651ed` subtitle language change üçün cutscene rules-da text rule yoxdur: ambiguous kimi açıqlanır, frozen D1 dəyişdirilmir. Sensitivity-only Qwen A/B false-PASS4/4, C0/4 at coverage0/12. Historical eval60 başqa build-in regression nəticəsidir.
 
-**A3 = A1 (determinizm / regression yoxlaması):** 36/36 sətir eyni decision, n_proposals, truncation cause, region box və verdict; stage-1 mətn 24/24 eyni; 80 təzə VLM çağırışı, 0 cache hit (`A3_review.md` sec 1-2; `docs/ali/EXPERIMENT_REGISTRY.md`). Yalnız vaxt sahələri fərqlənir. Bu, eyni host, temperature 0, n = 2 run üçün keçərlidir; ümumi determinizm zəmanəti deyil. Effektiv nümunə yenə 12 cütdür. A3-ü "ikinci eksperiment" kimi təqdim etməyin.
+## Demo run-ları və recording gate
 
-**Observation accuracy (yeni siqnal):** Ali-nin marks (`docs/ali/a1_evidence/obs_review.csv`, `A1_diagnostic.md`): B y+p 4/12, C y+p 9/12; strict y hər ikisi 1/12 (hədəf 10/12 ödənmir). Caveat-lar: bir rater (Ali), mümkün anchoring (marks söhbətdə göstərilən nümunə mətnə yaxındır), n = 12, partial credit subyektivdir; Claude bir sətirdə razılaşmır (vr_43773eb8 C: y), onda C 2 y / 7 p olardı. Əsas: bu yaxşılaşma düzgün qərarlara çevrilmədi (C-də 0 PASS, 0 FAIL). "DINOv2 daha dəqiqdir" demək olmaz; yalnız "region crop VLM-in təsvirini qismən düzgün etdi" demək olar.
-
-Qərar D17 (`docs/DECISIONS.md`): Qwen build dondurulur, vision kodu dəyişmir. Səbəb: Unity bug-larda lokalizasiya düzgündür, problem VLM perception-dadır (Gemini 2/2 düzgün təsvir etdi, Qwen 0/2; n = 2 reproducer).
-
-## 3. Diqqət: QA tapıntıları (`docs/ali/A5_acceptance.md`) və bunların səsdə/yazıda necə deyilməsi
-
-| ID | Problem | Necə deməli |
+| Shot | Runtime / run ID | Nəticə |
 |---|---|---|
-| D1 | `vr_330651ed` cütünün cutscene `rules.yaml`-ında mətn qaydası yoxdur | "Rule D1 mətn dəyişikliyini qadağan edir" **demə**. De: subtitle dili dəyişib, qayda bunu aydın əhatə etmir, label qeyri-müəyyəndir, uncertainty yüksəkdir |
-| D2 | 5 bug label-dan 4-ü (vr_4b921c5d, vr_d07179d5, vr_c1f47c57, vr_330651ed) model output-larından sonra Claude tərəfindən təklif/düzəliş olunub, Ali təsdiq edib | IoU 0.60 / 0.71 uyğunluğu tam müstəqil sübut deyil; "mənim müstəqil label-im" demə |
-| D3 | `labels_audit.md`-də "10 pairs" səhv idi (9 ID) | düzəldilib |
-| D4 | vr_d07179d5 label mətni "glass/texture" deyir, şəkil booth damı və TELEPHONE yazısının itdiyini göstərir | frozen label dəyişdirilmir; obs_review-da Gemini mətni doğrudur |
-| D5 | vr_4b921c5d ZIP-də scene audit `allowed` deyir (yanlış) | Kamerada de: audit "allowed" dedi (səhv), region guard ziddiyyəti tutdu, yekun REVIEW-dur, FAIL deyil |
-| D6 | Collapsed run-larda Scope bölməsi lokalizasiyanın çökdüyünü demirdi | `3b794aa`-da düzəldilib; demo ZIP-lər bundan sonra yenidən yaradılıb və "NOT assessed: global change ... collapsed" sətri var (mən `report.md`-ni grep etdim) |
+| C2 barrel | `20261009T123704Z-8e4e19` | FAIL R1(D1), SCENE(D1); 4 fresh calls; orchestration wall31.520s, pipeline30.2167s |
+| C2 pedestal | `20261009T124621Z-0b0c2b` | **False-PASS**, missing pedestal |
+| C2 outfit | `20261009T123947Z-584a66` | REVIEW; clean PASS deyil |
+| Qwen barrel baseline | `20261009T112802Z-c4530d` | REVIEW; model texture/lighting deyir |
+| C1 fallback barrel | `20261009T115633Z-83936b`, direct Gemini hash `6cfbba559386` | FAIL R1(D1); CLI25.4442s, pipeline18.4305s; Celalın prior UI replay/download check-i |
 
-## 4. Nə qismən / ölçülməyib
-- `evidence.json` normal UI/CLI export-da yazılırmı: hook (`0e234d8`, Celal-in `feat/hackathon-demo-integration` branch-ı) bu branch-da deyil və mən yoxlamamışam. Hook gələndə `test_plain_export_report_writes_evidence` strict xfail XPASS olub fail verəcək; marker-i silin.
-- Demo ZIP-lər `artifacts/ali/demo_zips/`-də mövcuddur (3 ədəd, hamısı NEEDS_REVIEW); QA onları açıb yoxlayıb (`A5_acceptance.md`, "Demo ZIPs"). Əvvəlki "export script işlədilməyib" qeydi köhnəlib. Kamera qarşısında göstərəcəyin ZIP-i yenə də `unzip -l` ilə yoxla.
-- Cache status hesabatda "unknown (replay possible)" göstərilir (per-stage provenance yoxdur); A1/A3 run-ları təzə namespace-də olub, `calls.jsonl`-da per-call provenance var.
-- QA-nın A3 vizual yoxlaması `docs/ali/A3_review.md`-yə əlavə olunur; bu faylı yazanda hələ oxuya bilmədim (unverified).
-- Gemini yalnız 2 çağırış ilə sınanıb (free tier 20 sorğu/gün/model, D16).
-- Live wall time ölçülməyib. CPU reference: B 37-49 s, C 63-161 s cütlük başına (`A3_review.md` sec 2).
-- UI-nin dev12 cütləri üçün `configs/ali_a1_qwen.yaml`-ı necə götürdüyü, rules-i UI-ya yükləmə addımları və `streamlit run app.py` bu sessiyada yoxlanmayıb.
-- Dev12 cütləri `split: dev`-dir, UI "Demo pair" siyahısında görünmürlər; upload ilə və ya saxlanmış run-ı yükləməklə göstərin.
+**Final recording C4 UI-ready integration UI-da edilir; Qwen branch UI istifadə edilmir.** [C4 runbook](FINAL_DEMO_RUNBOOK.md) exact Windows launch command, run IDs və browser replay/download evidence-i ehtiva edir. Celal host-da barrel və subtitle browser ZIP source ilə byte-identical yoxlanıb; C4 calls0, fresh UI inference yoxdur. Ali local C4 launch və bundle/export pre-flight hələ pending-dir. Deployment URL hazırda məlum deyil.
 
-## 5. A1/A3-ü necə təkrar etmək olar
-Şərtlər: `.venv`, Ollama işləyir və `qwen2.5vl:3b` yüklənib, `data/work/<id>/` şəkilləri mövcuddur. İnferensdə label-lar istifadə olunmur.
+Linux canonical launch form (local self-test bu config ilə açıldı; final recording hələ pending-dir):
+
+```bash
+GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml .venv/bin/streamlit run app.py
 ```
-cd /home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton
-.venv/bin/python scripts/ali_a1_run.py --config configs/ali_a3_qwen.yaml --ids dev12 --arms A,B,C
-.venv/bin/python scripts/ali_a1_score.py
-```
-(A3 run-ı bu config ilə edilib, `A3_review.md` sec 6. `scripts/ali_a1_score.py`-nin A3 üçün argumentlərini yoxlamamışam.) Run resumable-dır. Real run `artifacts/ali/vlm.lock` tutur; eyni anda başqa Ollama işi işlətməyin. Təkrar run-da təzə cache namespace seçin, əks halda nəticələr cache-dən gələr. Qwen-vs-Gemini: `docs/ali/a1_evidence/stage1_qwen_vs_gemini.json`; təkrar üçün `GEMINI_API_KEY` mühit dəyişəni (açarı heç yerə yazmayın), kvota məhduddur.
 
-## 6. Evidence harada
-- Raw: `docs/ali/a1_evidence/predictions_{A,B,C}.jsonl`, `score_raw.md`, `obs_review.csv`; A3 üçün `artifacts/ali/a3/` və `artifacts/ali/a1_inputs/a3/` (local, ignored ola bilər).
-- Review/audit: `docs/ali/A1_diagnostic.md`, `A3_review.md`, `EXPERIMENT_REGISTRY.md`, `labels_audit.md`, `A5_acceptance.md`; status `docs/status/ali-today.md`.
-- VLM-in gördüyü şəkillər: `docs/ali/a1_evidence/vr_4b921c5d_R1_vlm_input.png`, `vr_d07179d5_R1_vlm_input.png`.
-- Saxlanmış C run-ları: `artifacts/20261009T112802Z-c4530d` (vr_4b921c5d), `20261009T112407Z-355ff0` (vr_330651ed), `20261009T113543Z-8a257e` (vr_09a066d3). Demo ZIP-lər: `artifacts/ali/demo_zips/`.
-- Pitch və video: `docs/ali/PITCH_EVIDENCE.md`, `docs/ali/DEMO_VIDEO_NOTES.md`.
+Credential adı `OPENROUTER_API_KEY`-dir; dəyər source/report/log-a yazılmır. Hər real VLM job `artifacts/ali/vlm.lock` tutmalıdır. Bu continuation-da **heç bir VLM job işlədilməyib**. Final footage saved runs-dan hazırlanacaq; açıq REPLAY label tələb olunur.
 
-## 7. Qalan addımlar (vaxtlar `docs/status/ali-today.md`-dən; deadline 20:00, submit 19:30)
-- **Hazırda (17:20-17:30):** docs commit (`git-workflow-master`), sonra Ali `3b794aa` və yeni commit-i əllə push edir, PR-ı ready edir (agentlər push etmir). 17:30-dan sonra yeni experiment, tuning, model run yoxdur.
-- **A4, 17:30-18:45:** 15 - Ollama/Streamlit rehearsal (17:30); 16 - 90-120 s video `DEMO_VIDEO_NOTES.md` shot list ilə, seqmentlər `REPLAY` / `PRERECORDED` / `LIVE` ilə işarələnir (18:30-a qədər); 17 - live wall time ayrıca ölçülür, təzə boş cache, başqa yük yoxdur, n göstərilir (18:30-18:45); 18 - video + 3 slide şəkli (A1 cədvəli, Qwen vs Gemini, failure nümunəsi) Celal-a (18:45). Celal-dan 17:00-a qədər deployment URL varmı soruşulmalı idi; cavab `ali-today.md`-də yoxdur (unverified).
-- **A5, 18:45-19:30:** qa-engineer başqa cihazdan yoxlayır (yalnız mövcud olanı; URL yoxdursa replay/video dəqiq adlandırılır), ZIP-i açır, Celal-in pitch rəqəmlərini raw sətirlərlə tutuşdurur (19:05), paket checklist (19:10): code commit, launch əmri (`.venv/bin/streamlit run app.py`), model/config identity, input provenance, raw predictions, metrics, report ZIP, video, pitch, limitations. Ali + Celal baxışı 19:20, submit 19:30; təsdiqi saxla. Mən heç bir xarici mesaj göndərməmişəm.
-- Qadağan sözlər (iki sənəddə də): "fine-tuned", "production-ready", "reduces QA workload", DINOv2 üstünlüyü iddiası; vr_4b921c5d üçün "FAIL".
+## Presentation və motion artifact-ləri
+
+- [Pitch PDF](ali/pitch/AI_Gaming_Pitch.pdf), [PowerPoint](ali/pitch/AI_Gaming_Pitch.pptx): 7 səhifə; problem → pipeline → barrel success → measured comparison → pedestal failure → evidence ZIP → next pilot.
+- [SLIDE_HANDOFF.md](ali/SLIDE_HANDOFF.md): 7×1920×1080 PNG və Celal üçün ayrıca 3 science PNG; tələb olunan UI kadrları.
+- [PITCH_EVIDENCE.md](ali/PITCH_EVIDENCE.md): verified numbers, source identities və limitations.
+- [DEMO_VIDEO_NOTES.md](ali/DEMO_VIDEO_NOTES.md): **113 s** labelled final recording shot list; actual final video hələ yoxdur.
+- [MOTION_HANDOFF.md](ali/MOTION_HANDOFF.md): [110 s silent motion evidence draft](../artifacts/ali/motion/ali_evidence_motion_DRAFT_110s.mp4), 1920×1080, H264/30fps, 5,700,613 bytes. FFprobe/full decode PASS; 7/7 source hashes final PNG-lərlə match.
+- Motion SHA256 `cda409954b356249d71c37d92cc4fdf9a0a7c39f8228fb19a9db6b9033dee228`. Video boyunca PRERECORDED / DRAFT / UI RECORDING PENDING labels var. Narration guide ayrıca artifact-dir; voice-over yoxdur.
+- **Final video path, team acceptance və submission confirmation: PENDING.** Motion draft final UI recording və submission-ready narrated demo deyil.
+
+PPTX səhifələri image-based-dir. PDF7pages, PPTX CRC/XML7slides və representative PNG readability yoxlanıb; desktop slide reader və second-device review gözlənir. Renderers local artifacts-dən istifadə edir, inference çağırmır.
+
+## Verification və açıq acceptance
+
+Latest C4 source `6850189`-də independent offline pytest **197 passed, 6 skipped, 8.79s**. C2 verification source `79a0ef7`-də əvvəlki suite **194 passed, 6 skipped, 5.14s**-dır. Real-model skips passing sayılmır. Əvvəlki docs branch193/6 və Celal C2 suite186/6deselected ayrı nəticələrdir.
+
+Manifest hashes dəyişməyib: inference `245815f5191e6708`, labels `a10ab8dd2f936ada`, eval60 IDs `ff765d14428cd944`. `prepare_data.py` işlədilməyib. 3 local Qwen demo ZIP CRC/required members/6hashes-each check keçib; global-change collapse wording həmin local exports-da mövcuddur.
+
+12 C2 ZIP üçün committed verification records raw run IDs/decisions ilə match-dir. **Actual C2 ZIP bytes local checkout-da yoxdur**; CRC/member hash audit transfer-dən sonra edilir. Celal host-dakı `artifacts/c2-openrouter-20261009/` bundle-i gələndə existing Qwen artifacts üstünə yazılmır. Native cache status unknown (replay possible)-dır; fresh-call evidence ayrı records-dadır.
+
+Qalan qəbul:
+
+1. C4 UI-ready/launch/browser evidence repo-dadır; Ali host-da fresh C4 launch + saved-run pre-flight hələ pending-dir.
+2. Actual C2 bundle: barrel/pedestal ZIP CRC, required files/stored hashes, full request input-label audit.
+3. Ali final UI recording + narration, ≤120s; replay/live labels və timing ayrılığı.
+4. Second-device check, final deck human review və package link-ləri.
+5. Final handoff metadata19:25; authorized human submission **19:30** və confirmation.
+
+Yeni features/model experiments/threshold tuning yoxdur. Pitch konkret observed behavior, rule, evidence və traceability üzərində qurulur; fine-tuned/production-ready/QA workload reduction/generalization claims istifadə edilmir.

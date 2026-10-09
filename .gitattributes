@@ -1,2 +1,3 @@
 # Historical replay hashes describe exact bytes, including original line endings.
 deploy/replay/** -text
+docs/ali/pitch/AI_Gaming_Pitch.pdf binary

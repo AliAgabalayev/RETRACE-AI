@@ -18,3 +18,4 @@ models/
 *.egg-info/
 .claude/agent-memory/
 .idea/
+data/cache_ali_*/
