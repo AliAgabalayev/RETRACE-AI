@@ -258,15 +258,22 @@ def evidence_zip(result: AnalysisResult, run_dir: Path, *, public_replay: bool =
 def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool = False) -> None:
     static_replay = public_replay and os.environ.get("GAMEQA_PUBLIC_STATIC", "").strip() == "1"
 
-    def image_source(path: Path) -> str:
-        return static_replay_url(path) if static_replay else str(path)
+    def render_saved_image(target, path: Path, caption: str, **kwargs) -> None:
+        if static_replay:
+            url = html.escape(static_replay_url(path), quote=True)
+            label = html.escape(caption, quote=True)
+            target.html(f'<figure style="margin:0"><img src="{url}" alt="{label}" '
+                        'style="width:100%;max-width:100%;height:auto">'
+                        f'<figcaption>{label}</figcaption></figure>')
+        else:
+            target.image(str(path), caption=caption, **kwargs)
 
     ref_p, cand_p = run_dir / "images/reference.png", run_dir / "images/candidate.png"
     st.subheader("Reference and candidate")
     if ref_p.is_file() and cand_p.is_file():
         c1, c2 = st.columns(2)
-        c1.image(image_source(ref_p), caption="Reference · original screenshot", width="stretch")
-        c2.image(image_source(cand_p), caption="Candidate · original screenshot", width="stretch")
+        render_saved_image(c1, ref_p, "Reference · original screenshot", width="stretch")
+        render_saved_image(c2, cand_p, "Candidate · original screenshot", width="stretch")
     else:
         st.error("An original screenshot is missing from this saved run.")
 
@@ -327,7 +334,7 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
             for col, suffix, cap in ((cc1, "ref", "Reference crop"), (cc2, "cand", "Candidate crop (aligned)")):
                 f = run_dir / f"crops/{p.id}_{suffix}.png"
                 if f.is_file():
-                    col.image(image_source(f), caption=cap, width="stretch")
+                    render_saved_image(col, f, cap, width="stretch")
                 else:
                     col.warning("Stored crop is missing.")
             if j:
@@ -384,7 +391,7 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
         for rel, cap in (("diagnostics/heatmap.png", "DINOv2 distance heatmap"),
                          ("diagnostics/overlap_mask.png", "Alignment overlap mask")):
             if (run_dir / rel).is_file():
-                st.image(image_source(run_dir / rel), caption=cap)
+                render_saved_image(st, run_dir / rel, cap)
         st.caption(f"Recorded run: {result.run_id}")
         if public_replay:
             st.caption("Public replay · live analysis and reference approvals disabled · no new API calls.")

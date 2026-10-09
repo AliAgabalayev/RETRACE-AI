@@ -3,6 +3,7 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import shutil
 import zipfile
 
@@ -394,13 +395,16 @@ def test_public_static_replay_uses_original_file_urls_and_validated_download(pub
     app.run()
     app.run()
     assert not app.exception, app.exception
-    urls = _image_urls(app)
+    html = "\n".join(element.proto.body for element in app.get("html"))
+    urls = re.findall(r'<img[^>]* src="([^"]+)"', html)
     expected = ["images/reference.png", "images/candidate.png", "diagnostics/heatmap.png",
                 "diagnostics/overlap_mask.png"]
     expected += [f"crops/{p['id']}_{side}.png" for p in stored["proposals"] for side in ("ref", "cand")]
     assert set(urls) == {"/app/static/replay/barrel/" + relative for relative in expected}
+    assert not app.get("image")
+    assert 'alt="Reference · original screenshot"' in html
+    assert 'alt="Candidate · original screenshot"' in html
     assert not app.get("download_button")
-    html = "\n".join(element.proto.body for element in app.get("html"))
     assert 'href="/app/static/replay/barrel-replay.zip"' in html
     assert f'download="{stored["run_id"]}-replay.zip"' in html
     assert "Download evidence ZIP" in html
