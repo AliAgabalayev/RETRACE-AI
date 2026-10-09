@@ -31,3 +31,9 @@ Repro: tests/policy/test_decision.py::test_allowed_citing_unknown_rule_id_is_not
 - artifacts/eval/e1_classical_eval_subset60 (42 bug/18 no_bug): BA 0.524, bug recall 0.048. Essentially chance; a fixed global pixel-fraction cannot separate classes at 3840x2160.
 - E2 pipeline not run: Ollama needs ~9 GB free system RAM (QA-D6) and dl-engineer latency pending.
 - evaluate.py fixes after code-review: resume guard (method/config/ids/threshold), unexpected/missing IDs reported, side stats over scored set.
+
+## Final acceptance pass (2026-10-09, session 3)
+- pytest 164 passed / 6 skipped; GAMEQA_REAL=1 real_model 6 passed (cache-served, 7 s); ui_smoke OK; vr_bcbcf341 false PASS reproduced (cache-served).
+- E1/E2/E4 metrics independently recomputed, match. See docs/QA_REPORT.md (final) for defect table QA-D9..D15 and the Definition-of-Done verdict.
+- For senior-pm: no blocker code defect. Open important: QA-D10 (retry errors pollute judgment -> lost FAILs, non-reproducible), QA-D11 (uncompared border strip after alignment can hide a bug and PASS; reviewer-found, not reproduced end to end). Unmet DoD: uncommitted tree, HANDOFF.md missing.
+- QA-D6/D7/D8 are RESOLVED (see D6, D9).

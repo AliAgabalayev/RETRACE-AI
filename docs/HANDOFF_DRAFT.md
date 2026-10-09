@@ -1,15 +1,15 @@
 # HANDOFF (qaralama, faza 2) - documentation-engineer
 
-Qeyd: bu qaralamadır; yekun `HANDOFF.md`-ni senior-pm yığır. "VERIFIED" = status faylı, QA_REPORT, senior-pm və ya mənim özümün işlətdiyim komanda təsdiq edib. "UNVERIFIED" = hələ heç kim işlətməyib. "PENDING" = nəticə hələ gəlməyib (E2 gedir).
+Qeyd: bu qaralamadır (faza 3, final); yekun `HANDOFF.md`-ni senior-pm yığır. "VERIFIED" = status faylı, QA_REPORT, senior-pm və ya mənim özümün işlətdiyim komanda təsdiq edib. "UNVERIFIED" = hələ heç kim işlətməyib. qa-engineer-in real-model testləri bu qaralama yazılanda hələ gedirdi; onların nəticəsi burada YOXDUR.
 
 ## 1. Nə işləyir, nə partial-dır?
-- İşləyir (VERIFIED): `.venv/bin/python -m pytest -q` -> 163 passed, 6 skipped (senior-pm; mən də işlətdim, 5.5 s). 6 skipped = `GAMEQA_REAL=1` ilə açılan `real_model` testləri.
-- İşləyir (VERIFIED, real DINOv2 + real `qwen2.5vl:3b`, SYNTHETIC fixture): `object_removed` -> FAIL (R1 forbidden D1), `allowed_and_forbidden` -> FAIL, `lighting_change` -> NEEDS_REVIEW. Hamısı `real / complete`. Qeyd: `object_removed` run-ı VLM disk cache-dən gəlib (3-4 s); cache-siz bir pair median ~85 s çəkir (CPU).
+- İşləyir (VERIFIED): `.venv/bin/python -m pytest -q` -> 164 passed, 6 skipped (senior-pm; mən də işlətdim, 5.0 s). 6 skipped = `GAMEQA_REAL=1` ilə açılan `real_model` testləri.
+- İşləyir (VERIFIED, senior-pm, real DINOv2 + real `qwen2.5vl:3b`, SYNTHETIC fixture, `gameqa.cli analyze`): `object_removed` -> FAIL, `allowed_and_forbidden` -> FAIL, `small_object_removed` -> FAIL (run `20261009T065813Z-43cffa`), `clothing_color_change` -> PASS (0 proposal, scene audit `allowed A2`; run `20261009T065807Z-0f8434`; artifact-i mən oxudum), `lighting_change` -> NEEDS_REVIEW, `identical` -> PASS (deterministic shortcut, VLM-siz; run `20261009T065816Z-3054be`). Hamısı `real / complete`. Bəzi VLM cavabları disk cache-dən gəlib (latency 0.0); cache-siz pair median ~70 s çəkir (CPU).
 - İşləyir (VERIFIED, mən): CLI `--mock timeout|allowed` -> `NEEDS_REVIEW [MOCK]`; `approve` -> `references/<id>/versions/v1.png, v2.png` + `history.json`.
-- Partial: `clothing_color_change` -> PASS yalnız nəzəridir (dl-engineer: heç bir proposal yoxdur, audit `allowed A2`). End-to-end UNVERIFIED; senior-pm E2-dən sonra işlədəcək.
-- Partial: Streamlit UI başlayır (VERIFIED), amma real VLM ilə Analyze düyməsi UI-dan mənim tərəfimdən yoxlanmayıb (CLI eyni `pipeline.analyze`-ı çağırır).
-- Zəif: whole-scene audit (3B model removal-ı bəzən `allowed` adlandırır; `validate_response` bunu rədd edir), qaydaları (rules) xəritələmə, benchmark pair-lərdə recall (dev-də 10 pair-in heç birində validated `forbidden` olmayıb).
-- E2/E4 nəticələri: bax bölmə 6 (PENDING).
+- İşləyir (VERIFIED, senior-pm): benchmark `demo` split, `batch --split demo --out artifacts/demo/demo_split.jsonl`: 5 pair-in hamısı NEEDS_REVIEW, `real / complete`, hər biri 75-262 s (bax bölmə 6).
+- UI: VERIFIED yalnız headless: `scripts/ui_smoke.py` (Streamlit `AppTest`, real engine) keçdi: Analyze -> FAIL göründü, rerun inference-i təkrar etmədi, approve -> v1+v2+`history.json`. VLM cavabları əvvəlki real run-ın disk cache-indən gəlib. **Real brauzerdə klik-klik yoxlama VERIFIED DEYİL** (Chrome extension qoşulmayıb).
+- Zəif: whole-scene audit (3B model removal-ı bəzən `allowed` adlandırır; `validate_response` bunu rədd edir), qaydaları (rules) xəritələmə, benchmark pair-lərdə recall (E2-də 42 bug-dan 1 FAIL tutulub, bax bölmə 6).
+- Nəticə: sistem "konservativ triage" kimi işləyir (nadir hallarda bug-ı PASS edir, amma pair-lərin ~97 %-ni review-ya atır). Hipotez NOT SUPPORTED (bölmə 6).
 
 ## 2. Setup/run (hamısı `README.md`-də)
 - VERIFIED: `.venv` (`--system-site-packages`), `pip install streamlit`, `pip install -e . --no-deps`, `ollama pull qwen2.5vl:3b`.
@@ -20,7 +20,7 @@ Qeyd: bu qaralamadır; yekun `HANDOFF.md`-ni senior-pm yığır. "VERIFIED" = st
 - Gizli məlumat yoxdur: lokal setup üçün heç bir API key lazım deyil (cloud key-lər expired idi, D2).
 
 ## 3. Demo pair-lər
-`docs/DEMO_RUNBOOK.md`. Üç hal: forbidden = `object_removed` (FAIL), allowed = `clothing_color_change` (UNVERIFIED), uncertain/error = `lighting_change` (NEEDS_REVIEW) + MOCK `timeout` yolu. Bütün fixture-lər SYNTHETIC-dir. Real benchmark `demo` split-də 5 pair var (`vr_73635d70`, `vr_536596f0`, `vr_2ada9903`, `vr_b5647b43`, `vr_9aa8a337`); nəticələri "pending".
+`docs/DEMO_RUNBOOK.md`. Üç hal: forbidden = `object_removed` (FAIL), allowed = `clothing_color_change` (PASS, real run-da müşahidə olunub, amma bu bir əl ilə çəkilmiş pair-dir, ümumi PASS qabiliyyəti sübutu deyil), uncertain/error = `lighting_change` (NEEDS_REVIEW) + MOCK `timeout` yolu. Bütün fixture-lər SYNTHETIC-dir. Real benchmark `demo` split-də 5 pair var (`vr_73635d70`, `vr_536596f0`, `vr_2ada9903`, `vr_b5647b43`, `vr_9aa8a337`); hamısı NEEDS_REVIEW (bölmə 6).
 
 ## 4. Screenshot-dan verdict-ə code path
 `docs/CODE_WALKTHROUGH.md` (real `artifacts/20261008T230650Z-1335da` izlənib). Qısa: `analyze()` -> `align()` -> `FeatureExtractor.distance_map()` -> `propose()` -> `Judge.judge_region()` + `Judge.audit_scene()` -> `decide()`.
@@ -35,35 +35,54 @@ Niyə xəta `NEEDS_REVIEW` olur: timeout, yanlış JSON, mock, truncation, etiba
 
 ## 5. Nəyi harada dəyişmək
 - Model, timeout, threshold, region cap, deadline: `configs/default.yaml` (açarlar: `vlm.model`, `vlm.timeout_s`, `proposals.dinov2_threshold` 0.35, `proposals.classical_threshold` 40, `proposals.max_regions` 8, `proposals.global_change_fraction` 0.10, `alignment.*`, `run.deadline_s`). Defolt dəyişəndə `docs/DECISIONS.md`-ə yaz.
-- Başqa VLM provider: `Judge._ollama_reply` (`judge.py:262`) yanına yeni metod, `provider:` açarı.
+- Başqa VLM provider: `Judge._ollama_reply` (`judge.py:247`) yanına yeni metod, `provider:` açarı.
 - Prompt: `src/gameqa/vision/prompts.py`; dəyişəndə `PROMPT_VERSION` artır (cache key-in hissəsidir). Nümunə cümlə əlavə etmə: 3B model onları kopyalayır.
 - Cavab yoxlaması: `judge.validate_response`.
 - Final qərar siyasəti: `src/gameqa/decision.py` (testlər `tests/policy/test_decision.py`).
 - Rules: UI cədvəli və ya YAML (`configs/rules_example.yaml`); benchmark üçün `data/manifest.py:rules_from_question`.
 - Sınaq üçün konfiqi dəyişmədən override: `--config extra.yaml`.
+- Prompt versiyası config açarı deyil: `PROMPT_VERSION` (`prompts.py`, v9). `Judge`-in default-ları indi yaml ilə eynidir (D11).
+- `approve`: real-engine PASS olmayan run üçün CLI-də `--force`, UI-da əlavə "override" checkbox lazımdır (D11).
+- Model yüklənməsi uğursuz olubsa: Streamlit sidebar-da "Reload models" (restart lazım deyil).
 
-## 6. E2 / E4 nəticələri (senior-pm dolduracaq) - PENDING
-- E2 (pipeline, 60 pair, `artifacts/eval/e2_pipeline_subset60`): PENDING.
-- E4 (vlm_only, 60 pair): PENDING.
-- E1 classical baseline (VERIFIED, QA): full eval 205 pair, balanced accuracy 0.516 (bug recall 0.03) ~ təsadüf səviyyəsi; subset60: 0.524.
-- Hipotez ("DINOv2 proposals VLM-ə kömək edir") hələ ÖLÇÜLMÜYÜB. Nəticə yazılanda: per-source (Unity hamısı bug, no_bug yalnız Cutscene) və review->FAIL xəritəsi ilə balanced accuracy.
+## 6. E2 / E4 / E1 nəticələri (senior-pm-in verdiyi faktlar; mənbə `docs/EXPERIMENTS.md` bölmə 6, D11, D12)
+Hamısı eyni 60 held-out eval pair-ində (42 bug / 18 no_bug), real DINOv2 + `qwen2.5vl:3b`, prompt v9, dondurulmuş config. Əsas metrik: balanced accuracy (BA), review -> FAIL xəritəsi.
+
+| Metod | PASS / FAIL / REVIEW | BA | Bug-ın PASS olması (false PASS) | Review rate |
+| --- | --- | --- | --- | --- |
+| E1 classical pixel-diff | 58 / 2 / 0 | 0.524 | 40/42 | 0 % |
+| E2 pipeline (DINOv2 + VLM) | 1 / 1 / 58 | 0.488 | **1/42** | 96.7 % |
+| E4 yalnız VLM (whole-scene) | 43 / 0 / 17 | 0.385 | **33/42** | 28.3 % |
+
+- **Verdikt (əvvəlcədən elan olunmuş qayda): hipotez NOT SUPPORTED** bu operating point-də (3B VLM, CPU, prompt v9, 60 pair). E2 E1-dən yaxşı deyil (0.488 < 0.524, yuxarı CI sərhədi 0.500).
+- E2-nin aşağı false-PASS-ı əsasən **abstention**-dır: 60 run-ın 53-ü `truncated` idi (37 global-change collapse, 16 region cap) və truncation həmişə NEEDS_REVIEW verir. "Həmişə NEEDS_REVIEW" eyni təhlükəsizliyə və BA 0.500-ə malikdir. E2 bunun üstünə 1 düzgün FAIL (`vr_36133e80`) və 1 yanlış PASS (`vr_bcbcf341`) əlavə edir.
+- E2b (yalnız classical proposal + VLM) və E3 (proposal recall) İŞLƏDİLMƏYİB, ona görə "DINOv2 proposal-ları kömək edir" iddiası təkbaşına ölçülməyib.
+- E1 threshold (D12): əvvəlki split-də tune olunmuşdu (23/37 "dev" ID indi eval-dadır); cari dev split-də (40 ID) yenidən tune olundu: threshold 0.782, dev BA 0.515; nəticələr dəyişmədi, subset60 BA 0.524, full eval BA 0.516. İndi leakage-clean.
+- Confound: unity pair-lərin hamısı bug, no_bug yalnız cutscene-dir; yalnız cutscene-də false-positive ölçmək olar (N kiçik: 18 no_bug).
+- Benchmark `demo` split (5 pair, real, `artifacts/demo/demo_split.jsonl`, mən oxudum): hamısı NEEDS_REVIEW. Region sayı: `vr_73635d70` 1, `vr_536596f0` 1, `vr_2ada9903` 12 (8-i judge olunub, truncated), `vr_b5647b43` 8, `vr_9aa8a337` 1. Müddət 75-262 s. Bir çox region üçün cavab `validate_response`-dan keçməyib ("invalid or failed model response").
+- Pair sayı kiçikdir: bu smoke test-dir, yalnız iri effektləri göstərir.
 
 ## 7. Ən vacib known failure-lar (reproduce yolları ilə)
-1. Kiçik obyekt: `small_object_removed` (12 px coin). DINOv2 max distance 0.35 = threshold (etibarsız); classical tutur. Reproduce: fixture + `--config` ilə `proposals.sources: [dinov2]` (UNVERIFIED).
-2. Dəyişiklik proposal vermir: `clothing_color_change` heç bir region yaratmır; qərar yalnız scene audit-ə söykənir.
-3. Qlobal dəyişiklik: cutscene pair-lər `no_bug` olsa belə qlobal fərqlənir -> bir full-frame region, `truncated=true` -> həmişə `NEEDS_REVIEW` (PASS mümkün deyil).
-4. Alignment həssaslığı: `UNRELIABLE` olanda region-level FAIL söndürülür (D9).
-5. Kalibrasiya olunmamış 3B verdict-lər: VLM obyektin adını səhv yazır ("brown blocks" vs "barrel"), amma verdict düzgün ola bilər. Self-confidence istifadə olunmur.
-6. Latency: CPU-da ~20 s region, ~35 s audit, median ~85 s/pair.
-7. Selective download: yalnız metadata + seçilmiş şəkillər endirilib (33.4 GB-ın hamısı yox); `sha256_*` raw JPEG-dir.
+1. **Yanlış PASS: `vr_bcbcf341` (Unity, bug).** Ən təhlükəli nəticə. DINOv2 + classical proposal `R1 [1213,1973,3003,2160]` yolun yerə düşən teksturunun yoxluğunu düzgün əhatə edir; amma VLM bunu "license plate more visible" kimi təsvir etdi -> `allowed A1`, whole-scene audit isə "brighter lighting" dedi -> `allowed A1`. İkisi də validated olduğu üçün `decide()` PASS verdi. Siyasət dizayn olunduğu kimi işlədi; problem VLM-in mühakimə keyfiyyətidir. Bunu tuning ilə düzəltmədik, çünki bu, eval label-dan istifadə etmək olardı. Run saxlanılıb: `artifacts/20261009T003250Z-58905e` (`report.md`, `crops/`, `rules.yaml`). Reproduce (real VLM çağırır, mən təkrar ETMƏMİŞƏM):
+   `.venv/bin/python -m gameqa.cli analyze --reference data/work/vr_bcbcf341/reference.png --candidate data/work/vr_bcbcf341/candidate.png --rules artifacts/20261009T003250Z-58905e/rules.yaml --sample-id vr_bcbcf341`
+   Növbəti addım: bölmə 9, 1-3-cü maddələr.
+2. Çox yüksək review rate (E2: 58/60). Səbəb: global-change collapse (37 run) və region cap (16 run). Cutscene pair-lər `no_bug` olsa belə qlobal fərqlənir -> bir full-frame region, `truncated=true` -> həmişə `NEEDS_REVIEW`. Dev-də threshold və collapse dəyişikliyi eval-a baxmadan edilməlidir.
+3. Kiçik obyekt: `small_object_removed` (12 px coin). DINOv2 max distance 0.35 = threshold (etibarsız); classical tutur (real run FAIL, `20261009T065813Z-43cffa`). DINOv2-only miss-i görmək üçün `--config` ilə `proposals.sources: [dinov2]` (UNVERIFIED).
+4. Dəyişiklik proposal vermir: `clothing_color_change` heç bir region yaratmır; qərar yalnız scene audit-ə söykənir (real run PASS). Eyni mexanizm `vr_bcbcf341`-də səhv PASS-a gətirə bilər.
+5. Alignment həssaslığı: `UNRELIABLE` olanda region-level FAIL söndürülür, yalnız `SCENE` judgment FAIL verə bilər (D9).
+6. Kalibrasiya olunmamış 3B verdict-lər: VLM obyektin adını səhv yazır ("brown blocks" vs "barrel"), amma verdict düzgün ola bilər. Self-confidence istifadə olunmur.
+7. Latency: CPU-da ~20 s region, ~35 s audit; E2-də median 70 s, mean 116 s, p90 238 s per pair; demo pair-lər 75-262 s.
+8. Selective download: yalnız metadata + seçilmiş şəkillər endirilib (33.4 GB-ın hamısı yox); `sha256_*` raw JPEG-dir.
 
 ## 8. Doc/code uyğunsuzluqları (bug kimi bax)
-Siyahı `docs/READABILITY_FEEDBACK.md` "Mismatches" bölməsindədir. Əsasları: `configs/default.yaml:43` `vlm.prompt_version: v1` ölüdür (real versiya `prompts.py:11` = `v9`); `artifacts/20261008T230650Z-1335da` köhnə engine-mode ilə `degraded` yazılıb; `decision.py:1-9` modul docstring-i D9-un alignment qaydasını əks etdirmir; mock `timeout` səbəbi `decide()` mətnində görünmür.
+Siyahı `docs/READABILITY_FEEDBACK.md` "Mismatches" bölməsindədir. D11 təmizliyindən sonra qalanlar: (a) `docs/QA_REPORT.md` köhnədir (4 skipped, "E2/E4 not run", xfail); (b) `artifacts/20261008T230650Z-1335da` köhnə engine-mode ilə `degraded` yazılıb (eyni pair `20261008T230730Z-818bb9` `real/complete`-dir); (c) D4 `analyze(...)` imzasında `run_dir=` yoxdur; (d) `MOCK_BEHAVIORS` hələ üç yerdə təkrarlanır. Həll olunanlar: `vlm.prompt_version` ölü açarı silindi, `judge` default-ları yaml ilə eynidir, `decision.py` docstring-i D9-u əks etdirir, `SCENE_REGION_ID` ortaq sabitdir, mock timeout səbəbi indi `decide()` mətnində görünür.
 
 ## 9. Ali üçün növbəti işlər (prioritet sırası ilə)
-1. E2/E4 nəticələrini oxu (`docs/EXPERIMENTS.md`, `artifacts/eval/*`), hipotez haqqında senior-pm-in tövsiyəsini yoxla. Yoxlama: `scripts/evaluate.py score --run artifacts/eval/e2_pipeline_subset60`.
-2. `clothing_color_change`-i real engine ilə işlət (UI və ya CLI). Gözlənti: PASS və ya NEEDS_REVIEW; PASS-dırsa audit `allowed A2` validated olmalıdır. Fayl: `vision/judge.py`, `decision.py`.
-3. Daha güclü VLM (cloud və ya GPU-ya sığan) ilə eyni prompt-ları dev split-də müqayisə et. Fayllar: `judge.py` (`_ollama_reply`), `configs/default.yaml`. Yoxlama: eyni 10 dev pair, validated `forbidden` sayı və timing.
-4. Small-object recall: `dinov2_threshold` və `classical_threshold`-u yalnız dev split-də yoxla (eval split-ə toxunma). Yoxlama: `tests/vision` + `small_object_removed`.
-5. Okunaqlılıq düzəlişləri (`docs/READABILITY_FEEDBACK.md`): ölü config açarı, `judge.py:345` təkrar şərt, `_rule_fields` istifadə olunmayan açarlar.
-6. 5 demo benchmark pair-i işlət və `docs/DEMO_RUNBOOK.md` cədvəlində "pending" xanalarını doldur.
+1. `vr_bcbcf341` false PASS-ı anla (30 dəq): `artifacts/20261009T003250Z-58905e/report.md` və crop-lara bax. Ölç: eyni R1 crop-u daha güclü VLM-ə ver. Fayllar: `src/gameqa/vision/judge.py`, `configs/default.yaml`. Yoxlama: dev split-də (eval-a toxunmadan) validated `forbidden`/`allowed` düzgünlüyü.
+2. "Removal şübhəsi" qaydası: proposal-da DINOv2 mesafəsi yüksəkdirsə və VLM "lighting/brightness/more visible" kimi deyirsə, `allowed` PASS vermək əvəzinə review. Fayl: `src/gameqa/decision.py` (yalnız `docs/DECISIONS.md`-ə yazaraq, `tests/policy/test_decision.py` ilə). Diqqət: bu, review rate-i artırır.
+3. Daha güclü VLM (cloud və ya GPU-ya sığan) ilə eyni prompt-ları dev split-də müqayisə et. Fayllar: `judge.py` (`_ollama_reply`), `configs/default.yaml`. Yoxlama: eyni 10 dev pair, validated `forbidden` sayı və timing. Bu, hipotezi ədalətli test etmək üçün ən böyük lever-dir.
+4. Review rate-i azalt: global-change collapse threshold-u (`proposals.global_change_fraction` 0.10) və `max_regions` 8-i yalnız dev split-də yoxla; eval split-ə toxunma (protokol qaydası 2). Yoxlama: dev-də review rate və false PASS birlikdə.
+5. E2b ablation (classical-only proposal + VLM) işlət ki, "DINOv2 kömək edir" iddiası təkbaşına ölçülsün. Fayl: `scripts/evaluate.py predict`, `configs` ilə `proposals.sources: [classical]`.
+6. Small-object recall: `dinov2_threshold` və `classical_threshold`-u yalnız dev split-də yoxla. Yoxlama: `tests/vision` + `small_object_removed`.
+7. Real brauzerdə `streamlit run app.py` ilə klik-klik yoxla (VERIFIED deyil), `docs/DEMO_RUNBOOK.md`-dəki addımlarla.
+8. Okunaqlılıq düzəlişləri: `docs/READABILITY_FEEDBACK.md`.

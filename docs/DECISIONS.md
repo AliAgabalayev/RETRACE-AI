@@ -45,7 +45,7 @@ class Judge:
     # Never raises on provider errors: returns verdict=uncertain with errors filled.
 
 # src/gameqa/pipeline.py  (python-developer)
-def analyze(pair: PairInput, cfg: dict, *, judge: Judge | None = None, extractor: FeatureExtractor | None = None) -> AnalysisResult:
+def analyze(pair: PairInput, cfg: dict, *, judge: Judge | None = None, extractor: FeatureExtractor | None = None, run_dir: Path | None = None) -> AnalysisResult:  # run_dir added by APP
     """Validates input, aligns, extracts, proposes, crops, judges, audits, calls decision.decide, writes artifacts."""
 
 # src/gameqa/storage.py  (python-developer)
@@ -87,3 +87,21 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 - Global-change collapse: if ≥10 % of the valid area exceeds the DINOv2 threshold, `propose` returns one full-frame region with `truncated=True` → never auto-PASS (tuned on dev). DINOv2 threshold 0.35 unchanged.
 - Engine mode: only component failures (provider error / timeout / exception) mark a run `degraded`; a real answer rejected by validation stays `real/complete` and becomes NEEDS_REVIEW via `decide`.
 - E2 runs on all 60 IDs of `eval_subset_60.json` (not cut to 40: cutting would need label-based re-selection; ~85–100 min is affordable). Config and prompt frozen at this commit; no changes during or after based on eval results.
+
+## D11 — E2 result, known false PASS, post-eval cleanup (session 3, after power loss)
+- Power loss during E4 (50/60 done). E2 had completed 60/60; prediction files validated line by line, E4 resumed with `--out` (resume) on the same frozen config.
+- E2 (real DINOv2 + qwen2.5vl:3b, prompt v9, 60 eval pairs): 58 NEEDS_REVIEW, 1 FAIL (bug, correct), 1 PASS (bug → **false PASS**). Balanced accuracy (review→FAIL) 0.488, CI [0.464, 0.500]; review rate 0.967; median 70 s/pair. Hypothesis not supported at this operating point: the 3B VLM almost never commits.
+- Known failure `vr_bcbcf341` (Unity, bug): DINOv2+classical proposal R1 `[1213,1973,3003,2160]` correctly covers the road where the ground texture is missing in the candidate, but the VLM described it as "license plate more visible" → `allowed A1`, and the scene audit said "brighter lighting" → `allowed A1`. Both validated → PASS. Policy behaved as designed; the failure is VLM judgment quality. NOT fixed by tuning (would use an eval label). Repro: `.venv/bin/python -m gameqa.cli analyze --reference data/work/vr_bcbcf341/reference.png --candidate data/work/vr_bcbcf341/candidate.png --rules <A1/D1 from manifest>` (see HANDOFF).
+- Post-eval cleanup (no behaviour change; yaml values unchanged): `contracts.SCENE_REGION_ID`; judge fallback defaults now mirror yaml (75 s / 336 / 512 / 2048); dead `prep_crop` and unused prompt fields removed; misleading `vlm.prompt_version: v1` yaml key replaced by a pointer to `prompts.PROMPT_VERSION` (v9); mock review reason now includes the injected error; Streamlit sidebar "Reload models" clears cached engines after a load failure.
+- E4 (VLM-only whole-scene audit, same 60 IDs, same model/prompt v9): 43 PASS, 17 NEEDS_REVIEW, 0 FAIL; **33/42 bug pairs → PASS** (false PASS); balanced accuracy (review→FAIL) 0.385. Interpretation: proposals + per-region validation do not raise accuracy over chance, but cut dangerous false PASS from 33/42 (E4) to 1/42 (E2), at the price of a 97 % review rate.
+
+## D12 — E1 threshold re-tuned on the final dev split (session 3)
+- experiment-tracker-pm found `classical_threshold.json` had been tuned on an interim split: 23 of its 37 "dev" IDs are now in eval (2 in the 60-subset). Old threshold/runs kept as `*.stale_*` for audit.
+- Re-tuned with `scripts/evaluate.py tune-classical` on the current dev split (40 IDs, all verified `split=dev`): threshold 0.782 changed-pixel fraction (pixel_thr 25), dev BA 0.515. Re-ran E1: subset60 BA 0.524 (58 PASS / 2 FAIL), full eval BA 0.516 (199 PASS / 6 FAIL) — identical to the stale runs, so conclusions are unchanged; numbers are now leakage-clean. `paired_comparison.json` regenerated.
+- Hypothesis verdict (experiment-tracker-pm, pre-declared rule): **NOT SUPPORTED** at this operating point. Caveat recorded: 53/60 E2 runs were truncated (37 global-change collapse, 16 region cap), so E2's low false-PASS rate is mostly abstention.
+
+## D13 — QA final pass: QA-D10/D11 fixed, D12–D15 recorded (session 3)
+- QA-D10: `Judge._ask` no longer returns earlier-attempt notes when a retry produced a usable answer (they made valid answers NEEDS_REVIEW and runs non-reproducible). Test `tests/vision/test_judge.py::test_recovered_retry_leaves_no_judgment_errors`.
+- QA-D11: alignment fills pixels outside the valid overlap with reference pixels, so that strip is never compared. `decision.MIN_OVERLAP_FOR_PASS = 0.98`: below it, PASS is blocked with reason "N% of the reference was not compared"; FAIL from compared regions still stands. Consequence: shifted captures (e.g. `small_translation` fixture, overlap ≈ 0.97) now end NEEDS_REVIEW (its expected.json allows it). Tests in `tests/policy/test_decision.py`.
+- Open (minor, documented in HANDOFF): QA-D12 mock provider + pixel-identical audit shortcut can yield PASS labelled engine `mock`; QA-D13 a judge exception is labelled real/COMPLETE; QA-D14 a "no visible change" answer is accepted as allowed without a rule ID; QA-D15 E2 `run_meta.json` commit field says 0b3cc1b (written by evaluate.py from HEAD at start) — the frozen identity is `config_hash 8e6c97c0395c` + prompt v9, identical for E2 and E4.
+- E1/E2/E4 numbers were produced before D13; D10/D11 would only change runs with retries (E2: 0 provider errors) or partial-overlap alignment (all E2 dev/eval runs were identity/unreliable per dl-engineer), so the reported numbers stand.

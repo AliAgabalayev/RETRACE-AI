@@ -31,7 +31,6 @@ from gameqa.report import draw_boxes, render_report
 from gameqa.rules import dump_rules
 from gameqa.storage import new_run_dir, utc_now_iso, write_json_atomic, write_text_atomic
 
-SCENE_ID = "SCENE"
 
 
 # Thin lazy wrappers so this module imports (and tests can patch them) without torch/vision.

@@ -213,3 +213,24 @@ def test_scene_audit_forbidden_fails_even_under_bad_alignment(alignment):
 
 def test_forbidden_citing_unknown_rule_id_is_not_fail():
     assert d(judgments=[J(verdict=Verdict.FORBIDDEN, rule_ids=["D1", "NOPE"])]) == REVIEW
+
+
+# ---- QA-D11: uncompared strip outside the alignment overlap -----------------
+
+def _partial(overlap):
+    return AlignmentResult(status=AlignmentStatus.ALIGNED,
+                           candidate_to_reference=[[1, 0, -4], [0, 1, -3], [0, 0, 1]],
+                           overlap_fraction=overlap)
+
+
+def test_partial_overlap_blocks_pass():
+    dec, reason = decide(inp(alignment=_partial(0.90)))
+    assert dec == REVIEW and "not compared" in reason
+
+
+def test_near_full_overlap_can_pass():
+    assert d(alignment=_partial(0.995)) == PASS
+
+
+def test_partial_overlap_keeps_reliable_fail():
+    assert d(alignment=_partial(0.90), judgments=[J("R1", Verdict.FORBIDDEN)]) == FAIL

@@ -41,6 +41,13 @@ def get_engines(cfg_key: str, mock_behavior: str | None):
     return pipeline.build_engines(make_config(mock_behavior))
 
 
+def reload_engines_button() -> None:
+    """Engines are cached per process; after a model load failure, this retries without a restart."""
+    if st.sidebar.button("Reload models", help="Clear cached DINOv2/VLM engines and load them again"):
+        get_engines.clear()
+        st.sidebar.success("Model cache cleared; the next Analyze reloads them.")
+
+
 def make_config(mock_behavior: str | None) -> dict:
     if mock_behavior:
         return load_config(overrides={"vlm": {"provider": "mock", "mock_behavior": mock_behavior}})
@@ -208,6 +215,7 @@ def main() -> None:
     state = st.session_state
     state.setdefault("runs_by_hash", {})
 
+    reload_engines_button()
     with st.sidebar:
         st.header("Engine")
         engine = st.radio("VLM engine", ["Real (config)", "MOCK (fault injection)"],

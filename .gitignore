@@ -16,3 +16,4 @@ models/
 .claude/settings.local.json
 *.egg-info/
 .claude/agent-memory/
+.idea/

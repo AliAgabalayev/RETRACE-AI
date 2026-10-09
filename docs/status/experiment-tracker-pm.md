@@ -1,37 +1,30 @@
-# experiment-tracker-pm status (2026-10-09)
+# experiment-tracker-pm status (2026-10-09, after E1/E2/E4)
 
 ## Delivered
-- `docs/EXPERIMENTS.md`: hypothesis, metrics (primary = balanced accuracy with review->FAIL, pre-declared supported/not-supported/inconclusive rule), registry E1, E2, E2b (new ablation), E3, E4, leakage rules, sample-size honesty. All results: "not run".
-- `docs/DATA_CARD.md`: verified from the parquet and the 20-pair interim manifests; PENDING marked.
-- `THIRD_PARTY_NOTICES.md`: licenses fetched, not guessed.
+- `docs/EXPERIMENTS.md`: registry with actual runs, paired comparison, hypothesis verdict, confounds.
+- `docs/DATA_CARD.md`: final facts (250 pairs; demo 5 / dev 40 / eval 205; subset-60 = 18 no_bug / 20 cutscene bug / 22 Unity bug; D8 rules; order evidence; sha-grouping limitation).
+- `scripts/compare_runs.py` (CPU only): paired stratified bootstrap and false-PASS Wilson CIs; writes `artifacts/eval/paired_comparison.json`.
+- `THIRD_PARTY_NOTICES.md` (earlier).
 
-## Hypothesis status: UNTESTED (no E1/E2 runs under `artifacts/eval/` yet). Recommendation will be added when runs exist.
+## Hypothesis verdict: NOT SUPPORTED at this operating point (qwen2.5vl:3b CPU, prompt v9, N=60)
+Pre-declared rule fires on both triggers: E2 BA 0.488 [0.464, 0.500] is below E1 0.524, and its upper CI bound is 0.50. Paired E2-E1 = -0.036 [-0.083, 0.000]; E2-E4 = +0.103 [-0.028, +0.234] (inconclusive); E4-E1 = -0.139 [-0.270, -0.008].
+E2b was NOT run, so "DINOv2 proposals help" is untested in isolation.
 
-## Findings senior-pm should act on (data)
-1. **Class imbalance.** Source subset = 250 pairs (matches brief): 224 bug / 26 no_bug (10.4%). Verified from `data/raw/metadata/data/test-00000-of-00001.parquet`. Plain accuracy is meaningless (always-FAIL = 89.6%); I use balanced accuracy and per-class recall.
-2. **Source is confounded with label.** All 26 no_bug are Youtube-Cutscene pairs; all 171 Unity pairs are bug. Resolution (3840x2160 Unity vs about 1280x720 cutscene) is a shortcut. Results are reported per source; only cutscenes can show a false-positive rate.
-3. **Interim dev split is unusable for threshold tuning:** 2 dev pairs, both Unity bug, zero no_bug. Request to python-developer DATA / senior-pm: final dev must include no_bug cutscene pairs (suggest at least 6 of the 26 no_bug in dev, at least 12 in eval, rest in demo/spare) and stratify by source x label. Decision is yours; I did not edit the manifests.
-4. **Groups are per-sample** (`g_vr_<id>`), so real scene groups are unknown; Unity pairs share 9 scenes per the paper. Leakage between dev and eval scenes is possible; documented as a limitation.
-5. Only 2 distinct rule texts exist (one per source). The manifest rules are Q1 deny = whole question, A1 allow = acceptable list. "Rule-aware" is therefore barely tested; say so in the final report.
-6. **Qwen license conflict:** HF repo says Qwen Research License (non-commercial); the Ollama package bundles Apache-2.0 text. Treated as non-commercial until verified (see `THIRD_PARTY_NOTICES.md`).
-7. Manifest `sha256_*` is of the raw JPEG (all 40 verified), not of the working PNG.
+## Safety result (what is real)
+False PASS on bug pairs: E1 40/42 (95.2%), E4 33/42 (78.6%), E2 1/42 (2.4%, Wilson 0.4-12.3%). Caveat: 53/60 E2 runs were truncated (37 global-change collapse, 16 hit the 8-region cap) and truncation forces NEEDS_REVIEW, so E2 behaves almost like "always NEEDS_REVIEW" (review rate 96.7%, no_bug 18/18 flagged). The safety comes mostly from abstention, not from better understanding.
 
-## Inference budget (estimate; dl-engineer has not yet reported a latency in docs/status; no `dl-engineer.md` exists)
-My own measurement (one Ollama `/api/chat` call to `qwen2.5vl:3b`, temp 0, two 448x448 solid-colour images, 556 prompt tokens, 27 output tokens, 3 repeats):
-- Cold model load: 68 s (first call 91 s total). Warm calls: 2.5 s, 2.3 s.
-- This is a lower bound: real crops carry more image tokens and the judgment JSON has reasoning text. Assumption (not measured): 4-7 s per real call.
-Per pair: up to 8 region calls + 1 audit = 9 calls, plus alignment/DINOv2 on possibly 4K inputs (assume 3-5 s) -> planning figure **about 60 s per pair** (range roughly 25-70 s; many pairs will have fewer than 8 regions). Planning only; replace with dl-engineer's measured median.
+## Flags for senior-pm
+1. E1 threshold provenance: `classical_threshold.json` dev_ids contain 23 IDs that are now in the eval split (2 in the 60-subset, both predicted PASS). Likely produced against an earlier split. Effect on conclusions negligible, but re-tune E1 on current dev (CPU, minutes) before quoting E1 as clean.
+2. E2 `run_meta.commit` says `0b3cc1b` although config was frozen later; `config_hash` 8e6c97c0395c is identical in E2 and E4 and is the reliable identity.
+3. Source predicts label; 2 question texts; Unity scene groups unknown (sha-grouping only); N = 18 no_bug. Say so in any result slide.
 
-2 h = 7200 s -> about 120 pairs at 60 s, about 290 at 25 s. GPU is shared, so runs are sequential.
+## Ranked next experiments (expected value per cost; do not run VLM jobs while demos use Ollama)
+1. **Stronger VLM, same pipeline and same 60 IDs (E2-strong and E4-strong).** Highest value: the verdict is limited by a 3B CPU model that rarely commits. Use a working API key if one exists (lawful, within existing credentials per the brief), else a larger local model only if free RAM allows (currently about 3 GB available of 14 GB, so a 7B is not feasible until other apps close). Cost: 60-100 min local, or minutes by API. Pre-declare the same rule; compare to current E2/E4 in a paired way.
+2. **E2b (classical-only proposals + VLM), same 60 IDs.** The only run that isolates DINOv2. Cost about 90-120 min on the 3B CPU model (about 20-35 s per VLM call). Run only after item 1 or when Ollama is free; with the 3B model it is likely to show review rate near 97 % again, so its value is highest together with item 1's stronger VLM.
+3. **Calibrate the global-change collapse (CPU/GPU-proposal only, no VLM).** 52 of 53 truncated runs end in NEEDS_REVIEW; measure on dev only how the collapse threshold (10 % area) and the 8-region cap change truncation rate and proposal count, and report a dev-only sweep. Cost: minutes, no Ollama. Any new setting needs a fresh eval run on untouched eval pairs (outside the 60 subset: 145 spare eval pairs), not a re-score of the 60.
+4. **Re-tune E1 on the current dev split** (flag 1). Minutes, CPU. Removes a protocol blemish.
+5. **E3 with manual region annotations** (about 10 cutscene + 10 Unity pairs, a human draws the changed box). Cost: roughly 30-60 min of human time; enables proposal recall/IoU for DINOv2 vs classical without any VLM, the cleanest test of the proposal half of the hypothesis. Lower priority only because it needs human time.
+6. **Larger no_bug sample.** The source has only 26 no_bug; this cannot be fixed by running more. Instead use fixtures or synthetic allowed changes (lighting, weather) as an additional, labelled-synthetic false-positive check.
 
-**Recommendation:** eval subset **N = 60 pairs**, chosen by a seeded script before any run, stratified by source x label:
-- all available eval-split no_bug cutscene pairs (aim at 12-20 depending on the final split), plus bug pairs in about equal Unity and Cutscene numbers to reach 60 (for example 20 no_bug, 20 cutscene bug, 20 Unity bug).
-- Cost: E2 about 60 min; E4 (1 call/pair) about 7 min; E1 minutes on CPU; E2b (optional) another about 60 min; dev tuning of 15 pairs about 15 min plus proposal-only tuning without the VLM (cheap). Total about 2.5 h sequential without E2b, about 3.5 h with E2b.
-- If measured latency is above 90 s/pair, cut E2 to N = 40 and drop E2b. If latency is below 30 s/pair, run E2 on all eval pairs available.
-- Natural prevalence (90% bug) is deliberately NOT preserved, because it would leave under 10 no_bug pairs; per-class rates are reported instead of accuracy, and the sampling design is stated in every table.
-- Recommended order: (1) pilot E2 on the 20 interim pairs for latency and sanity (that run is not a result); (2) E1 and E4 on eval; (3) E2; (4) E2b if time.
-
-## Needs from others
-- python-developer DATA: final manifests (update DATA_CARD tables) and an order spot-check; stratified dev per item 3.
-- dl-engineer: record median/p90 seconds per pair and VLM calls per pair, `prompt_version`, DINOv2 threshold in the run output.
-- qa-engineer: `scripts/evaluate.py` must emit the confusion matrix with NEEDS_REVIEW, the three review mappings, balanced accuracy, Wilson CIs, per-source breakdown, and `run_meta.json`, as specified in `docs/EXPERIMENTS.md` section 2. A paired bootstrap for the E2-minus-E1 difference is also needed; I can run it from the per-pair prediction files if they are saved as `artifacts/eval/<exp>/predictions.json` (`sample_id`, `decision`, `n_regions`, `seconds`).
+## Not recommended
+More seeds/repeats at temperature 0 (no extra power); further prompt tuning against eval labels (would invalidate the held-out set; use dev only).

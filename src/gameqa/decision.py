@@ -21,12 +21,19 @@ from gameqa.contracts import (
     AlignmentStatus,
     Coverage,
     FinalDecision,
+    SCENE_REGION_ID,
     RegionJudgment,
     Rule,
     RuleEffect,
     SceneAudit,
     Verdict,
 )
+
+
+# Alignment fills pixels outside the valid overlap with reference pixels, so that strip is never
+# compared. Below this overlap fraction the uncompared strip is large enough to hide a change, so
+# PASS is not allowed (QA-D11). FAIL from compared regions is unaffected.
+MIN_OVERLAP_FOR_PASS = 0.98
 
 
 @dataclass
@@ -76,6 +83,8 @@ def find_rule_conflicts(rules: list[Rule]) -> list[str]:
     (case/whitespace-insensitive) declared both allow and deny. Semantic conflicts beyond
     this are left to the VLM, which must answer ``uncertain`` for them."""
     conflicts: list[str] = []
+    # rules.py already rejects duplicate IDs for UI/CLI input; this check guards other callers
+    # (e.g. hand-built PairInput or manifests) so the policy does not depend on that parser.
     seen: set[str] = set()
     for r in rules:
         if r.id in seen:
@@ -121,7 +130,7 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
         AlignmentStatus.FAILED,
     )
     fail_sources = all_judgments if alignment_ok else [
-        j for j in all_judgments if j.region_id == "SCENE"
+        j for j in all_judgments if j.region_id == SCENE_REGION_ID
     ]
     forbidden = [j for j in fail_sources if is_reliable_forbidden(j, inp.rules)]
     if forbidden:
@@ -144,6 +153,11 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
         AlignmentStatus.FAILED,
     ):
         reasons.append("alignment unreliable or missing")
+    elif inp.alignment.overlap_fraction < MIN_OVERLAP_FOR_PASS:
+        reasons.append(
+            f"{100 * (1 - inp.alignment.overlap_fraction):.1f}% of the reference was not compared "
+            "(outside the alignment overlap)"
+        )
     if inp.coverage.truncated:
         reasons.append(
             f"proposals truncated ({inp.coverage.proposals_judged}/{inp.coverage.proposals_total} judged)"
@@ -161,7 +175,8 @@ def decide(inp: DecisionInput) -> tuple[FinalDecision, str]:
 
     for j in all_judgments:
         if j.is_mock:
-            reasons.append(f"{j.region_id}: mock judgment (not real inference)")
+            detail = f" [{'; '.join(j.errors)}]" if j.errors else ""
+            reasons.append(f"{j.region_id}: mock judgment (not real inference){detail}")
         elif j.errors or not j.validated:
             reasons.append(f"{j.region_id}: invalid or failed model response")
         elif j.verdict != Verdict.ALLOWED:

@@ -101,6 +101,9 @@ class RegionJudgment(BaseModel):
     latency_s: float | None = None
 
 
+SCENE_REGION_ID = "SCENE"  # region_id of the whole-scene audit judgment
+
+
 class SceneAudit(BaseModel):
     judgment: RegionJudgment
     # Additional suspicious changes the audit reported outside proposed regions.

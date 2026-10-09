@@ -12,7 +12,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from gameqa.contracts import RegionJudgment, Rule, RuleEffect, SceneAudit, Verdict
+from gameqa.contracts import SCENE_REGION_ID, RegionJudgment, Rule, RuleEffect, SceneAudit, Verdict
 from gameqa.vision.prompts import (AUDIT_PROMPT, DECIDE_PROMPT, PROMPT_VERSION, REGION_PROMPT, STAGE1_AUDIT_SCHEMA,
                                    STAGE1_SCHEMA, STAGE2_SCHEMA)
 
@@ -34,22 +34,6 @@ def _fit(img: np.ndarray, max_side: int) -> tuple[np.ndarray, float]:
     if s == 1.0:
         return img, 1.0
     return cv2.resize(img, (max(1, round(w * s)), max(1, round(h * s))), interpolation=cv2.INTER_AREA), s
-
-
-def prep_crop(img: np.ndarray, max_side: int, min_side: int = 112) -> np.ndarray:
-    """Fit a crop for the VLM. Ollama's qwen2.5vl preprocessing panics (HTTP 500 / runner crash) when a side
-    is < 28 px, so small crops are upscaled (cubic) to >= min_side on the short side, capped by max_side;
-    extreme aspect ratios are edge-padded so both sides stay >= 28."""
-    h, w = img.shape[:2]
-    s = min(max_side / max(h, w), max(1.0, min_side / min(h, w)))
-    if s != 1.0:
-        img = cv2.resize(img, (max(1, round(w * s)), max(1, round(h * s))),
-                         interpolation=cv2.INTER_CUBIC if s > 1 else cv2.INTER_AREA)
-    h, w = img.shape[:2]
-    ph, pw = max(0, 28 - h), max(0, 28 - w)
-    if ph or pw:
-        img = cv2.copyMakeBorder(img, 0, ph, 0, pw, cv2.BORDER_REPLICATE)
-    return img
 
 
 def _draw_box(img: np.ndarray, box, scale: float, color, label: str | None = None) -> None:
@@ -197,12 +181,13 @@ class Judge:
         v = cfg.get("vlm", {})
         self.provider = v.get("provider", "ollama")
         self.base_url = v.get("base_url", "http://localhost:11434").rstrip("/")
-        self.timeout_s = float(v.get("timeout_s", 30))
+        # Fallbacks mirror configs/default.yaml (D10); the yaml values are authoritative.
+        self.timeout_s = float(v.get("timeout_s", 75))
         self.max_attempts = int(v.get("max_attempts", 2))
         self.temperature = float(v.get("temperature", 0.0))
-        self.crop_max_side = int(v.get("crop_max_side", 448))
-        self.context_max_side = int(v.get("context_max_side", 768))
-        self.num_ctx = v.get("num_ctx", 4096)
+        self.crop_max_side = int(v.get("crop_max_side", 336))
+        self.context_max_side = int(v.get("context_max_side", 512))
+        self.num_ctx = v.get("num_ctx", 2048)
         self.classical_thr = float(cfg.get("proposals", {}).get("classical_threshold", 40))
         self.resid_min_px = int(cfg.get("proposals", {}).get("min_area_px", 40))
         self.identical_px = int(v.get("identical_max_px", 8))
@@ -305,7 +290,9 @@ class Judge:
                     (self.cache_dir / f"{key}.json").write_text(json.dumps({"raw": raw, "model": self.model_id, "prompt_version": self.prompt_version}))
                 except OSError:
                     pass
-            return raw, errors, time.time() - t0
+            # A failed earlier attempt followed by a usable answer is not a judgment error
+            # (QA-D10): returning the retry notes would turn a valid answer into review.
+            return raw, [], time.time() - t0
         return None, errors, time.time() - t0
 
     def _two_stage(self, images, stage1_prompt, audit, rules, where):
@@ -342,17 +329,16 @@ class Judge:
                                   is_mock=self.is_mock, errors=perr or ["no response"], validated=False, latency_s=latency), False
         p = validate_response(raw, rules, audit)
         return RegionJudgment(region_id=region_id, observed_change=p["observed_change"], verdict=p["verdict"],
-                              rule_ids=p["rule_ids"] if p["validated"] else p["rule_ids"], evidence=p["evidence"],
+                              rule_ids=p["rule_ids"], evidence=p["evidence"],
                               model=self.model_id, is_mock=self.is_mock, errors=perr + p["errors"],
                               validated=p["validated"], latency_s=latency), p["extra"]
 
     @staticmethod
-    def _rule_fields(rules: list[Rule], audit: bool = False) -> dict:
+    def _rule_fields(rules: list[Rule]) -> dict:
         allow = [r.id for r in rules if r.effect is RuleEffect.ALLOW]
         deny = [r.id for r in rules if r.effect is RuleEffect.DENY]
         return dict(rules="\n".join(f"- {r.id} [{r.effect.value.upper()}]: {r.description}" for r in rules),
-                    allow_ids=", ".join(allow) or "(none)", deny_ids=", ".join(deny) or "(none)",
-                    ex_deny=deny[0] if deny else "D1", ex_other=', "other_changes_outside_boxes": false' if audit else "")
+                    allow_ids=", ".join(allow) or "(none)", deny_ids=", ".join(deny) or "(none)")
 
     def warmup(self) -> dict:
         """Load the model into memory (cold load can take ~70 s on CPU). Never raises."""
@@ -394,12 +380,12 @@ class Judge:
             if not proposals and diff_px <= self.identical_px and resid == 0:
                 # Documented deterministic shortcut: pixel-identical pair, nothing to audit. NOT a VLM result.
                 return SceneAudit(judgment=RegionJudgment(
-                    region_id="SCENE", observed_change="no visible change", verdict=Verdict.ALLOWED, rule_ids=[],
+                    region_id=SCENE_REGION_ID, observed_change="no visible change", verdict=Verdict.ALLOWED, rule_ids=[],
                     evidence=f"pixel-identical within tolerance ({diff_px} px differ by more than 6 levels)",
                     model="deterministic:pixel-identical", is_mock=False, errors=[], validated=True, latency_s=0.0),
                     extra_changes_reported=False)
             raw, perr, lat = self._two_stage([comp], prompt, True, rules, " (whole scene)")
-            j, extra = self._to_judgment("SCENE", raw, perr, lat, rules, True)
+            j, extra = self._to_judgment(SCENE_REGION_ID, raw, perr, lat, rules, True)
             if j.validated and j.verdict is Verdict.FORBIDDEN and resid == 0:
                 # A 3B VLM hallucinates 'forbidden' on near-identical pairs (measured). A scene-level forbidden claim
                 # needs pixel support OUTSIDE the already-judged boxes; otherwise it is not trusted.
@@ -408,6 +394,6 @@ class Judge:
             # if the audit could not be validated we cannot claim it found nothing extra
             return SceneAudit(judgment=j, extra_changes_reported=bool(extra) if j.validated else False)
         except Exception as e:  # noqa: BLE001
-            j = RegionJudgment(region_id="SCENE", observed_change="", verdict=Verdict.UNCERTAIN, model=self.model_id,
+            j = RegionJudgment(region_id=SCENE_REGION_ID, observed_change="", verdict=Verdict.UNCERTAIN, model=self.model_id,
                                is_mock=self.is_mock, errors=[f"audit_scene failure: {type(e).__name__}: {e}"], validated=False)
             return SceneAudit(judgment=j, extra_changes_reported=False)

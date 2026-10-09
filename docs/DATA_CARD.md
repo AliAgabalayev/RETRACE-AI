@@ -1,6 +1,6 @@
 # Data card: VideoGameQA-Bench visual-regression subset
 
-Owner: experiment-tracker-pm. Facts below were verified by reading `data/raw/metadata/data/test-00000-of-00001.parquet` and `data/manifests/*.json` on 2026-10-09. Items marked PENDING are not yet verified or depend on the full 250-pair preparation still running (see `docs/status/data-prep.md`). Re-verify when manifests are overwritten.
+Owner: experiment-tracker-pm. Facts below were verified by reading `data/raw/metadata/data/test-00000-of-00001.parquet` and `data/manifests/*.json` on 2026-10-09. Final facts after the full 250-pair preparation (re-verified against `data/manifests/inference_manifest.json`, `eval_labels.json` and `eval_subset_60.json` on 2026-10-09). No PENDING items remain; re-verify if manifests are regenerated.
 
 ## 1. Source
 - Dataset: VideoGameQA-Bench, `taesiri/VideoGameQA-Bench` on Hugging Face. Paper: arXiv 2505.15952 (Taesiri, Ghildyal, Zadtootaghaj, Barman, Bezemer).
@@ -34,39 +34,41 @@ Owner: experiment-tracker-pm. Facts below were verified by reading `data/raw/met
 Consequences:
 - **Severe class imbalance.** An "always bug" predictor scores 89.6% accuracy on the full subset. Plain accuracy is not a valid headline metric; report per-class recall (bug recall, no-bug recall) and balanced accuracy.
 - **Source is confounded with label.** All 26 `no_bug` pairs are cutscene frames; every Unity pair is a `bug`. A method that detects the source/image size (Unity captures are 3840x2160, cutscenes about 1280x720) can score well without detecting changes. Report results per `media_source` and treat cutscene-only no_bug/bug as the only source with both classes.
-- Only 2 distinct `question` texts exist (one per source), so "rule-aware" behaviour is tested against 2 generic rule sets, not many different rules. Rules in the manifest are derived from that text (`Q1` deny = the whole question text, `A1` allow = the ACCEPTABLE list).
+- Only 2 distinct `question` texts exist (one per source), so "rule-aware" behaviour is tested against 2 generic rule sets.
 
-### Prepared so far (interim 20 pairs, verified from manifests)
-| split | media_source | bug | no_bug |
-| --- | --- | --- | --- |
-| demo | Unity | 2 | 0 |
-| demo | Cutscene | 1 | 2 |
-| dev | Unity | 2 | 0 |
-| dev | Cutscene | 0 | 0 |
-| eval | Unity | 6 | 0 |
-| eval | Cutscene | 4 | 3 |
-| total | | 15 | 5 |
+### Rules mapping (D8, verified: all 250 records have exactly rules A1, D1)
+- `A1` effect allow = the "Consider these variations ACCEPTABLE:" block verbatim.
+- `D1` effect deny = the "Consider these variations UNACCEPTABLE:" block verbatim.
+- The benchmark's own "Provide your assessment as JSON {test_pass}" instruction is excluded from the rules. The full question stays in the manifest `question` field. Fallback when no UNACCEPTABLE block: D1 = whole question (not triggered: 250/250 use the block mapping).
+- This replaces the earlier interim mapping (`Q1` deny = whole question).
 
-Totals: demo 5, dev 2, eval 13. This is interim; the full-subset preparation will overwrite splits (sample IDs stay stable). Final per-split table: PENDING.
+### Final splits (verified from manifests; 250 pairs, all `validation_status = ok`)
+| split | Unity bug | Cutscene bug | Cutscene no_bug | total |
+| --- | --- | --- | --- | --- |
+| demo | 1 | 2 | 2 | 5 |
+| dev | 26 | 8 | 6 | 40 |
+| eval | 144 | 43 | 18 | 205 |
+| total | 171 | 53 | 26 | 250 |
 
-Dev concern (reported to senior-pm): the interim dev split has no `no_bug` pair, so no threshold can be tuned against false positives. The final dev split must contain `no_bug` cutscene pairs.
+- Split sizes: demo 5 / dev 40 / eval 205. Demo pairs are never scored; thresholds and prompts were tuned on dev and fixtures only.
+- `eval_subset_60` (seeded, chosen before results; `data/manifests/eval_subset_60.json`): 60 pairs = 18 no_bug (all eval no_bug cutscenes) + 20 cutscene bug + 22 Unity bug (42 bug). Used for E1/E2/E4 paired comparison.
+- Provenance flag: `artifacts/eval/classical_threshold.json` (E1 threshold) lists 37 dev IDs of which 23 are in the current eval split (2 in the 60-subset); see `docs/EXPERIMENTS.md` 6.6.
 
-## 5. Image facts (interim 20 pairs)
-- Counts: 20 pairs prepared, 0 failed, `validation_status = ok` for 20.
-- All 40 raw JPEGs match `sha256_reference` / `sha256_candidate` in the manifest (sha256 is of the **raw JPEG**, not of the working PNG). All 40 working PNGs exist and decode.
-- Reference and candidate dimensions are identical in all 20 pairs.
-- Dimensions: 10 Unity pairs at 3840x2160; 10 cutscene pairs between about 1139x634 and 1278x718 (several different sizes, e.g. 1278x718, 1274x568, 1139x634). 3840x2160 images are large for a 6 GB GPU pipeline; downscaling is done inside the pipeline (box coordinates stay in original pixels).
-- Full-subset statistics (missing files, dimension histogram, mismatched sizes): PENDING.
+## 5. Image facts (all 250 pairs, verified from manifests)
+- 250 pairs prepared, 0 failed, `validation_status = ok` for 250. Reference and candidate dimensions are identical in all 250 pairs.
+- Dimensions: Unity 148 pairs at 3840x2160 and 23 at 2560x1440 (171); 79 cutscene pairs with 45 distinct sizes, between 1120x627 and 1279x718 (most common 1278x718, 23 pairs; some letterboxed at about 1274x568). Source (and so label for no_bug) can be read from resolution alone.
+- Hashes: `sha256_reference` / `sha256_candidate` are of the raw JPEG (not the working PNG). 128 distinct reference hashes; 249 distinct candidate hashes; no pair has identical reference and candidate hash. The 40-image interim check (sha256 and PNG decode) was done earlier; all 250 pairs have their raw JPEGs and working PNGs on disk (checked 2026-10-09).
+- 3840x2160 images are downscaled inside the pipeline; box coordinates stay in original reference pixels.
 
 ## 6. Reference/candidate order
-- Textual evidence only: both question texts say "the second image" is the one judged against "the first (reference)", and the media files are `question_images_0` then `question_images_1`. Manifest maps `_0` -> reference, `_1` -> candidate.
-- Visual spot-check of the order on sample pairs: PENDING (qa-engineer / data-prep). Unity ground truth is all `bug`, so order cannot be inferred from labels.
+- Mapping: `question_images_0` -> reference, `question_images_1` -> candidate.
+- Evidence: (1) both question texts say the second image is judged against "the first (reference)" and files are `_0` then `_1`; (2) visual spot-check by data-prep (`docs/status/data-prep.md`): `vr_7ec62bb3` (bug) has a lit "AMERICAN" billboard with a red car in image 0 and it is removed in image 1 (missing object in the candidate); `vr_59af7164` (no_bug) is the same shot with the character jacket changed (allowed customization). Two pairs only, so the order is supported, not proven for all 250; Unity labels (all bug) cannot confirm it.
 
 ## 7. Groups and leakage limitations
-- Manifest `group_id` is `g_vr_<sample id>`: one group per sample. These are **not** real scene groups; group is unknown, so it is not invented.
-- The paper describes 9 Unity scenes behind the 171 Unity pairs (and cutscene frames paired with glitch-free frames). Many pairs therefore share a scene or reference. With per-sample groups, dev and eval pairs from the same scene can leak; thresholds tuned on dev may transfer optimistically to eval for Unity. State this limitation in every result.
-- Cutscene `bug` and `no_bug` pairs may derive from the same cutscene source; not verifiable from metadata.
-- Demo pairs are hand-selected and are excluded from eval and from any metric.
+- `group_id` = pairs sharing a **reference image sha256** (`prepare._group_ids`). 128 groups: 77 cutscene singletons, 1 cutscene group of 2, 50 Unity groups of 1 to 9 pairs. Splits never straddle a group (verified: 0 groups and 0 reference hashes cross splits). The 60-pair subset spans 55 groups (max 3 per group).
+- This is **sha-grouping only**. Real scene identity is unknown: the paper describes 9 Unity scenes, and different reference captures of the same scene (different sha) can fall in dev and eval. Optimistic transfer from dev to eval on Unity cannot be excluded. Candidate hashes are not used for grouping (249 distinct).
+- Cutscene bug and no_bug pairs may derive from the same cutscene source; not verifiable from metadata.
+- Bootstrap CIs resample pairs, not groups, and so are somewhat optimistic where groups have several pairs (Unity).
 
 ## 8. Known limitations
 - Pair-level labels only; no region annotations. No localization IoU may be computed from them.

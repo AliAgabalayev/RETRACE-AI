@@ -40,7 +40,7 @@ vlm:
   timeout_s: 75                 # CPU-resident VLM: stage-1 audit call takes ~35 s (was 30; see MODEL_NOTES)
   max_attempts: 2
   temperature: 0.0
-  prompt_version: v1
+  # prompt version lives in src/gameqa/vision/prompts.py (PROMPT_VERSION, currently v9)
   crop_max_side: 336
   context_max_side: 512
   num_ctx: 2048

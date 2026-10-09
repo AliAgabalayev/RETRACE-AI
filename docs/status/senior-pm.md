@@ -59,3 +59,14 @@ Each agent writes only its own files and its own `docs/status/<agent>.md`; senio
 - c463a07: config frozen (D10). E2 (pipeline, 60) then E4 (vlm_only, 60) running serially in background → artifacts/eval/e2_pipeline_subset60, e4_vlm_only_subset60; logs artifacts/eval/e{2,4}_predict.log. Docs phase 2 re-dispatched (a8a27f55de610a06c).
 - Docs phase 2 done (README, walkthrough, runbook, handoff draft, readability). Fixed now: decision.py docstring; approve of non-PASS/non-real run needs --force (CLI) / override checkbox (UI) + test → 164 pass / 6 skip.
 - DEFERRED until E2+E4 finish (config/code frozen for eval): yaml `vlm.prompt_version` v1 vs real v9; judge.py fallback defaults ≠ yaml; SCENE_ID constant; mock-timeout reason text; judge.py dead code (`prep_crop`, identical branches, unused `_rule_fields` outputs); app engine cache keeps degraded after a load failure; then QA_REPORT/EXPERIMENTS/DATA_CARD refresh by owners.
+
+## Session 3 (after power loss, 2026-10-09 morning)
+- E2 60/60 complete; E4 resumed 50→60. Both scored. E1 re-tuned on final dev (D12). Verdict NOT SUPPORTED (D11/D12). Key false PASS: vr_bcbcf341.
+- Real demo runs: object_removed FAIL, allowed_and_forbidden FAIL, small_object_removed FAIL, clothing_color_change PASS, lighting_change NEEDS_REVIEW, identical PASS; benchmark demo split 5/5 NEEDS_REVIEW (artifacts/demo/demo_split.jsonl).
+- UI: Chrome extension not connected → scripts/ui_smoke.py (AppTest, real engines) OK: Analyze FAIL rendered, rerun no re-inference, approve v1+v2 + history.
+- Commits: 1f81dd2 (approve guard, docs phase 2). Post-eval cleanup (D11) uncommitted.
+- Next: QA final acceptance + real_model tests; docs final; HANDOFF.md; fresh-process launch check; final commit.
+- QA final verdict: accept as honest prototype, not a working detector. QA-D10/D11 fixed by senior-pm (D13), 168 passed / 6 skipped. Real-model tests 6 passed (QA, cached VLM).
+- Fresh-process Streamlit launch: health ok / HTTP 200 (port 8517 check).
+- HANDOFF.md written (Azerbaijani). Final commit via git-workflow-master.
+- REMAINING (for Ali): real-browser UI click-through (Chrome extension was not connected); stronger VLM; review-rate reduction on dev; E2b; open minor QA-D12..D15.

@@ -86,3 +86,20 @@ def test_tiny_crop_is_upscaled_for_ollama():
     a = np.zeros((12, 20, 3), np.uint8)
     im = labelled_pair(a, a, 336)
     assert min(im.shape[:2]) >= 28
+
+
+def test_recovered_retry_leaves_no_judgment_errors(monkeypatch):
+    """QA-D10: attempt 1 fails, attempt 2 answers validly -> no errors carried into the judgment."""
+    j = Judge({"vlm": {"provider": "ollama", "base_url": "http://127.0.0.1:9", "max_attempts": 2, "cache": False}})
+    calls = {"n": 0}
+
+    def flaky(images, prompt, schema):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise TimeoutError("simulated timeout")
+        return json.dumps({**BASE, "verdict": "forbidden", "rule_ids": ["D1"], "change_type": "disappeared"})
+
+    monkeypatch.setattr(j, "_ollama_reply", flaky)
+    monkeypatch.setattr("gameqa.vision.judge.time.sleep", lambda s: None)
+    raw, errors, _ = j._ask([], "p", {}, RULES, False)
+    assert raw is not None and errors == [] and calls["n"] == 2
