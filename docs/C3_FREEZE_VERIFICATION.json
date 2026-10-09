@@ -1,0 +1,131 @@
+{
+  "runtime_code_sha": "bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3",
+  "config_hash": "eaa371255716",
+  "config_file_sha256": "d18ff48f9690d2f8a8643f151deb2890cca08df9c98ae057f9cc5eec3a539210",
+  "prompt_version": "v9",
+  "tracked_files_scanned": 225,
+  "credential_material_found": false,
+  "C2_preserved": true,
+  "report_matches_3b794aa": true,
+  "storage_prompts_defaults_policy_pipeline_unchanged": true,
+  "new_model_calls": 0,
+  "zip_checks": [
+    {
+      "sample_id": "vr_4b921c5d",
+      "run_id": "20261009T123704Z-8e4e19",
+      "zip_sha256": "b739b23a055fd70937dcf741c9595acd2587d13b1ea289fbb56ea81539bd2554",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_a981c1d3",
+      "run_id": "20261009T123834Z-c48717",
+      "zip_sha256": "eb45b7d80b500fef2a6c00371e9dc0280d070c477caa9687abe84361ff69158d",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_330651ed",
+      "run_id": "20261009T123852Z-72dbc0",
+      "zip_sha256": "db1f1ba8f023a7cea39d5a49a30f8cd004c4c020d0bced6389480b52abac6c72",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_4255ae09",
+      "run_id": "20261009T123921Z-3c8b6a",
+      "zip_sha256": "71d9ad120ad857be5ef785e2d3cffcdd4bb2839b92644769438c74d75eb47790",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_09a066d3",
+      "run_id": "20261009T123947Z-584a66",
+      "zip_sha256": "8514c5ce8dac1c5ed228812c68cba2953ebb716304c2897ec7d51768ebd5b020",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_59af7164",
+      "run_id": "20261009T124102Z-bc1521",
+      "zip_sha256": "8a0c80d3eb1c384155bcf2745e146135fa6ec1d495915677004cb047cc806147",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_41bab231",
+      "run_id": "20261009T124150Z-27b831",
+      "zip_sha256": "b1d72ccd29f8fb3429ddc97d0dbdd94f99028450e97da19c308e8950e92a3f54",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_d07179d5",
+      "run_id": "20261009T124304Z-580c0b",
+      "zip_sha256": "d69377b1c2d19a1d720a36e63e6cec5d5a289d566d03df4d4ac181e0ce01788a",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_c1f47c57",
+      "run_id": "20261009T124621Z-0b0c2b",
+      "zip_sha256": "d732182fe3243b75152fb6e2f212c40815e43a510748756ede21eb69a7506249",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_fec26436",
+      "run_id": "20261009T124803Z-8da9b8",
+      "zip_sha256": "e68d409e7b152cfb4a27f72f53e46c24d9b4d5bb3e8d5e58fd3ab02f98a80fdd",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_ef9b073a",
+      "run_id": "20261009T124839Z-312535",
+      "zip_sha256": "2492c2be98105f6f330529a10fba6dcf9006bf91d5fd95111d47d5ae8fa84a97",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    },
+    {
+      "sample_id": "vr_43773eb8",
+      "run_id": "20261009T124923Z-38587e",
+      "zip_sha256": "41af7c4ebf97a90b54469d67bba6a346144128f1a4af1479a2bb88660d11327f",
+      "integrity": "pass",
+      "evidence": "pass",
+      "credential_scan": "pass",
+      "unchanged": true
+    }
+  ],
+  "saved_run_replay_scope_notes": [
+    "global change: the whole frame differed beyond the collapse threshold, so it was collapsed into one full-frame region; no localized region-level check was possible"
+  ],
+  "tests": {
+    "sandbox_temp": "14 failed, 40 passed, 15.17 s (atomic rename permission errors)",
+    "sandbox_workspace": "1 failed, 53 passed, 18.27 s (hard-link permission error)",
+    "normal_process": "54 passed, 8.02 s",
+    "offline_observer": "1 passed, 0.56 s"
+  }
+}
