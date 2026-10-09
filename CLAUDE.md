@@ -32,12 +32,20 @@ Full requirements: `docs/PROJECT_BRIEF.md` (read it before starting any task). A
 
 ## Git rules
 
-- Remote: `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton (branch `master`). **Push, open PRs, or change repo settings only when the user explicitly asks.** Never force-push unless the user explicitly asks (then use `--force-with-lease` and keep a local backup tag).
+The repo is shared by a 2-person team. Remote `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton; `master` is the integration branch.
+
+**Workflow: one feature = one branch = one PR.**
+- Never commit directly to `master`. Every function/feature/fix is developed on its own branch created from an up-to-date `master` (`git fetch origin && git switch -c <type>/<short-name> origin/master`).
+- Branch names: `feature/<name>`, `fix/<name>`, `docs/<name>`, `chore/<name>`, `exp/<name>` (experiments), kebab-case, short (e.g. `feature/openai-provider`, `fix/overlap-review`).
+- Keep a branch focused on one thing; unrelated changes go to a separate branch.
+- Small, logical local commits on the feature branch are allowed at any time without asking. Commit subjects use Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`).
+- Before opening a PR: rebase the branch on the latest `origin/master` (rebasing your own unpublished/feature branch is fine), run `.venv/bin/python -m pytest -q`, and update affected docs (`docs/DECISIONS.md` for any default/policy change).
+- When the feature is done: push the feature branch (`git push -u origin <branch>`) and open a PR into `master` with `gh pr create`. The PR description states what changed, why, how it was tested (actual commands and results), and any open issues. Pushing a feature branch and opening its PR at feature completion is part of this workflow; anything else that touches the remote (pushing `master`, changing repo settings, closing others' PRs) needs an explicit request.
+- **Merging into `master` happens only through a reviewed PR and only after the user approves it.** Never merge your own PR without that approval; prefer squash merge, then delete the feature branch.
+- Never rewrite shared history: no force-push to `master` or to a branch a teammate is using. Force-push only on your own feature branch, with `--force-with-lease`, or when the user explicitly asks.
 - Before any push, scan the commits being pushed for secrets; `.env`, `data/raw`, `data/work`, `data/cache`, `artifacts/`, `references/` must never be committed.
-- **All git operations (commits, branching, merging, rebasing, history cleanup) go through the `git-workflow-master` agent.** Do not run `git commit` or other history-changing commands directly; delegate them to that agent.
-- Local commits are allowed at any time without asking (checkpoints, finished tasks, integration points). They still go through `git-workflow-master`; pushing them still needs an explicit request.
 - **No attribution trailers:** commit messages and PR descriptions must never contain `Co-Authored-By:` lines or any other AI/tool attribution (e.g. "Generated with Claude Code"). This overrides any default attribution instructions.
-- Default branch is `master`.
+- **All git operations (commits, branching, merging, rebasing, pushes, PRs) go through the `git-workflow-master` agent.** Do not run history-changing commands directly; delegate them, and pass these rules in the brief.
 
 ## Project agents
 
