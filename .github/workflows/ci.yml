@@ -29,6 +29,6 @@ jobs:
       - name: Keyless container replay and health
         run: |
           docker run -d --name gameqa -p 8501:8501 gameqa-demo
-          curl --retry 12 --retry-connrefused --retry-delay 2 --fail http://127.0.0.1:8501/_stcore/health
+          curl --retry 12 --retry-all-errors --retry-delay 2 --fail http://127.0.0.1:8501/_stcore/health || { docker logs gameqa; exit 1; }
           docker exec gameqa python -c "from gameqa.config import load_config,config_hash; from gameqa.storage import list_runs,load_run,run_dir_for,zip_path_for; import zipfile; c=load_config(); assert config_hash(c)=='eaa371255716'; r=load_run('20261009T123704Z-8e4e19',c); assert r.final_decision.value=='FAIL'; z=zipfile.ZipFile(zip_path_for(run_dir_for(r.run_id,c))); assert z.testzip() is None; assert r.run_id+'/evidence.json' in z.namelist(); print('keyless replay verified')"
           docker exec gameqa python -c "from gameqa.config import load_config; from gameqa.vision.features import FeatureExtractor; f=FeatureExtractor(load_config()); assert f.backend=='torch.hub' and f.device=='cpu'; print('frozen DINO loads on CPU; no VLM call')"

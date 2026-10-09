@@ -30,7 +30,7 @@ def prepare():
         return destination  # Preserve existing original ZIP/evidence/history.
     shutil.copytree(source, destination)
     shutil.copyfile(destination / "images/candidate.png", destination / "images/aligned_candidate.png")
-    save_png(destination / "images/overlay.png", draw_boxes(load_image(destination / "images/reference.png"), result.proposals))
+    save_png(destination / "images/overlay.png", draw_boxes(load_image(destination / "images/reference.png", cfg).array, result.proposals))
     export_report(result, destination)
     return destination
 
