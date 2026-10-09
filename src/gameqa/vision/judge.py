@@ -177,6 +177,12 @@ def validate_response(raw: str, rules: list[Rule], audit: bool = False) -> dict:
 
 
 # ---------------- Judge ----------------
+def _is_transient(exc: Exception) -> bool:
+    """HTTP 429 (rate limit) / 503 (overloaded) from a hosted VLM: worth retrying after a pause."""
+    text = str(exc)
+    return "HTTP 429" in text or "HTTP 503" in text
+
+
 class Judge:
     def __init__(self, cfg: dict):
         v = cfg.get("vlm", {})
@@ -185,6 +191,7 @@ class Judge:
         # Fallbacks mirror configs/default.yaml (D10); the yaml values are authoritative.
         self.timeout_s = float(v.get("timeout_s", 75))
         self.max_attempts = int(v.get("max_attempts", 2))
+        self.transient_retries = int(v.get("transient_retries", 4))  # extra retries on HTTP 429/503
         self.temperature = float(v.get("temperature", 0.0))
         self.crop_max_side = int(v.get("crop_max_side", 336))
         self.context_max_side = int(v.get("context_max_side", 512))
@@ -221,6 +228,8 @@ class Judge:
             prefix = "openai" if host == "api.openai.com" else f"openai-compatible@{host}"
             self.model_id, self.is_mock = f"{prefix}:{self._model}", False
             self.image_detail = v.get("image_detail", "high")
+            # Optional reasoning budget for "thinking" models (e.g. low/medium/high); omitted when unset.
+            self.reasoning_effort = v.get("reasoning_effort")
         else:
             raise ValueError(f"unknown vlm provider {self.provider}")
 
@@ -233,6 +242,9 @@ class Judge:
         h.update(prompt.encode())
         h.update(json.dumps(schema, sort_keys=True).encode())
         h.update(f"{self.model_id}|{self.prompt_version}|{self.temperature}|{self.num_ctx}".encode())
+        # Settings that change the answer must change the key (else a stale answer is reused).
+        if getattr(self, "reasoning_effort", None):
+            h.update(f"|effort={self.reasoning_effort}".encode())
         return h.hexdigest()
 
     def _mock_reply(self, rules: list[Rule], audit: bool) -> str:
@@ -280,8 +292,10 @@ class Judge:
     def _openai_reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
         import httpx
         content: list[dict] = [{"type": "text", "text": prompt}]
+        # "detail" is OpenAI-specific; set vlm.image_detail: null for endpoints that reject it
+        img_extra = {"detail": self.image_detail} if self.image_detail else {}
         content += [{"type": "image_url",
-                     "image_url": {"url": f"data:image/png;base64,{_png_b64(i)}", "detail": self.image_detail}}
+                     "image_url": {"url": f"data:image/png;base64,{_png_b64(i)}", **img_extra}}
                     for i in images]
         payload = {
             "model": self._model, "temperature": self.temperature,
@@ -289,11 +303,14 @@ class Judge:
             "response_format": {"type": "json_schema",
                                 "json_schema": {"name": "judgment", "schema": schema, "strict": False}},
         }
+        if self.reasoning_effort:
+            payload["reasoning_effort"] = self.reasoning_effort
         r = httpx.post(f"{self.base_url}/chat/completions", json=payload, timeout=self.timeout_s,
                        headers={"Authorization": f"Bearer {self._api_key()}"})
         if r.status_code >= 400:
             # never echo request headers; the body carries the provider's error message only
-            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
+            # (800 chars keeps quota details such as quotaId/limit/retryDelay visible)
+            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:800]}")
         return r.json()["choices"][0]["message"]["content"]
 
     def _reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
@@ -316,12 +333,23 @@ class Judge:
             except Exception:  # noqa: BLE001
                 pass
         errors: list[str] = []
-        for attempt in range(1, self.max_attempts + 1):
+        transient_left = self.transient_retries
+        attempt = 0
+        while attempt < self.max_attempts:
+            attempt += 1
             try:
                 raw = self._mock_reply(rules, audit) if self.is_mock else self._reply(images, prompt, schema)
             except Exception as e:  # noqa: BLE001  (timeouts, connection, HTTP, bad payload)
                 errors.append(f"provider error (attempt {attempt}): {type(e).__name__}: {e}")
-                if attempt < self.max_attempts and not self.is_mock:
+                if self.is_mock:
+                    continue
+                # Hosted APIs return 429/503 when overloaded; that is infrastructure, not a model
+                # answer, so retry with backoff without spending a regular attempt.
+                if _is_transient(e) and transient_left > 0:
+                    transient_left -= 1
+                    attempt -= 1
+                    time.sleep(min(60.0, 5.0 * 2 ** (self.transient_retries - transient_left - 1)))
+                elif attempt < self.max_attempts:
                     time.sleep(3.0)
                 continue
             parsed = validate_response(raw, rules, audit)

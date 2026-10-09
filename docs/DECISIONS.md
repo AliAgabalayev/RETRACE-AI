@@ -117,3 +117,15 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 ## D15 — Attribution trailers removed; commit hashes changed (2026-10-09)
 - Owner request: no `Co-Authored-By` / AI attribution in commits or PRs (rule in CLAUDE.md). All existing commits were rewritten (`git filter-branch --msg-filter`; trees verified identical, 8 commits) and force-pushed by the owner. Local backup tag: `backup/pre-trailer-strip` (not pushed).
 - Old → new hashes: 9c09345→d4b85af, 0b3cc1b→3022ec8, c463a07→58ba189, 1f81dd2→871d8b1, 5f4fb4a→1c2f1ca, 9e9eb16→2349860, 9a34339→2663d6f, eab6514→004d997. Docs now show `new [was old]`; untracked `artifacts/eval/*/run_meta.json` keep the old hashes.
+
+## D16 — Gemini via the OpenAI-compatible provider; free-tier quota blocks evaluation (2026-10-09)
+- OpenAI key: valid, but the account has no API credits (HTTP 429 `insufficient_quota`); a ChatGPT subscription does not include API credits. No OpenAI run was possible.
+- Gemini added without new client code: `configs/gemini.yaml` (endpoint `generativelanguage.googleapis.com/v1beta/openai`, key `GEMINI_API_KEY`). `scripts/list_models.py` lists the models an endpoint offers (key never printed).
+- Model choice (owner asked for newer than 2.5): `gemini-3.1-pro-preview` → HTTP 429, no free-tier quota. `gemini-3.8-flash` works and is the newest usable model. Default reasoning ≈ 29 s per call; `reasoning_effort: low` (new optional `vlm.reasoning_effort`) ≈ 7 s per call.
+- Smoke results with gemini-3.8-flash (synthetic fixtures, real API): `object_removed` → FAIL (R1 forbidden D1, validated); `lighting_change` → NEEDS_REVIEW (R1 uncertain, audit allowed A1); `clothing_color_change` → NEEDS_REVIEW (0 proposals, audit reported a change outside proposals; Qwen gave PASS here).
+- Code fixes found while integrating:
+  - the VLM cache key now includes `reasoning_effort` (a stale default-effort answer was being reused — measurement bug);
+  - HTTP 429/503 are treated as transient: up to `vlm.transient_retries` (default 4) extra retries with 5→10→20→40 s backoff, not counted as regular attempts;
+  - provider error text is kept to 800 chars so quota details stay visible;
+  - `vlm.image_detail: null` omits the OpenAI-only `detail` field.
+- **Blocker:** Gemini free tier = **20 requests/day per model** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`). The 60-pair comparison needs ≈600 requests (E2 ≈ 8/pair, E4 ≈ 2/pair). E2-Gemini was stopped after 1 pair; its quota-error row was dropped (`artifacts/eval/e2g_pipeline_gemini_subset60/dropped_provider_errors.txt`). No Gemini metrics exist yet. Options: enable billing (paid tier) or accept a much smaller sample.
