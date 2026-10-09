@@ -42,6 +42,14 @@ Standard Function response limit 4.5 MB; [streaming guidance](https://vercel.com
 
 ## Actual verification
 
+### Native Streamlit media adaptation
+
+Container preview `dpl_5tpyKYm1HmZ6Kp3rrDeWtvFta5Rm` at `https://retrace-visual-r4bbxbd9m-octopus-e236.vercel.app` successfully loaded the Streamlit WebSocket/session and recorded FAIL/observations; health returned200. `/media/<id>.jpg` returned404 because instance-local media is unavailable to independently routed HTTP requests. This preview is not accepted as a complete application.
+
+Minimal fix uses Streamlit [native static serving](https://docs.streamlit.io/develop/concepts/configuration/serving-static-files): Docker build copies exact `deploy/replay` bytes to `static/replay`, enables `STREAMLIT_SERVER_ENABLE_STATIC_SERVING=true` and `GAMEQA_PUBLIC_STATIC=1`. Public images/crops/diagnostics use `/app/static/replay/barrel/...`; a same-origin accessible anchor with `download` attribute serves the validated archive. Public runtime validates manifest/archive before showing the link. No external storage, framework replacement or runtime asset generation. Optional generated numbered overlays are omitted; original crops and box coordinates remain visible. Local/native downloads and approvals remain available outside this public static mode.
+
+Actual pinned Docker static browser: desktop/mobile/separate session and refresh pass; all6 original image/crop/diagnostic files decode; recorded observations and frozen config hash visible; fullZIP downloads with evidence.json and20/20manifest asset hashes matching; no console errors/overflow/provider requests. Focused UI20passed; full offline suite **218passed6deselected36.88s** (separate agent run218passed6skipped36.94s). Independent static adaptation review: NO BLOCKERS. Latest CLI63.1 container build/VCR upload succeeded, image `vcr.vercel.com/octopus-e236/retrace-visual-qa/retrace@sha256:d880245ca8be1f4da175ccda3bfd07318a3c8c3f86a5921844775144a66d1e43`; hosted acceptance pending.
+
 ```sh
 env -u OPENROUTER_API_KEY GAMEQA_PUBLIC_REPLAY=1 PYTHONPATH=src PORT=8531 .venv/bin/python scripts/start_deployment.py
 .venv/bin/python -m pytest -m 'not real_model' -q

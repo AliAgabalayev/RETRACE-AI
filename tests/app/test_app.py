@@ -232,8 +232,10 @@ def test_public_replay_has_no_mutation_controls_even_when_host_key_exists(public
     assert not calls
 
 
-def test_public_missing_original_archive_is_explicit_and_never_regenerated(public_replay):
+@pytest.mark.parametrize("static", [False, True])
+def test_public_missing_original_archive_is_explicit_and_never_regenerated(public_replay, monkeypatch, static):
     app, run, stored, calls = public_replay
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1" if static else "0")
     before = _file_hashes(run)
     app.run()
     app.run()
@@ -241,14 +243,17 @@ def test_public_missing_original_archive_is_explicit_and_never_regenerated(publi
     messages = [e.value for e in list(app.error) + list(app.warning) + list(app.info)]
     assert any("original" in m.lower() and "zip" in m.lower() for m in messages), messages
     assert not app.get("download_button")
+    assert not any('download="' in element.proto.body for element in app.get("html"))
     assert not run.with_suffix(".zip").exists()
     assert _file_hashes(run) == before
     assert not calls
 
 
-def test_public_rerun_preserves_existing_archive_bytes(public_replay):
+@pytest.mark.parametrize("static", [False, True])
+def test_public_rerun_preserves_existing_archive_bytes(public_replay, monkeypatch, static):
     """Fault-injection ZIP is QA-only; it is never represented as original evidence."""
     app, run, stored, calls = public_replay
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1" if static else "0")
     archive = run.with_suffix(".zip")
     with zipfile.ZipFile(archive, "w") as zipped:
         prefix = stored["run_id"] + "/"
@@ -268,20 +273,30 @@ def test_public_rerun_preserves_existing_archive_bytes(public_replay):
     app.run()
     app.run()
     assert not app.exception, app.exception
-    assert any(e.label == "Download evidence ZIP" for e in app.get("download_button"))
+    if static:
+        assert not app.get("download_button")
+        html = "\n".join(element.proto.body for element in app.get("html"))
+        assert 'href="/app/static/replay/barrel.zip"' in html
+        assert f'download="{stored["run_id"]}.zip"' in html
+        assert not any("Portable replay export" in element.value for element in app.caption)
+    else:
+        assert any(e.label == "Download evidence ZIP" for e in app.get("download_button"))
     assert archive.read_bytes() == before
     assert _file_hashes(run) == hashes
     assert not calls
 
 
-def test_public_rejects_untrusted_archive_without_replacing_it(public_replay):
+@pytest.mark.parametrize("static", [False, True])
+def test_public_rejects_untrusted_archive_without_replacing_it(public_replay, monkeypatch, static):
     app, run, stored, calls = public_replay
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1" if static else "0")
     archive = run.with_suffix(".zip")
     archive.write_bytes(b"QA-only corrupted archive; not original evidence")
     before = archive.read_bytes()
     app.run()
     assert not app.exception, app.exception
     assert not app.get("download_button")
+    assert not any('download="' in element.proto.body for element in app.get("html"))
     assert any("checksum" in e.value.lower() or "hash" in e.value.lower()
                for e in list(app.error) + list(app.warning))
     assert archive.read_bytes() == before
@@ -365,3 +380,55 @@ def test_public_reconstructed_replay_rejects_missing_or_changed_original_asset(
                for e in app.error)
     assert _file_hashes(run.parent) == before
     assert not calls
+
+
+def _image_urls(app):
+    return [image.url for element in app.get("image") for image in element.proto.imgs]
+
+
+def test_public_static_replay_uses_original_file_urls_and_validated_download(public_replay, monkeypatch):
+    app, run, stored, calls = public_replay
+    _qa_reconstructed_export(public_replay)
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1")
+    before = _file_hashes(run.parent)
+    app.run()
+    app.run()
+    assert not app.exception, app.exception
+    urls = _image_urls(app)
+    expected = ["images/reference.png", "images/candidate.png", "diagnostics/heatmap.png",
+                "diagnostics/overlap_mask.png"]
+    expected += [f"crops/{p['id']}_{side}.png" for p in stored["proposals"] for side in ("ref", "cand")]
+    assert set(urls) == {"/app/static/replay/barrel/" + relative for relative in expected}
+    assert not app.get("download_button")
+    html = "\n".join(element.proto.body for element in app.get("html"))
+    assert 'href="/app/static/replay/barrel-replay.zip"' in html
+    assert f'download="{stored["run_id"]}-replay.zip"' in html
+    assert "Download evidence ZIP" in html
+    assert any("Original ZIP unavailable" in element.value for element in app.caption)
+    assert any(element.value.startswith("**FAIL") for element in app.error)
+    assert _file_hashes(run.parent) == before
+    assert not calls
+
+
+def test_public_static_replay_rejects_corrupt_download(public_replay, monkeypatch):
+    app, run, stored, calls = public_replay
+    archive = _qa_reconstructed_export(public_replay)
+    archive.write_bytes(archive.read_bytes() + b"QA-only corruption")
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1")
+    before = _file_hashes(run.parent)
+    app.run()
+    assert not app.exception, app.exception
+    html = "\n".join(element.proto.body for element in app.get("html"))
+    assert 'download="' not in html
+    assert any("checksum" in element.value.lower() for element in app.error)
+    assert _file_hashes(run.parent) == before
+    assert not calls
+
+
+def test_static_flag_keeps_local_reference_approval_and_native_download(app, monkeypatch):
+    monkeypatch.setenv("GAMEQA_PUBLIC_STATIC", "1")
+    _analyze_fixture(app)
+    assert not app.exception, app.exception
+    assert any(button.label == "Approve as new reference" for button in app.button)
+    assert any(element.label == "Download evidence ZIP" for element in app.get("download_button"))
+    assert all(not url.startswith("/app/static/") for url in _image_urls(app))

@@ -8,6 +8,7 @@ Inference runs only when Analyze is pressed; results are kept in st.session_stat
 from __future__ import annotations
 
 import hashlib
+import html
 import io
 import json
 import os
@@ -15,6 +16,7 @@ import re
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
@@ -45,6 +47,15 @@ def public_replay_enabled() -> bool:
     return os.environ.get("GAMEQA_PUBLIC_REPLAY", "").strip() == "1"
 
 
+def static_replay_url(path: Path) -> str:
+    """Build a same-origin URL for immutable files copied into Streamlit's static directory."""
+    try:
+        relative = path.resolve().relative_to((REPO_ROOT / "deploy/replay").resolve())
+    except ValueError as exc:
+        raise StorageError("Static replay asset is outside the recorded package.") from exc
+    return "/app/static/replay/" + quote(relative.as_posix(), safe="/")
+
+
 def render_header() -> None:
     st.html("""<style>
         h1 { font-size: clamp(3.5rem, 10vw, 7rem) !important;
@@ -55,6 +66,10 @@ def render_header() -> None:
                            line-height: 1.5; margin: 0 0 1.5rem; }
         hr { border-color: #303030; }
         button { border-radius: 0.25rem !important; }
+        .retrace-download { display: inline-block; background: #E66B38; color: #090909 !important;
+                            border-radius: 0.25rem; padding: 0.55rem 0.9rem;
+                            text-decoration: none !important; font-weight: 600; }
+        .retrace-download:hover { background: #CD592D; }
         :focus-visible { outline: 2px solid #E66B38 !important; outline-offset: 3px; }
     </style>""")
     st.title("RETRACE")
@@ -241,12 +256,17 @@ def evidence_zip(result: AnalysisResult, run_dir: Path, *, public_replay: bool =
 
 
 def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool = False) -> None:
+    static_replay = public_replay and os.environ.get("GAMEQA_PUBLIC_STATIC", "").strip() == "1"
+
+    def image_source(path: Path) -> str:
+        return static_replay_url(path) if static_replay else str(path)
+
     ref_p, cand_p = run_dir / "images/reference.png", run_dir / "images/candidate.png"
     st.subheader("Reference and candidate")
     if ref_p.is_file() and cand_p.is_file():
         c1, c2 = st.columns(2)
-        c1.image(str(ref_p), caption="Reference · original screenshot", width="stretch")
-        c2.image(str(cand_p), caption="Candidate · original screenshot", width="stretch")
+        c1.image(image_source(ref_p), caption="Reference · original screenshot", width="stretch")
+        c2.image(image_source(cand_p), caption="Candidate · original screenshot", width="stretch")
     else:
         st.error("An original screenshot is missing from this saved run.")
 
@@ -285,7 +305,9 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
 
     st.divider()
     st.subheader("Region evidence")
-    if ref_p.is_file() and cand_p.is_file():
+    if static_replay:
+        st.caption("Recorded crops are shown below; region boxes use original reference pixel coordinates.")
+    elif ref_p.is_file() and cand_p.is_file():
         ref, cand = img(ref_p), img(cand_p)
         a = result.alignment
         use_inv = a is not None and a.status.value in ("aligned", "resized")
@@ -305,7 +327,7 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
             for col, suffix, cap in ((cc1, "ref", "Reference crop"), (cc2, "cand", "Candidate crop (aligned)")):
                 f = run_dir / f"crops/{p.id}_{suffix}.png"
                 if f.is_file():
-                    col.image(str(f), caption=cap, width="stretch")
+                    col.image(image_source(f), caption=cap, width="stretch")
                 else:
                     col.warning("Stored crop is missing.")
             if j:
@@ -331,9 +353,17 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
         if reconstructed:
             st.caption("Portable replay export — original run files preserved; report and evidence index "
                        "reconstructed. Original ZIP unavailable.")
-        st.download_button("Download evidence ZIP", archive,
-                           file_name=f"{result.run_id}{'-replay' if reconstructed else ''}.zip", mime="application/zip",
-                           key=f"export_{result.run_id}", on_click="ignore", type="primary")
+        file_name = f"{result.run_id}{'-replay' if reconstructed else ''}.zip"
+        if static_replay:
+            path = run_dir.parent / "barrel-replay.zip" if reconstructed else zip_path_for(run_dir)
+            url = html.escape(static_replay_url(path), quote=True)
+            filename = html.escape(file_name, quote=True)
+            st.html(f'<a class="retrace-download" href="{url}" download="{filename}">'
+                    'Download evidence ZIP</a>')
+        else:
+            st.download_button("Download evidence ZIP", archive,
+                               file_name=file_name, mime="application/zip",
+                               key=f"export_{result.run_id}", on_click="ignore", type="primary")
     except StorageError as exc:
         st.error(str(exc))
     if not public_replay:
@@ -354,7 +384,7 @@ def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool 
         for rel, cap in (("diagnostics/heatmap.png", "DINOv2 distance heatmap"),
                          ("diagnostics/overlap_mask.png", "Alignment overlap mask")):
             if (run_dir / rel).is_file():
-                st.image(str(run_dir / rel), caption=cap)
+                st.image(image_source(run_dir / rel), caption=cap)
         st.caption(f"Recorded run: {result.run_id}")
         if public_replay:
             st.caption("Public replay · live analysis and reference approvals disabled · no new API calls.")
