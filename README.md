@@ -107,3 +107,14 @@ Real benchmark data (VideoGameQA-Bench, CC BY 4.0), synthetic fixtures, real mod
 ## Known limits (short)
 
 A known false PASS on the benchmark (`vr_bcbcf341`: the 3B VLM called a missing ground texture a brightness change), a 97 % review rate in E2, small-object misses at 14 px patch scale (the classical fallback catches some), alignment sensitivity (unreliable alignment blocks region-level FAIL), an uncalibrated 3B VLM (weak rule mapping, weak scene audit), CPU-only VLM latency, and a benchmark with only two distinct rule texts. Details: `docs/CODE_WALKTHROUGH.md` section 9.
+
+## Optional: GPT (OpenAI-compatible) VLM instead of local Qwen
+
+Implemented and unit-tested; **not yet run with a real key** (DECISIONS D14).
+
+1. `cp .env.example .env` and put your real key in `.env` (`OPENAI_API_KEY=...`; `.env` is git-ignored).
+2. UI: `GAMEQA_CONFIG=configs/openai.yaml .venv/bin/streamlit run app.py`
+3. CLI: `.venv/bin/python -m gameqa.cli analyze ... --config configs/openai.yaml`
+4. OpenRouter instead: `configs/openrouter.yaml` with `OPENROUTER_API_KEY`.
+
+Without a valid key the run ends `NEEDS_REVIEW [DEGRADED]` and no API call is made (verified with the placeholder key).

@@ -34,7 +34,7 @@ proposals:
   max_regions: 8                # cap; truncation is recorded and blocks PASS
 
 vlm:
-  provider: ollama              # ollama | mock
+  provider: ollama              # ollama | openai (any OpenAI-compatible API) | mock
   model: qwen2.5vl:3b
   base_url: http://localhost:11434
   timeout_s: 75                 # CPU-resident VLM: stage-1 audit call takes ~35 s (was 30; see MODEL_NOTES)

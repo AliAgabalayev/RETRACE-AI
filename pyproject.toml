@@ -9,7 +9,7 @@ description = "Rule-aware visual regression prototype (DINOv2 proposals + VLM ju
 requires-python = ">=3.11"
 dependencies = [
   "numpy", "pillow", "opencv-python", "pydantic>=2", "pyyaml", "httpx",
-  "streamlit", "pandas", "pyarrow", "huggingface_hub", "torch", "torchvision",
+  "streamlit", "python-dotenv", "pandas", "pyarrow", "huggingface_hub", "torch", "torchvision",
 ]
 
 [project.optional-dependencies]

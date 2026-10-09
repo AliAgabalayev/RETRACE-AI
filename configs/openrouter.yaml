@@ -1,0 +1,10 @@
+# VLM via OpenRouter (OpenAI-compatible). Use: GAMEQA_CONFIG=configs/openrouter.yaml or --config.
+# The key is read from $OPENROUTER_API_KEY (.env). See DECISIONS D14.
+vlm:
+  provider: openai
+  model: openai/gpt-4o-mini
+  base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+  timeout_s: 60
+  max_attempts: 2
+  image_detail: high

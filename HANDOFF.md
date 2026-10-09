@@ -122,7 +122,7 @@ Demo zamanı göstər:
 | Nə | Harada |
 |---|---|
 | VLM modeli, timeout, attempt, şəkil ölçüləri | `configs/default.yaml` → `vlm.*` |
-| Yeni VLM provider (cloud) | `src/gameqa/vision/judge.py` → `_ollama_reply` yanına yeni metod + `vlm.provider` |
+| GPT / OpenAI-compatible VLM (D14) | `.env`-də `OPENAI_API_KEY` (və ya `OPENROUTER_API_KEY`) → `GAMEQA_CONFIG=configs/openai.yaml .venv/bin/streamlit run app.py` və ya CLI `--config configs/openai.yaml`. Kod: `judge.py: _openai_reply` |
 | Prompt-lar | `src/gameqa/vision/prompts.py`. Dəyişəndə `PROMPT_VERSION`-u artır (cache key-in hissəsidir) |
 | Cavab validasiyası | `judge.validate_response` |
 | DINOv2 threshold, classical threshold, min area, region cap, global-change collapse | `configs/default.yaml` → `proposals.*` (yalnız **dev** split-də tune et) |

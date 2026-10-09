@@ -1,10 +1,11 @@
-"""VLM judgment (Ollama or labelled mock), strict response validation, disk cache."""
+"""VLM judgment (Ollama, OpenAI-compatible API, or labelled mock), strict response validation, disk cache."""
 from __future__ import annotations
 
 import base64
 import hashlib
 import io
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -197,7 +198,7 @@ class Judge:
         self.warmup_timeout_s = float(v.get("warmup_timeout_s", 180))
         self.mock_behavior = v.get("mock_behavior", "uncertain")
         self.prompt_version = PROMPT_VERSION
-        self.cache_enabled = bool(v.get("cache", True)) and self.provider == "ollama"
+        self.cache_enabled = bool(v.get("cache", True)) and self.provider in ("ollama", "openai")
         self.cache_dir = Path(cfg.get("run", {}).get("cache_dir", "data/cache")) / "vlm"
         self.last_cache_hit = False
         if self.provider == "mock":
@@ -207,6 +208,19 @@ class Judge:
         elif self.provider == "ollama":
             self.model_id, self.is_mock = f"ollama:{v.get('model', 'qwen2.5vl:3b')}", False
             self._model = v.get("model", "qwen2.5vl:3b")
+        elif self.provider == "openai":
+            # Any OpenAI-compatible Chat Completions endpoint (OpenAI, OpenRouter, ...). The key is
+            # read from the environment variable named by vlm.api_key_env (loaded from .env).
+            from gameqa.config import load_env_file
+            load_env_file()
+            self._model = v.get("model", "gpt-4o-mini")
+            self.api_key_env = v.get("api_key_env", "OPENAI_API_KEY")
+            if self.base_url.startswith("http://localhost:11434"):  # yaml default is Ollama's URL
+                self.base_url = "https://api.openai.com/v1"
+            host = self.base_url.split("//", 1)[-1].split("/", 1)[0]
+            prefix = "openai" if host == "api.openai.com" else f"openai-compatible@{host}"
+            self.model_id, self.is_mock = f"{prefix}:{self._model}", False
+            self.image_detail = v.get("image_detail", "high")
         else:
             raise ValueError(f"unknown vlm provider {self.provider}")
 
@@ -256,6 +270,37 @@ class Judge:
             raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
         return r.json()["message"]["content"]
 
+    def _api_key(self) -> str:
+        key = os.environ.get(self.api_key_env, "").strip()
+        if not key or key.lower().startswith(("mock", "your-", "replace", "sk-replace")):
+            raise RuntimeError(f"{self.api_key_env} is not configured (set a real key in .env); "
+                               "VLM unavailable")
+        return key
+
+    def _openai_reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
+        import httpx
+        content: list[dict] = [{"type": "text", "text": prompt}]
+        content += [{"type": "image_url",
+                     "image_url": {"url": f"data:image/png;base64,{_png_b64(i)}", "detail": self.image_detail}}
+                    for i in images]
+        payload = {
+            "model": self._model, "temperature": self.temperature,
+            "messages": [{"role": "user", "content": content}],
+            "response_format": {"type": "json_schema",
+                                "json_schema": {"name": "judgment", "schema": schema, "strict": False}},
+        }
+        r = httpx.post(f"{self.base_url}/chat/completions", json=payload, timeout=self.timeout_s,
+                       headers={"Authorization": f"Bearer {self._api_key()}"})
+        if r.status_code >= 400:
+            # never echo request headers; the body carries the provider's error message only
+            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
+        return r.json()["choices"][0]["message"]["content"]
+
+    def _reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
+        if self.provider == "openai":
+            return self._openai_reply(images, prompt, schema)
+        return self._ollama_reply(images, prompt, schema)
+
     def _ask(self, images, prompt, schema, rules, audit) -> tuple[str | None, list[str], float]:
         """Returns (raw_text|None, errors, latency). Never raises."""
         self.last_cache_hit = False
@@ -273,7 +318,7 @@ class Judge:
         errors: list[str] = []
         for attempt in range(1, self.max_attempts + 1):
             try:
-                raw = self._mock_reply(rules, audit) if self.is_mock else self._ollama_reply(images, prompt, schema)
+                raw = self._mock_reply(rules, audit) if self.is_mock else self._reply(images, prompt, schema)
             except Exception as e:  # noqa: BLE001  (timeouts, connection, HTTP, bad payload)
                 errors.append(f"provider error (attempt {attempt}): {type(e).__name__}: {e}")
                 if attempt < self.max_attempts and not self.is_mock:
@@ -344,6 +389,12 @@ class Judge:
         """Load the model into memory (cold load can take ~70 s on CPU). Never raises."""
         if self.is_mock:
             return {"ok": True, "mock": True, "seconds": 0.0}
+        if self.provider == "openai":  # hosted model: nothing to load; only check the key exists
+            try:
+                self._api_key()
+                return {"ok": True, "seconds": 0.0}
+            except RuntimeError as e:
+                return {"ok": False, "seconds": 0.0, "error": str(e)}
         import httpx
         t0 = time.time()
         try:

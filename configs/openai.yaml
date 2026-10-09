@@ -1,0 +1,10 @@
+# VLM via the OpenAI API. Use: GAMEQA_CONFIG=configs/openai.yaml (app) or --config configs/openai.yaml (CLI).
+# The key is read from $OPENAI_API_KEY (put it in .env, which is git-ignored). See DECISIONS D14.
+vlm:
+  provider: openai
+  model: gpt-4o-mini            # or gpt-4o
+  base_url: https://api.openai.com/v1
+  api_key_env: OPENAI_API_KEY
+  timeout_s: 60
+  max_attempts: 2
+  image_detail: high
