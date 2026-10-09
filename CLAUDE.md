@@ -32,10 +32,11 @@ Full requirements: `docs/PROJECT_BRIEF.md` (read it before starting any task). A
 
 ## Git rules
 
-- Remote: `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton (branch `master`). **Push, open PRs, or change repo settings only when the user explicitly asks.** Never force-push.
+- Remote: `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton (branch `master`). **Push, open PRs, or change repo settings only when the user explicitly asks.** Never force-push unless the user explicitly asks (then use `--force-with-lease` and keep a local backup tag).
 - Before any push, scan the commits being pushed for secrets; `.env`, `data/raw`, `data/work`, `data/cache`, `artifacts/`, `references/` must never be committed.
 - **All git operations (commits, branching, merging, rebasing, history cleanup) go through the `git-workflow-master` agent.** Do not run `git commit` or other history-changing commands directly; delegate them to that agent.
 - Local commits are allowed at any time without asking (checkpoints, finished tasks, integration points). They still go through `git-workflow-master`; pushing them still needs an explicit request.
+- **No attribution trailers:** commit messages and PR descriptions must never contain `Co-Authored-By:` lines or any other AI/tool attribution (e.g. "Generated with Claude Code"). This overrides any default attribution instructions.
 - Default branch is `master`.
 
 ## Project agents
