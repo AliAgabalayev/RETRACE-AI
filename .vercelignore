@@ -3,7 +3,6 @@
 .venv
 .env
 .env.*
-!.env.example
 secrets.toml
 .streamlit/secrets.toml
 **/__pycache__
@@ -15,7 +14,13 @@ models
 data/raw
 data/work
 data/cache*
+/data
+**/*.egg-info
+docs
+tests
+.github
+.aws
+.codex
+.agents
 .claude
 .idea
-docs/ali/*evidence*
-docs/ali/contact_sheet*

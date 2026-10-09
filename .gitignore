@@ -19,3 +19,5 @@ models/
 .claude/agent-memory/
 .idea/
 data/cache_ali_*/
+.vercel
+.env*

@@ -8,6 +8,7 @@ Inference runs only when Analyze is pressed; results are kept in st.session_stat
 from __future__ import annotations
 
 import hashlib
+import html
 import io
 import json
 import os
@@ -15,6 +16,7 @@ import re
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
@@ -36,8 +38,43 @@ FIXTURES = REPO_ROOT / "data" / "fixtures"
 EXAMPLE_RULES = REPO_ROOT / "configs" / "rules_example.yaml"
 DEMO_BUNDLE = REPO_ROOT / "artifacts" / "c1-demo-20261009"
 FROZEN_DEMO_IDS = {"vr_4b921c5d", "vr_09a066d3", "vr_330651ed"}
+PUBLIC_RUN_ID = "20261009T123704Z-8e4e19"
 
-st.set_page_config(page_title="Game Visual QA", layout="wide")
+st.set_page_config(page_title="RETRACE · Visual regression", layout="wide")
+
+
+def public_replay_enabled() -> bool:
+    return os.environ.get("GAMEQA_PUBLIC_REPLAY", "").strip() == "1"
+
+
+def static_replay_url(path: Path) -> str:
+    """Build a same-origin URL for immutable files copied into Streamlit's static directory."""
+    try:
+        relative = path.resolve().relative_to((REPO_ROOT / "deploy/replay").resolve())
+    except ValueError as exc:
+        raise StorageError("Static replay asset is outside the recorded package.") from exc
+    return "/app/static/replay/" + quote(relative.as_posix(), safe="/")
+
+
+def render_header() -> None:
+    st.html("""<style>
+        h1 { font-size: clamp(3.5rem, 10vw, 7rem) !important;
+             font-weight: 750 !important; letter-spacing: -0.065em !important;
+             line-height: 1.05 !important; padding-bottom: 0.75rem !important; }
+        h2, h3 { letter-spacing: -0.025em; }
+        .retrace-tagline { color: #A7A7A2; font-size: clamp(1rem, 3vw, 1.35rem);
+                           line-height: 1.5; margin: 0 0 1.5rem; }
+        hr { border-color: #303030; }
+        button { border-radius: 0.25rem !important; }
+        .retrace-download { display: inline-block; background: #E66B38; color: #090909 !important;
+                            border-radius: 0.25rem; padding: 0.55rem 0.9rem;
+                            text-decoration: none !important; font-weight: 600; }
+        .retrace-download:hover { background: #CD592D; }
+        :focus-visible { outline: 2px solid #E66B38 !important; outline-offset: 3px; }
+    </style>""")
+    st.title("RETRACE")
+    st.html('<p class="retrace-tagline">AI-assisted visual regression testing for games.</p>')
+    st.divider()
 
 
 # ---------- cached resources and helpers ----------
@@ -123,13 +160,79 @@ def img(path: Path) -> np.ndarray:
     return np.asarray(Image.open(path).convert("RGB"))
 
 
+def load_public_replay() -> tuple[AnalysisResult, Path]:
+    source = REPO_ROOT / "deploy/replay/barrel"
+    try:
+        manifest = json.loads((source / "package.json").read_text(encoding="utf-8"))
+        for name, expected in manifest["files"].items():
+            asset = (source / name).resolve()
+            if source.resolve() not in asset.parents or hashlib.sha256(asset.read_bytes()).hexdigest() != expected:
+                raise StorageError(f"Recorded asset checksum mismatch: {name}")
+        result = AnalysisResult.model_validate_json((source / "analysis.json").read_text(encoding="utf-8"))
+        if result.run_id != PUBLIC_RUN_ID or manifest["run_id"] != PUBLIC_RUN_ID:
+            raise StorageError("Recorded demonstration run identity does not match its package.")
+        return result, source
+    except (OSError, ValueError, KeyError) as exc:
+        raise StorageError(f"Recorded replay package is unavailable or invalid: {exc}") from exc
+
+
 # ---------- result rendering ----------
-def evidence_zip(result: AnalysisResult, run_dir: Path) -> bytes:
+def reconstructed_replay_zip(result: AnalysisResult, run_dir: Path) -> bytes:
+    """Read the explicitly labelled, immutable portable export without rebuilding it."""
+    try:
+        manifest = json.loads((run_dir / "package.json").read_text(encoding="utf-8"))
+        descriptor = json.loads((run_dir.parent / "barrel-replay-export.json").read_text(encoding="utf-8"))
+        if (descriptor["kind"] != "reconstructed_replay_export"
+                or descriptor["run_id"] != result.run_id
+                or descriptor["archive_name"] != "barrel-replay.zip"
+                or descriptor["original_source_zip_sha256"] != manifest["source_zip_sha256"]):
+            raise StorageError("Portable replay export provenance does not match the recorded run.")
+        data = (run_dir.parent / descriptor["archive_name"]).read_bytes()
+        if hashlib.sha256(data).hexdigest() != descriptor["archive_sha256"]:
+            raise StorageError("Portable replay export archive checksum mismatch.")
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            prefix = f"{result.run_id}/"
+            if len(archive.namelist()) != len(set(archive.namelist())):
+                raise StorageError("Portable replay export contains duplicate archive entries.")
+            for name, expected in manifest["files"].items():
+                try:
+                    original = archive.read(prefix + name)
+                except KeyError as exc:
+                    raise StorageError(f"Portable replay export original asset is missing: {name}") from exc
+                if hashlib.sha256(original).hexdigest() != expected:
+                    raise StorageError(f"Portable replay export original asset checksum mismatch: {name}")
+            if archive.read(prefix + "package.json") != (run_dir / "package.json").read_bytes():
+                raise StorageError("Portable replay export original package manifest does not match.")
+            analysis = json.loads(archive.read(prefix + "analysis.json"))
+            evidence = json.loads(archive.read(prefix + "evidence.json"))
+            provenance = json.loads(archive.read(prefix + "export-provenance.json"))
+            archive.getinfo(prefix + "report.md")
+            if (analysis["run_id"] != result.run_id
+                    or evidence["run_id"] != result.run_id
+                    or analysis["final_decision"] != result.final_decision.value
+                    or evidence["decision"]["final"] != result.final_decision.value):
+                raise StorageError("Portable replay export decision does not match the recorded run.")
+            for metadata in (provenance, evidence["provenance"]):
+                if any(metadata[key] != descriptor[key] for key in (
+                        "kind", "run_id", "original_source_zip_sha256")):
+                    raise StorageError("Portable replay export reconstructed provenance does not match.")
+        return data
+    except StorageError:
+        raise
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        raise StorageError(f"Portable replay export is incomplete or invalid: {exc}") from exc
+
+
+def evidence_zip(result: AnalysisResult, run_dir: Path, *, public_replay: bool = False) -> bytes:
     """Reuse a matching saved export; reruns must preserve original evidence ZIPs."""
     path = zip_path_for(run_dir)
     if path.is_file():
         data = path.read_bytes()
         try:
+            if public_replay:
+                manifest = json.loads((run_dir / "package.json").read_text(encoding="utf-8"))
+                if hashlib.sha256(data).hexdigest() != manifest["source_zip_sha256"]:
+                    raise StorageError("The original evidence ZIP checksum does not match the recorded package.")
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 prefix = f"{result.run_id}/"
                 analysis = json.loads(archive.read(prefix + "analysis.json"))
@@ -139,13 +242,42 @@ def evidence_zip(result: AnalysisResult, run_dir: Path) -> bytes:
                         and analysis["final_decision"] == result.final_decision.value
                         and evidence["decision"]["final"] == result.final_decision.value):
                     return data
-        except (KeyError, ValueError, zipfile.BadZipFile):
+        except StorageError:
+            raise
+        except (OSError, KeyError, ValueError, zipfile.BadZipFile):
             pass
+    if public_replay:
+        if not path.is_file() and (run_dir.parent / "barrel-replay-export.json").is_file():
+            return reconstructed_replay_zip(result, run_dir)
+        raise StorageError("The original evidence ZIP is unavailable or does not match this run. "
+                           "The public replay cannot regenerate recorded evidence.")
     export_report(result, run_dir)
     return path.read_bytes()
 
 
-def render_result(result: AnalysisResult, run_dir: Path) -> None:
+def render_result(result: AnalysisResult, run_dir: Path, *, public_replay: bool = False) -> None:
+    static_replay = public_replay and os.environ.get("GAMEQA_PUBLIC_STATIC", "").strip() == "1"
+
+    def render_saved_image(target, path: Path, caption: str, **kwargs) -> None:
+        if static_replay:
+            url = html.escape(static_replay_url(path), quote=True)
+            label = html.escape(caption, quote=True)
+            target.html(f'<figure style="margin:0"><img src="{url}" alt="{label}" '
+                        'style="width:100%;max-width:100%;height:auto">'
+                        f'<figcaption>{label}</figcaption></figure>')
+        else:
+            target.image(str(path), caption=caption, **kwargs)
+
+    ref_p, cand_p = run_dir / "images/reference.png", run_dir / "images/candidate.png"
+    st.subheader("Reference and candidate")
+    if ref_p.is_file() and cand_p.is_file():
+        c1, c2 = st.columns(2)
+        render_saved_image(c1, ref_p, "Reference · original screenshot", width="stretch")
+        render_saved_image(c2, cand_p, "Candidate · original screenshot", width="stretch")
+    else:
+        st.error("An original screenshot is missing from this saved run.")
+
+    st.subheader("Final decision")
     dec = result.final_decision
     label = dec.value.replace("_", " ")
     banner = {FinalDecision.PASS: st.success, FinalDecision.FAIL: st.error,
@@ -158,46 +290,19 @@ def render_result(result: AnalysisResult, run_dir: Path) -> None:
         st.warning("DEGRADED: a model component was unavailable or returned errors "
                    "(see Diagnostics). Result is not a full AI run.")
     else:
-        st.caption(f"Engine: real ({result.versions.vlm_model or 'no model needed'})")
+        st.caption(f"{'Recorded engine' if public_replay else 'Engine'}: real "
+                   f"({result.versions.vlm_model or 'no model needed'})")
 
-    ref_p, cand_p = run_dir / "images/reference.png", run_dir / "images/candidate.png"
-    if ref_p.is_file() and cand_p.is_file():
-        ref, cand = img(ref_p), img(cand_p)
-        a = result.alignment
-        use_inv = a is not None and a.status.value in ("aligned", "resized")
-        cand_boxes = draw_boxes(cand, result.proposals, a.candidate_to_reference if use_inv else None)
-        c1, c2 = st.columns(2)
-        c1.image(draw_boxes(ref, result.proposals), caption="Reference (numbered change proposals)")
-        c2.image(cand_boxes, caption="Candidate" + (
-            " (boxes mapped back through the inverse alignment)" if use_inv
-            else " (boxes in reference coordinates; no alignment transform applied)"))
-
-    st.subheader("Regions")
+    st.subheader("Observed changes")
     if not result.judgments:
         st.write("No regions were judged.")
-    judged = {j.region_id: j for j in result.judgments}
-    for p in result.proposals:
-        j = judged.get(p.id)
-        verdict = j.verdict.value if j else "not judged"
-        with st.expander(f"{p.id}: {verdict}  box={list(p.box)}  source={p.source}"):
-            cc1, cc2 = st.columns(2)
-            for col, suffix, cap in ((cc1, "ref", "Reference crop"), (cc2, "cand", "Candidate crop (aligned)")):
-                f = run_dir / f"crops/{p.id}_{suffix}.png"
-                if f.is_file():
-                    col.image(str(f), caption=cap)
-            if j:
-                st.markdown(f"**Observed:** {j.observed_change or 'n/a'}")
-                st.markdown(f"**Rules:** {', '.join(j.rule_ids) or 'none cited'}")
-                st.markdown(f"**Evidence:** {j.evidence or 'n/a'}")
-                st.caption(f"Model: {j.model}{' (MOCK)' if j.is_mock else ''} | validated: {j.validated}")
-                if j.errors:
-                    st.error("; ".join(j.errors))
+    for j in result.judgments:
+        st.markdown(f"**{j.region_id} · {j.verdict.value}** — {j.observed_change or 'n/a'}")
 
-    st.subheader("Whole-scene audit")
     if result.scene_audit:
         aj = result.scene_audit.judgment
-        st.markdown(f"**{aj.verdict.value}**: {aj.observed_change or 'n/a'}")
-        st.markdown(f"Rules: {', '.join(aj.rule_ids) or 'none'} | Evidence: {aj.evidence or 'n/a'}")
+        st.markdown(f"**Whole-scene audit · {aj.verdict.value}** — {aj.observed_change or 'n/a'}")
+        st.caption(f"Rules: {', '.join(aj.rule_ids) or 'none'} | Evidence: {aj.evidence or 'n/a'}")
         if result.scene_audit.extra_changes_reported:
             st.warning("The audit reported changes outside the proposed regions.")
         if aj.errors:
@@ -205,7 +310,78 @@ def render_result(result: AnalysisResult, run_dir: Path) -> None:
     else:
         st.info("Scene audit did not run.")
 
-    with st.expander("Diagnostics"):
+    st.divider()
+    st.subheader("Region evidence")
+    if static_replay:
+        st.caption("Recorded crops are shown below; region boxes use original reference pixel coordinates.")
+    elif ref_p.is_file() and cand_p.is_file():
+        ref, cand = img(ref_p), img(cand_p)
+        a = result.alignment
+        use_inv = a is not None and a.status.value in ("aligned", "resized")
+        cand_boxes = draw_boxes(cand, result.proposals, a.candidate_to_reference if use_inv else None)
+        with st.expander("View numbered change locations"):
+            c1, c2 = st.columns(2)
+            c1.image(draw_boxes(ref, result.proposals), caption="Reference · proposal locations", width="stretch")
+            c2.image(cand_boxes, caption="Candidate" + (
+                " · locations mapped through inverse alignment" if use_inv
+                else " · proposal locations in reference coordinates"), width="stretch")
+    judged = {j.region_id: j for j in result.judgments}
+    for p in result.proposals:
+        j = judged.get(p.id)
+        verdict = j.verdict.value if j else "not judged"
+        with st.expander(f"{p.id} · {verdict}", expanded=True):
+            cc1, cc2 = st.columns(2)
+            for col, suffix, cap in ((cc1, "ref", "Reference crop"), (cc2, "cand", "Candidate crop (aligned)")):
+                f = run_dir / f"crops/{p.id}_{suffix}.png"
+                if f.is_file():
+                    render_saved_image(col, f, cap, width="stretch")
+                else:
+                    col.warning("Stored crop is missing.")
+            if j:
+                st.markdown(f"**Observed:** {j.observed_change or 'n/a'}")
+                st.markdown(f"**Rules:** {', '.join(j.rule_ids) or 'none cited'}")
+                st.markdown(f"**Evidence:** {j.evidence or 'n/a'}")
+                st.caption(f"Model: {j.model}{' (MOCK)' if j.is_mock else ''} | validated: {j.validated}")
+                if j.errors:
+                    st.error("; ".join(j.errors))
+            st.caption(f"Reference box: {list(p.box)} | Proposal source: {p.source}")
+
+    st.subheader("Rules stored with this run (read-only)")
+    st.dataframe(pd.DataFrame([r.model_dump(mode="json") for r in result.rules],
+                              columns=["id", "effect", "description"]),
+                 hide_index=True, width="stretch")
+
+    st.divider()
+    st.subheader("Evidence export")
+    st.caption("Saved analysis, recorded observations, rules, original images and region crops.")
+    try:
+        archive = evidence_zip(result, run_dir, public_replay=public_replay)
+        reconstructed = public_replay and not zip_path_for(run_dir).is_file()
+        if reconstructed:
+            st.caption("Portable replay export — original run files preserved; report and evidence index "
+                       "reconstructed. Original ZIP unavailable.")
+        file_name = f"{result.run_id}{'-replay' if reconstructed else ''}.zip"
+        if static_replay:
+            path = run_dir.parent / "barrel-replay.zip" if reconstructed else zip_path_for(run_dir)
+            url = html.escape(static_replay_url(path), quote=True)
+            filename = html.escape(file_name, quote=True)
+            st.html(f'<a class="retrace-download" href="{url}" download="{filename}">'
+                    'Download evidence ZIP</a>')
+        else:
+            st.download_button("Download evidence ZIP", archive,
+                               file_name=file_name, mime="application/zip",
+                               key=f"export_{result.run_id}", on_click="ignore", type="primary")
+    except StorageError as exc:
+        st.error(str(exc))
+    if not public_replay:
+        render_approval(result, run_dir)
+
+    with st.expander("Limitations and runtime details"):
+        st.write("Development diagnostic; uncertain cases require human review. "
+                 "A missing pedestal can receive a false PASS. "
+                 "Autonomous gameplay and video analysis are future features.")
+        st.caption("PASS: no forbidden change found · FAIL: forbidden change reported · "
+                   "NEEDS_REVIEW: uncertain or incomplete assessment.")
         a = result.alignment
         st.write(f"Alignment: {a.status.value if a else 'n/a'}"
                  + (f" (overlap {a.overlap_fraction:.2f})" if a else ""))
@@ -215,17 +391,15 @@ def render_result(result: AnalysisResult, run_dir: Path) -> None:
         for rel, cap in (("diagnostics/heatmap.png", "DINOv2 distance heatmap"),
                          ("diagnostics/overlap_mask.png", "Alignment overlap mask")):
             if (run_dir / rel).is_file():
-                st.image(str(run_dir / rel), caption=cap)
-        st.caption(f"Run ID {result.run_id} | saved in {run_dir}")
-
-    st.subheader("Actions")
-    st.download_button("Download evidence ZIP", evidence_zip(result, run_dir),
-                       file_name=f"{result.run_id}.zip", mime="application/zip",
-                       key=f"export_{result.run_id}", on_click="ignore")
-    render_approval(result, run_dir)
+                render_saved_image(st, run_dir / rel, cap)
+        st.caption(f"Recorded run: {result.run_id}")
+        if public_replay:
+            st.caption("Public replay · live analysis and reference approvals disabled · no new API calls.")
 
 
 def render_approval(result: AnalysisResult, run_dir: Path) -> None:
+    if public_replay_enabled():
+        return
     default_id = re.sub(r"[^A-Za-z0-9_.-]", "_", result.sample_id or "")
     open_key = f"approval_open_{result.run_id}"
     def keep_open():
@@ -258,14 +432,24 @@ def render_approval(result: AnalysisResult, run_dir: Path) -> None:
 
 # ---------- main ----------
 def main() -> None:
-    st.title("Game Visual QA")
-    st.caption("Compare approved and new-build screenshots against your rules, with visual evidence.")
-    st.caption("PASS: no forbidden change found · FAIL: forbidden change reported · "
-               "NEEDS_REVIEW: uncertain or incomplete assessment. "
-               "Development diagnostic; uncertain cases go to human review.")
+    render_header()
+    public_replay = public_replay_enabled()
+    state = st.session_state
+    if public_replay:
+        st.subheader("Saved demonstration")
+        st.selectbox("Recorded run", [PUBLIC_RUN_ID],
+                     format_func=lambda _: "Barrel removed · vr_4b921c5d · recorded FAIL")
+        st.info("Recorded model run — replay, no new inference.")
+        st.caption("Live analysis and persistent reference approvals are disabled in this public demonstration.")
+        try:
+            result, run_dir = load_public_replay()
+            render_result(result, run_dir, public_replay=True)
+        except StorageError as exc:
+            st.error(f"Cannot load recorded demonstration: {exc}")
+        return
+
     cfg_default = load_config()
     load_env_file()
-    state = st.session_state
     state.setdefault("runs_by_hash", {})
 
     reload_engines_button()
@@ -301,10 +485,6 @@ def main() -> None:
         try:
             active = state["active_run_id"]
             result = load_run(active, cfg_default)
-            st.subheader("Rules stored with this run (read-only)")
-            st.dataframe(pd.DataFrame([r.model_dump(mode="json") for r in result.rules],
-                                      columns=["id", "effect", "description"]),
-                         hide_index=True, width="stretch")
             render_result(result, run_dir_for(active, cfg_default))
         except StorageError as exc:
             st.error(f"Cannot load run {active}: {exc}")
