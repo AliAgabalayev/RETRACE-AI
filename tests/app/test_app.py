@@ -1,8 +1,9 @@
-"""Headless Streamlit checks (AppTest). Engines are fakes; mock mode is exercised for banners."""
+"""Headless UI checks: fake test engines and recorded replay never perform paid inference."""
 
 from pathlib import Path
 import hashlib
 import json
+import shutil
 import zipfile
 
 import pytest
@@ -157,3 +158,130 @@ def test_missing_live_key_blocks_analyze_but_allows_saved_replay(app, monkeypatc
     assert not app.exception
     assert any(e.value == "Saved run replay — no new inference" for e in app.info)
     assert app.calls["n"] == calls
+
+
+@pytest.fixture
+def public_replay(app, monkeypatch, tmp_path):
+    """Use original bundled replay bytes, without inference or regenerated evidence."""
+    import gameqa.config as gc
+    import gameqa.storage as storage
+
+    root = Path(__file__).resolve().parents[2]
+    source = root / "deploy/replay/barrel"
+    stored = json.loads((source / "analysis.json").read_text())
+    run = tmp_path / "deploy/replay/barrel"
+    shutil.copytree(source, run)
+    shutil.copytree(root / "configs", tmp_path / "configs")
+    monkeypatch.setattr(gc, "REPO_ROOT", tmp_path)
+    monkeypatch.setenv("GAMEQA_PUBLIC_REPLAY", "1")
+    monkeypatch.setenv("GAMEQA_CONFIG", str(root / "configs/openrouter_gemini_pilot.yaml"))
+    # Deliberately nonsecret test value: presence must never enable public inference.
+    monkeypatch.setenv("OPENROUTER_API_KEY", "qa-only-not-a-credential")
+    calls = []
+
+    def forbidden(operation):
+        def fail(*args, **kwargs):
+            calls.append(operation)
+            raise AssertionError(f"Public replay invoked forbidden operation: {operation}")
+        return fail
+
+    monkeypatch.setattr(gc, "load_env_file", forbidden("local dotenv loading"))
+    monkeypatch.setattr(pipeline, "build_engines", forbidden("engine construction"))
+    monkeypatch.setattr(pipeline, "analyze", forbidden("new inference"))
+    monkeypatch.setattr(storage, "approve_reference", forbidden("reference approval"))
+    monkeypatch.setattr(storage, "export_report", forbidden("evidence regeneration"))
+    return app, run, stored, calls
+
+
+def _file_hashes(directory):
+    return {str(p.relative_to(directory)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in directory.rglob("*") if p.is_file()}
+
+
+def test_public_replay_defaults_to_recorded_barrel_and_shows_original_results(public_replay):
+    app, run, stored, calls = public_replay
+    app.run()
+    assert not app.exception, app.exception
+    assert any(e.value == "Recorded model run — replay, no new inference." for e in app.info)
+    assert any(e.value.startswith("**FAIL") for e in app.error)
+    assert stored["run_id"] == "20261009T123704Z-8e4e19"
+    assert any(stored["run_id"] in e.value for e in app.caption)
+    assert app.dataframe[0].value.to_dict("records") == stored["rules"]
+    displayed = "\n".join(e.value for e in app.markdown)
+    for judgment in stored["judgments"]:
+        assert judgment["observed_change"] in displayed
+        assert judgment["evidence"] in displayed
+    assert stored["scene_audit"]["judgment"]["observed_change"] in displayed
+    assert len(app.get("image")) >= 2 + 2 * len(stored["proposals"])
+    assert not calls
+
+
+def test_public_replay_has_no_mutation_controls_even_when_host_key_exists(public_replay):
+    app, run, stored, calls = public_replay
+    app.run()
+    assert not app.exception, app.exception
+    button_labels = {b.label for b in app.button}
+    assert not button_labels.intersection({"Analyze", "Approve as new reference",
+                                           "Compare new screenshots", "Reload models"})
+    assert not any(r.label in {"Pair source", "VLM engine"} for r in app.radio)
+    assert not any(s.label == "Mock behavior" for s in app.selectbox)
+    assert not app.get("file_uploader")
+    assert not app.get("data_editor")
+    assert not app.checkbox
+    assert not calls
+
+
+def test_public_missing_original_archive_is_explicit_and_never_regenerated(public_replay):
+    app, run, stored, calls = public_replay
+    before = _file_hashes(run)
+    app.run()
+    app.run()
+    assert not app.exception, app.exception
+    messages = [e.value for e in list(app.error) + list(app.warning) + list(app.info)]
+    assert any("original" in m.lower() and "zip" in m.lower() for m in messages), messages
+    assert not app.get("download_button")
+    assert not run.with_suffix(".zip").exists()
+    assert _file_hashes(run) == before
+    assert not calls
+
+
+def test_public_rerun_preserves_existing_archive_bytes(public_replay):
+    """Fault-injection ZIP is QA-only; it is never represented as original evidence."""
+    app, run, stored, calls = public_replay
+    archive = run.with_suffix(".zip")
+    with zipfile.ZipFile(archive, "w") as zipped:
+        prefix = stored["run_id"] + "/"
+        zipped.writestr(prefix + "analysis.json", (run / "analysis.json").read_bytes())
+        zipped.writestr(prefix + "evidence.json", json.dumps({
+            "decision": {"final": "FAIL"}, "test_fixture": "QA archive byte-preservation simulation"}))
+        zipped.writestr(prefix + "report.md", "QA simulation; this is not original run evidence.")
+        zipped.writestr(prefix + "provider-capture/qa.txt", "QA preservation sentinel")
+    # This anchor is changed only in the disposable QA fixture; the repository's
+    # historical source_zip_sha256 is never edited or represented by this ZIP.
+    manifest_path = run / "package.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["source_zip_sha256"] = hashlib.sha256(archive.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+    before = archive.read_bytes()
+    hashes = _file_hashes(run)
+    app.run()
+    app.run()
+    assert not app.exception, app.exception
+    assert any(e.label == "Download evidence ZIP" for e in app.get("download_button"))
+    assert archive.read_bytes() == before
+    assert _file_hashes(run) == hashes
+    assert not calls
+
+
+def test_public_rejects_untrusted_archive_without_replacing_it(public_replay):
+    app, run, stored, calls = public_replay
+    archive = run.with_suffix(".zip")
+    archive.write_bytes(b"QA-only corrupted archive; not original evidence")
+    before = archive.read_bytes()
+    app.run()
+    assert not app.exception, app.exception
+    assert not app.get("download_button")
+    assert any("checksum" in e.value.lower() or "hash" in e.value.lower()
+               for e in list(app.error) + list(app.warning))
+    assert archive.read_bytes() == before
+    assert not calls

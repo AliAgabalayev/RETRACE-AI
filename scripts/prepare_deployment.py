@@ -11,7 +11,7 @@ from gameqa.report import draw_boxes
 from gameqa.storage import export_report
 
 
-def prepare():
+def prepare(*, public_replay=False):
     cfg = load_config(REPO_ROOT / "configs/openrouter_gemini_pilot.yaml")
     if config_hash(cfg) != "eaa371255716":
         raise RuntimeError("Frozen runtime config changed; explicit unblock required")
@@ -21,6 +21,11 @@ def prepare():
         if hashlib.sha256((source / name).read_bytes()).hexdigest() != expected:
             raise RuntimeError(f"Replay package checksum mismatch: {name}")
     result = AnalysisResult.model_validate_json((source / "analysis.json").read_text())
+    if public_replay:
+        # Public replay serves the immutable recorded package without generating evidence.
+        if result.run_id != manifest["run_id"] or result.sample_id != manifest["sample_id"]:
+            raise RuntimeError("Replay package identity mismatch")
+        return source
     root = resolve_dir(cfg, "artifacts_dir")
     destination = root / result.run_id
     root.mkdir(parents=True, exist_ok=True)
