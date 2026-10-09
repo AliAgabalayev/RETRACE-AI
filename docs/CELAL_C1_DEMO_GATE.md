@@ -1,6 +1,6 @@
 # Celal C1 — frozen real demo gate
 
-**READY — bounded single-bug demo gate.** Frozen bundle verified; one fresh Gemini analysis on the human-labelled missing barrel returned **FAIL**. Exact run UI replay and ZIP download verified. One selected dev success does not establish model accuracy or general QA automation.
+**READY — bir real bug üçün bounded demo gate.** Frozen bundle yoxlanıldı; human-labelled missing barrel üçün bir fresh Gemini analysis **FAIL** verdi. Həmin run-un UI replay və ZIP download-u verified-dir. Bir seçilmiş dev uğuru model accuracy və ümumi QA automation sübutu deyil.
 
 ## Scope / Git / vaxt
 
@@ -17,7 +17,7 @@ Desktop `dev12_bundle_for_celal.zip`: **64,103,616 bytes**, SHA256 **70089e24991
 
 Supplied `20261009T105011Z-fbde6e.zip`: integrity valid, SHA256 **cc592761a0ca4e69eb725166a3419cd53bd6cd537a26709d2d2e1c063d3f53a1**. Actual sample **vr_59af7164**, allowed clothing/A1 observation, final **NEEDS_REVIEW**, cache **unknown (replay possible)**. This is a supplied historical clothing report, not a fresh barrel result.
 
-Labels are frozen dev annotations, not independent untouched truth. A1 started around **15:21**, before the **15:38** label freeze. Ali's diagnostic says he did not inspect outputs before confirmation; this is an attributed statement. Several assistant-proposed corrections came from an assistant already exposed to earlier balanced-six outputs. Preserve that provenance and do not describe the labels as fully blind.
+Labels frozen dev annotations-dur; untouched holdout deyil. A1 təxminən **15:21**-də, **15:38** label freeze-dən əvvəl başladı. Ali diagnostic-də confirmation-dan əvvəl outputs-a baxmadığını bildirir; bu, attributed statement-dir. Bir neçə assistant correction əvvəlki balanced-six outputs-u görmüş assistant-dan gəlib. Bu provenance qorunur; labels fully blind kimi təqdim edilmir.
 
 | Candidate | Actual frozen label / uncertainty | Rationale / provenance | Local image inspection / current execution |
 |---|---|---|---|
@@ -34,7 +34,7 @@ Contact sheet and barrel inspection crop are local visual evidence. The three ar
 - Human labels and expected verdicts never passed to the CLI or prompts. CLI inputs were the two original verified images and **exact inventory A1/D1 rules**; equality with AnalysisResult rules asserted. Unity rules differ from cutscene rules; no substitute generic rules were used.
 - Original inventory reference SHA256: **1b9f503b677e6c547aad6b835d6ca95b2407cd8bd3123911d9d30ae30040ef18**.
 - Original inventory candidate SHA256: **a8c2321f4237f8c36483d87762f020806901dfe30ba733585fb3dd00be750a98**.
-- Rules YAML SHA256: **9c27faab5f1e1fef11243685ec1bf606cd70f7bbb0b8bf893a5f4acd0adcd62b**. Original/stored input hash equality is separately checked via ZIP evidence; stored pixel size 3840×2160.
+- Rules YAML SHA256: **9c27faab5f1e1fef11243685ec1bf606cd70f7bbb0b8bf893a5f4acd0adcd62b**. Original və stored PNG byte hashes re-encoding səbəbilə fərqlənir; **decoded RGB pixels identical** ayrıca PIL ImageChops ilə yoxlanıldı. Original hashes inventory ilə, stored hashes ZIP evidence ilə match-dir; ölçü 3840×2160. Exact pairs input-pixel-identity.json-dadır.
 - Alignment **identity**, overlap **1.0**; R1 **[2484,1400,3049,1966]**, source **union**, one proposal judged, truncated=false, no deadline expiry. Localized proposal covers the missing barrel.
 - Region observation: **The large wooden barrel has disappeared from the wooden stand.**
 - Region judgment: **forbidden / D1**, validated=true, errors=[]. Exact evidence: **The AFTER screenshot shows that 'the large wooden barrel is missing, leaving only small wooden blocks on the stand', which constitutes a missing key scene element.**
@@ -71,7 +71,7 @@ Committed raw predictions_A/B/C.jsonl were read from fetched exact HEAD and inde
 | B Qwen full-frame | 8 / 0 / 4 | 8/12 | 5/5 | 3/7 |
 | C Qwen hybrid | 0 / 0 / 12 | **0/12** | 0/5 | 0/7 |
 
-C has nine truncated runs. Its 0 false-PASS is explained by **100% REVIEW**, equivalent to always-REVIEW decision coverage; it proves no useful automatic reduction of QA work. Unity source is bug-only; class/source imbalance and label exposure limit comparisons. Observation correctness was not scored in Ali's diagnostic. The fresh one-case Gemini FAIL is a successful selected demo gate, not a measured population improvement or a fair full A/B/C ablation.
+C-də doqquz truncated run var. 0 false-PASS **100% REVIEW** hesabınadır; decision coverage always-REVIEW ilə eynidir və QA işinin useful automatic azalmasını sübut etmir. Unity source yalnız bug-dur; class/source imbalance və label exposure comparisons-ı məhdudlaşdırır. Ali diagnostic-də observation correctness scored deyil. Bir fresh Gemini FAIL seçilmiş demo gate uğurudur, population improvement və fair full A/B/C ablation deyil.
 
 ## Remaining blockers / stop
 
