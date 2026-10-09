@@ -73,6 +73,43 @@ Committed raw predictions_A/B/C.jsonl were read from fetched exact HEAD and inde
 
 C-də doqquz truncated run var. 0 false-PASS **100% REVIEW** hesabınadır; decision coverage always-REVIEW ilə eynidir və QA işinin useful automatic azalmasını sübut etmir. Unity source yalnız bug-dur; class/source imbalance və label exposure comparisons-ı məhdudlaşdırır. Ali diagnostic-də observation correctness scored deyil. Bir fresh Gemini FAIL seçilmiş demo gate uğurudur, population improvement və fair full A/B/C ablation deyil.
 
+## Ali confirmed checkpoint — C1 əlavəsi, inference təkrarlanmadı
+
+User-confirmed pin **feat/hackathon-vision-evidence @ a5590a50849ace549debff63ad3f3b4e1a1f815a** artıq fetch edilmiş exact HEAD ilə eynidir. `git merge-base --is-ancestor` ilə aşağıdakı chain yoxlanıldı; full SHAs checkpoint-confirmation.json-dadır:
+
+- cf861f1 — frozen dev12 selection.
+- e844aab — frozen labels.
+- cac62c7 — A1 tooling və configs/ali_a1_qwen.yaml.
+- a502c2d — A1 diagnostic və predictions_A/B/C.jsonl.
+
+**Qwen diagnostic identity:** `qwen2.5vl:3b`, prompt **v9**, config_hash **3a144cfcbb67**; raw A/B/C rows bu hash-i təsdiqləyir. Bu identity current Gemini barrel demo **gemini-3.5-flash / v9 / 6cfbba559386** identity-sindən ayrıdır. A1 table və onun coverage nəticələri Qwen diagnostic-ə aiddir, current Gemini result deyil.
+
+Pinned `docs/ali/labels_audit.md` oxundu: audit **post-freeze və A1 outputs görüldükdən sonra** aparılıb. Frozen labels file byte SHA unchanged-dir.
+
+- **vr_c1f47c57:** audit description correction — statue-nin altındakı **stone pedestal missing**-dir; small table object deyil. D1 qalır; audit uncertainty-ni low təklif edir. Frozen CSV-dəki description/medium dəyişdirilmədi. Bu case üçün yeni visual inspection/inference edilmədi; burada Ali audit finding-i attributed olunur.
+- **vr_330651ed:** English → Portuguese subtitles və slight pose. Öz **cutscene D1 rules**-unda text changes ayrıca yoxdur; D1 support zəifdir. Ambiguous demo kimi təqdim edilir, frozen **D1/high** saxlanılır; yeni ambiguous ground-truth class yazılmır.
+
+Sensitivity-only hesabı: vr_330651ed scoring üçün clean sayılsa **4 bug / 8 clean** olur. Raw predictions-dan müstəqil recompute edildi; labels faylı dəyişdirilmədi, inference yoxdur:
+
+| Arm | Bug false-PASS | Clean PASS | Decision coverage |
+|---|---|---|---|
+| A pixel | **4/4** | 8/8 | 12/12 |
+| B Qwen full-frame | **4/4** | 4/8 | 8/12 |
+| C Qwen hybrid | **0/4** | 0/8 | **0/12 — all REVIEW** |
+
+Bu sensitivity əsas nəticəni dəyişmir: A/B bugs-u PASS edir, C avtomatik qərar vermir.
+
+Ali-nin pinned `docs/ali/a1_evidence/stage1_qwen_vs_gemini.json` reproducer-i oxundu, local evidence copy saxlanıldı. Artifact eyni composite PNG və stage-1 prompt ilə Qwen/Gemini comparison olduğunu bildirir:
+
+| Pair | Qwen stage-1 reported | Gemini stage-1 reported |
+|---|---|---|
+| vr_4b921c5d | different texture and lighting effect on barrels | large barrel disappeared; stand empty |
+| vr_d07179d5 | telephone booth replaced by a red mirror | booth roof and TELEPHONE sign disappeared |
+
+Bunlar Ali-nin **prior same-crop perception reproducer** nəticələridir (n=2), yeni C1 calls deyil və accuracy measurement sayılmır. Current C1 barrel run ayrıca fresh end-to-end **FAIL**-dır. Crop-un təsvir etdiyi change-in görünə bilməsi üçün diagnostic evidence verir; digər cases üzrə generalization sübut etmir.
+
+Bu əlavədə API attempts **4/8** olaraq qaldı; yeni run, UI inference, model/config change və ya cherry-pick yoxdur. Original **16:15 Asia/Baku cutoff** saxlanıldı.
+
 ## Remaining blockers / stop
 
 Broader coverage and accuracy unverified; allowed/subtitle cases have no fresh Gemini result. Scene semantic uncertainty remains. Label assistant exposure makes these dev data unsuitable as a fresh improvement holdout. Native DINO identity still reports weights_sha256=unknown under custom TORCH_HOME (actual weights were preserved from the previous verified runtime). Hosted quota availability is not known. No vision/policy intervention, deployment, training or follow-on roadmap work.
