@@ -8,7 +8,7 @@ Target: 19:15 Asia/Baku; submission 20:00.
 | Private GitHub access, fresh master, feature branch | git-workflow-master | Verified |
 | Native Vercel Docker/WebSocket feasibility və account access | senior-pm | Official docs checked; account connection unavailable |
 | Minimal RETRACE theme və read-only public replay | python-developer | Implemented, tested |
-| Immutable public startup, additive Dockerfile.vercel | senior-pm | Implemented; Docker validation in PR CI |
+| Immutable public startup, additive Dockerfile.vercel | senior-pm | Local pinned Docker build + browser verified; existing CI preserved |
 | Regression tests və independent code review | qa-engineer / code-reviewer | 208 passed, 6 deselected; review completed |
 | Local desktop/mobile browser, refresh, separate session | senior-pm | Verified; no console errors |
 | Original historical ZIP download | senior-pm / owner | BLOCKED: original archive absent |

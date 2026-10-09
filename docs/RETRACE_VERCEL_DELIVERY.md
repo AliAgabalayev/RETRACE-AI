@@ -6,7 +6,7 @@
 
 İş qovluğu Windows handoff yolu əvəzinə `/home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton`-dur. Private GitHub giriş `AliAgabalayev` hesabı ilə verified-dir. Başlanğıc fresh master `7f93c0204b44f8e41cc5c1a688a135ea0f133e88`; iş zamanı sənədləşmə merge-i ilə son master `3d7dbf7db57e244846546cf99b360ae760710e2c` oldu. Feature `feat/retrace-vercel-ui` həmin son master üzərinə rebase edilir. User cache-ləri qorunur; repo private qalır.
 
-Verified public URL: **yoxdur**. Deployed SHA: **yoxdur**. Vercel project/account/plan seçilməyib; preview və production yaradılmayıb. Bu sessiyada Vercel CLI/token/connected plugin yoxdur. Owner-dan Vercel bağlantısı və team seçimi istənilib. Portfolio dəyişdirilməyib; hosting plan/domain/storage alınmayıb.
+Verified public URL: **yoxdur**. Deployed SHA: **yoxdur**. Owner Vercel hesabını `aliagabalazade00-2183`, team adını `octopus` olaraq bildirdi və browser login etdi. Codex Vercel plugin-i hələ connected deyil; CLI login ayrıca hazırlanır. Actual account/plan/project access hələ verified deyil; preview və production yaradılmayıb. Portfolio dəyişdirilməyib; hosting plan/domain/storage alınmayıb.
 
 ## Implemented behavior
 
@@ -28,7 +28,7 @@ Current official [Container Images](https://vercel.com/docs/functions/container-
 
 Official [WebSocket docs](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections) native support-un public beta/all plans olduğunu bildirir. Connection bir instance-a pin olunur, max duration-da bağlanır; reconnect yeni instance-a düşə bilər. Immutable package hər instance-da olduğuna görə replay persistent storage istəmir. Actual Streamlit reconnect/media/download routing preview-də yoxlanmalıdır.
 
-Official [Function limits](https://vercel.com/docs/functions/limitations): Hobby 2 GB/1 CPU və 300s; Pro/Enterprise max 4 GB/2 CPU və 800s, bəzi runtimes üçün extended 1800s beta. Bunlar account capability və measured RETRACE requirement deyil. Existing image-in historical 1.58 GiB ölçüsü yeni Vercel image ölçməsi deyil. [VCR limits](https://vercel.com/kb/guide/how-to-use-vercel-container-registry): compressed layer 500 MB, image 15 GB. Cold starts/hosted RAM ölçülməyib. Production idle scale-down 5min, preview 30s; SIGTERM 30s grace. Filesystem persistence gözlənilmir; public startup package-i read-only oxuyur.
+Official [Function limits](https://vercel.com/docs/functions/limitations): Hobby 2 GB/1 CPU və 300s; Pro/Enterprise max 4 GB/2 CPU və 800s, bəzi runtimes üçün extended 1800s beta. Bunlar account capability və measured RETRACE requirement deyil. Local public image actual uncompressed size **1,695,774,470 bytes (~1.58 GiB)**; compressed registry layer ölçməsi deyil. [VCR limits](https://vercel.com/kb/guide/how-to-use-vercel-container-registry): compressed layer 500 MB, image 15 GB. Cold starts/hosted RAM ölçülməyib. Production idle scale-down 5min, preview 30s; SIGTERM 30s grace. Filesystem persistence gözlənilmir; public startup package-i read-only oxuyur.
 
 ZIP/images üçün response-size gate də lazımdır: standard Function response limit 4.5 MB; [official guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions) streaming responses-in limitdən azad olduğunu deyir. Container/Streamlit media yolu ilə original full download-un işləməsi **unverified**-dir. External storage və rewrite başlanmayıb. Actual feature, filesystem və response behavior hesab/preview olmadan verified kimi təqdim edilmir.
 
@@ -41,14 +41,14 @@ cd /home/aliagabalayev/Desktop/Workspace/neuroscience-hackhaton
 env -u OPENROUTER_API_KEY GAMEQA_PUBLIC_REPLAY=1 PYTHONPATH=src PORT=8531 .venv/bin/python scripts/start_deployment.py
 ```
 
-Local Python 3.13 / Streamlit 1.65 environment; Docker pins Python 3.12 / Streamlit 1.61.1. Local checks do not establish hosted/pinned-runtime success.
+Local Python 3.13 / Streamlit 1.65 environment; public Docker image **Python 3.12.15 / Streamlit 1.61.1** ilə ayrıca build və browser yoxlamasından keçib. Image ID `sha256:240c4e298da035213397f5e106ac7e701650796b9b3aac270d4c565c20a5c9d8`. Hosted Vercel behavior hələ verified deyil.
 
-- `.venv/bin/python -m pytest -m 'not real_model' -q`: **208 passed, 6 deselected, 23.20s**. Real-model checks excluded; no new inference.
+- `.venv/bin/python -m pytest -m 'not real_model' -q`: post-rebase **208 passed, 6 deselected, 23.60s**. Real-model checks excluded; no new inference.
 - Focused UI/deployment checks pass, including local safeguards, public immutable assets, no dotenv/engine/provider calls, absent/corrupt ZIP refusal, matching QA-only archive byte preservation and startup key stripping. QA archive simulations are not original model evidence.
-- Real Brave browser via isolated `/tmp` profile/CDP: desktop 1440×1000, mobile 390×844, separate Streamlit session 1280×900; FAIL/replay label, originals/crops/observations/rules visible; desktop refresh passed; images decoded; horizontal overflow 0; console errors 0.
+- Real Brave browser via isolated `/tmp` profile/CDP, both local and pinned Docker runtime: desktop 1440×1000, mobile 390×844, separate Streamlit session 1280×900; FAIL/replay label, originals/crops/observations/rules visible; desktop refresh passed; images decoded; horizontal overflow 0; console errors 0. Docker checks confirm no key/.env/generated artifacts and frozen config hash.
 - Screenshots/results və QA record ignored local `artifacts/retrace-ui-20261009/` daxilində qorunur; temporary browser files `/tmp/retrace-browser-evidence/`-də də var. No key values in logs. Browser downloaded original ZIP/hash verification **not run: original archive unavailable**.
 - Independent code review completed; startup flag whitespace defect found and fixed with parametrized regression.
-- PR CI validates original Render Docker path and additive Vercel public image startup. Actual CI result is recorded in PR/final handoff, not inherited from older runs.
+- GitHub rejected the first push because configured OAuth token lacks `workflow` scope for `.github/workflows/ci.yml`. Proposed additional container CI was preserved locally at `artifacts/retrace-ui-20261009/proposed-vercel-container-ci.patch` and removed from unpublished commits. Existing CI remains byte-identical to master: offline tests plus original Render Docker path. Additional public image was built and browser-tested locally. No force push, workflow permission bypass or credentials extraction.
 - Task provider API calls **0**, inference cost **$0**. Hosting cost not measured; no Vercel resources created.
 
 ## Remaining release gates and rollback
