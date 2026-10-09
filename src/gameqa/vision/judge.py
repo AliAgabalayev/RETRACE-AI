@@ -177,6 +177,12 @@ def validate_response(raw: str, rules: list[Rule], audit: bool = False) -> dict:
 
 
 # ---------------- Judge ----------------
+def _is_transient(exc: Exception) -> bool:
+    """HTTP 429 (rate limit) / 503 (overloaded) from a hosted VLM: worth retrying after a pause."""
+    text = str(exc)
+    return "HTTP 429" in text or "HTTP 503" in text
+
+
 class Judge:
     def __init__(self, cfg: dict):
         v = cfg.get("vlm", {})
@@ -185,6 +191,7 @@ class Judge:
         # Fallbacks mirror configs/default.yaml (D10); the yaml values are authoritative.
         self.timeout_s = float(v.get("timeout_s", 75))
         self.max_attempts = int(v.get("max_attempts", 2))
+        self.transient_retries = int(v.get("transient_retries", 4))  # extra retries on HTTP 429/503
         self.temperature = float(v.get("temperature", 0.0))
         self.crop_max_side = int(v.get("crop_max_side", 336))
         self.context_max_side = int(v.get("context_max_side", 512))
@@ -201,6 +208,11 @@ class Judge:
         self.cache_enabled = bool(v.get("cache", True)) and self.provider in ("ollama", "openai")
         self.cache_dir = Path(cfg.get("run", {}).get("cache_dir", "data/cache")) / "vlm"
         self.last_cache_hit = False
+        # Opt-in debug dump of exactly what each VLM request carries (unset = no behaviour change).
+        d = v.get("dump_inputs_dir")
+        self.dump_dir = Path(d) / str(v.get("dump_tag") or "run") if d else None
+        self._cur_region = "na"
+        self._dump_n: dict[tuple[str, str], int] = {}
         if self.provider == "mock":
             if self.mock_behavior not in MOCK_BEHAVIORS:
                 raise ValueError(f"unknown mock_behavior {self.mock_behavior}")
@@ -221,6 +233,8 @@ class Judge:
             prefix = "openai" if host == "api.openai.com" else f"openai-compatible@{host}"
             self.model_id, self.is_mock = f"{prefix}:{self._model}", False
             self.image_detail = v.get("image_detail", "high")
+            # Optional reasoning budget for "thinking" models (e.g. low/medium/high); omitted when unset.
+            self.reasoning_effort = v.get("reasoning_effort")
         else:
             raise ValueError(f"unknown vlm provider {self.provider}")
 
@@ -233,6 +247,9 @@ class Judge:
         h.update(prompt.encode())
         h.update(json.dumps(schema, sort_keys=True).encode())
         h.update(f"{self.model_id}|{self.prompt_version}|{self.temperature}|{self.num_ctx}".encode())
+        # Settings that change the answer must change the key (else a stale answer is reused).
+        if getattr(self, "reasoning_effort", None):
+            h.update(f"|effort={self.reasoning_effort}".encode())
         return h.hexdigest()
 
     def _mock_reply(self, rules: list[Rule], audit: bool) -> str:
@@ -280,8 +297,10 @@ class Judge:
     def _openai_reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
         import httpx
         content: list[dict] = [{"type": "text", "text": prompt}]
+        # "detail" is OpenAI-specific; set vlm.image_detail: null for endpoints that reject it
+        img_extra = {"detail": self.image_detail} if self.image_detail else {}
         content += [{"type": "image_url",
-                     "image_url": {"url": f"data:image/png;base64,{_png_b64(i)}", "detail": self.image_detail}}
+                     "image_url": {"url": f"data:image/png;base64,{_png_b64(i)}", **img_extra}}
                     for i in images]
         payload = {
             "model": self._model, "temperature": self.temperature,
@@ -289,11 +308,14 @@ class Judge:
             "response_format": {"type": "json_schema",
                                 "json_schema": {"name": "judgment", "schema": schema, "strict": False}},
         }
+        if self.reasoning_effort:
+            payload["reasoning_effort"] = self.reasoning_effort
         r = httpx.post(f"{self.base_url}/chat/completions", json=payload, timeout=self.timeout_s,
                        headers={"Authorization": f"Bearer {self._api_key()}"})
         if r.status_code >= 400:
             # never echo request headers; the body carries the provider's error message only
-            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
+            # (800 chars keeps quota details such as quotaId/limit/retryDelay visible)
+            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:800]}")
         return r.json()["choices"][0]["message"]["content"]
 
     def _reply(self, images: list[np.ndarray], prompt: str, schema: dict) -> str:
@@ -301,7 +323,37 @@ class Judge:
             return self._openai_reply(images, prompt, schema)
         return self._ollama_reply(images, prompt, schema)
 
-    def _ask(self, images, prompt, schema, rules, audit) -> tuple[str | None, list[str], float]:
+    def _dump_call(self, stage, images, prompt, schema, raw, errors, latency) -> None:
+        """Write the exact inputs/outputs of one VLM request. Never raises, never writes keys."""
+        try:
+            region = re.sub(r"[^A-Za-z0-9_.-]", "_", str(self._cur_region))
+            n = self._dump_n.get((region, stage), 0) + 1
+            self._dump_n[(region, stage)] = n
+            self.dump_dir.mkdir(parents=True, exist_ok=True)
+            base = f"{region}_{stage}_{n}"
+            names = []
+            for k, im in enumerate(images):
+                name = f"{base}.png" if k == 0 else f"{base}_{k + 1}.png"
+                (self.dump_dir / name).write_bytes(base64.b64decode(_png_b64(im)))  # same bytes as sent
+                names.append({"file": name, "shape_hwc": list(im.shape)})
+            (self.dump_dir / f"{base}.txt").write_text(prompt)
+            meta = dict(region_id=self._cur_region, stage=stage, n=n, model=self.model_id, is_mock=self.is_mock,
+                        cache_hit=self.last_cache_hit, latency_s=round(latency, 3), images=names,
+                        prompt_version=self.prompt_version, raw_reply=raw, errors=errors, schema=schema)
+            (self.dump_dir / f"{base}.json").write_text(json.dumps(meta, indent=1))
+            with (self.dump_dir / "calls.jsonl").open("a") as f:
+                f.write(json.dumps({k: meta[k] for k in ("region_id", "stage", "n", "model", "is_mock", "cache_hit", "latency_s")}
+                                   | {"base": base, "n_images": len(images), "ok": raw is not None}) + "\n")
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _ask(self, images, prompt, schema, rules, audit, stage: str = "stage1") -> tuple[str | None, list[str], float]:
+        raw, errors, lat = self._ask_inner(images, prompt, schema, rules, audit)
+        if self.dump_dir is not None:
+            self._dump_call(stage, images, prompt, schema, raw, errors, lat)
+        return raw, errors, lat
+
+    def _ask_inner(self, images, prompt, schema, rules, audit) -> tuple[str | None, list[str], float]:
         """Returns (raw_text|None, errors, latency). Never raises."""
         self.last_cache_hit = False
         t0 = time.time()
@@ -316,12 +368,23 @@ class Judge:
             except Exception:  # noqa: BLE001
                 pass
         errors: list[str] = []
-        for attempt in range(1, self.max_attempts + 1):
+        transient_left = self.transient_retries
+        attempt = 0
+        while attempt < self.max_attempts:
+            attempt += 1
             try:
                 raw = self._mock_reply(rules, audit) if self.is_mock else self._reply(images, prompt, schema)
             except Exception as e:  # noqa: BLE001  (timeouts, connection, HTTP, bad payload)
                 errors.append(f"provider error (attempt {attempt}): {type(e).__name__}: {e}")
-                if attempt < self.max_attempts and not self.is_mock:
+                if self.is_mock:
+                    continue
+                # Hosted APIs return 429/503 when overloaded; that is infrastructure, not a model
+                # answer, so retry with backoff without spending a regular attempt.
+                if _is_transient(e) and transient_left > 0:
+                    transient_left -= 1
+                    attempt -= 1
+                    time.sleep(min(60.0, 5.0 * 2 ** (self.transient_retries - transient_left - 1)))
+                elif attempt < self.max_attempts:
                     time.sleep(3.0)
                 continue
             parsed = validate_response(raw, rules, audit)
@@ -343,9 +406,10 @@ class Judge:
     def _two_stage(self, images, stage1_prompt, audit, rules, where):
         """Stage 1 (image, no rules) then stage 2 (text only, rules). Returns (merged_raw_json|None, errors, latency).
         Mock provider: single call returning the final JSON."""
+        s1 = "audit" if audit else "stage1"
         if self.is_mock:
-            return self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit)
-        raw1, e1, l1 = self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit)
+            return self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit, s1)
+        raw1, e1, l1 = self._ask(images, stage1_prompt, STAGE1_AUDIT_SCHEMA if audit else STAGE1_SCHEMA, rules, audit, s1)
         if raw1 is None:
             return None, e1, l1
         try:
@@ -358,7 +422,7 @@ class Judge:
                                   observed_change=d1.get("observed_change", ""), change_type=d1.get("change_type", ""),
                                   any_difference=str(d1.get("any_difference", "")).lower(),
                                   rules=f["rules"], allow_ids=f["allow_ids"], deny_ids=f["deny_ids"])
-        raw2, e2, l2 = self._ask([], p2, STAGE2_SCHEMA, rules, False)
+        raw2, e2, l2 = self._ask([], p2, STAGE2_SCHEMA, rules, False, "audit_stage2" if audit else "stage2")
         if raw2 is None:
             return None, e1 + e2, l1 + l2
         try:
@@ -409,6 +473,7 @@ class Judge:
     # ---- public API ----
     def judge_region(self, proposal, ref_crop, cand_crop, ref_context, cand_context, rules) -> RegionJudgment:
         try:
+            self._cur_region = proposal.id
             x1, y1, x2, y2 = proposal.box
             prompt = REGION_PROMPT.format(x1=x1, y1=y1, x2=x2, y2=y2)
             imgs = [labelled_pair(ref_crop, cand_crop, self.crop_max_side)]
@@ -423,6 +488,7 @@ class Judge:
 
     def audit_scene(self, reference, aligned_candidate, rules, proposals) -> SceneAudit:
         try:
+            self._cur_region = SCENE_REGION_ID
             boxes = [p.box for p in proposals]
             btxt = ", ".join(f"{p.id}={list(p.box)}" for p in proposals) or "none"
             prompt = AUDIT_PROMPT.format(boxes=btxt)

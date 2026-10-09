@@ -1,31 +1,40 @@
 # Third-party notices
 
-Verified 2026-10-09 unless marked otherwise.
+## VideoGameQA-Bench demo images
 
-## Dataset: VideoGameQA-Bench
-- Source: https://huggingface.co/datasets/taesiri/VideoGameQA-Bench (revision `2afbfdcc9cb84318845f348c023bb2e92b942e29`); project page https://asgaardlab.github.io/videogameqa-bench/
-- License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Used here: the visual-regression subset, selected image pairs only, resized/converted to PNG working copies. Original files are kept unmodified under `data/raw/`.
-- Attribution: please cite the paper:
-  Taesiri, Mohammad Reza; Ghildyal, Abhijay; Zadtootaghaj, Saman; Barman, Nabajeet; Bezemer, Cor-Paul. "VideoGameQA-Bench: Evaluating Vision-Language Models for Video Game Quality Assurance." arXiv:2505.15952 (2025). https://arxiv.org/abs/2505.15952
-  (Authors and title read from the arXiv abstract page metadata.)
-- Changes made by this project: subset selection, relabelling of `ground_truth` into `bug`/`no_bug`, internal dev/eval split. No endorsement by the authors is implied.
+The portable barrel pair derives from [taesiri/VideoGameQA-Bench](https://huggingface.co/datasets/taesiri/VideoGameQA-Bench), dataset revision `2afbfdcc9cb84318845f348c023bb2e92b942e29`, licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Attribution: Mohammad Reza Taesiri, Abhijay Ghildyal, Saman Zadtootaghaj, Nabajeet Barman and Cor-Paul Bezemer, *VideoGameQA-Bench: Evaluating Vision-Language Models for Video Game Quality Assurance* (2025), [paper](https://arxiv.org/abs/2505.15952), [project](https://asgaardlab.github.io/videogameqa-bench/).
 
-## Model: DINOv2
-- facebookresearch/dinov2, https://github.com/facebookresearch/dinov2. Repository code license: Apache License 2.0 (LICENSE file in the repository `main` branch verified). Used as frozen `dinov2_vits14`, inference only.
-- Pretrained weights are obtained through `torch.hub`. The main README (line 660, "License" section) states: "DINOv2 code and model weights are released under the Apache License 2.0". Note the same README also lists separate non-commercial licenses for other variants in the repo (X-Ray-DINO, Cell-DINO); those are not used here. Weights are not redistributed by this project.
-- Reference: Oquab et al., "DINOv2: Learning Robust Visual Features without Supervision", 2023 (arXiv:2304.07193).
+Project changes: visual-regression subset selection, internal dev/eval grouping, human frozen labels, conversion to PNG working copies, crops/overlay and QA reports. Authors do not endorse this prototype. Dataset licensing does not transfer all underlying third-party game IP rights. Replay is attributed research/demo evidence; owner should review redistribution requirements for their intended use.
 
-## Model: Qwen2.5-VL 3B via Ollama
-- Ollama tag `qwen2.5vl:3b` (3.2 GB), run locally; no data leaves the machine.
-- **License conflict to resolve, do not assume:** the Hugging Face repository `Qwen/Qwen2.5-VL-3B-Instruct` ships `LICENSE` = **Qwen RESEARCH LICENSE AGREEMENT** (README `license_name: qwen-research`), which grants rights "for non-commercial purposes only" (non-commercial = research or evaluation) and requires a separate license from Alibaba Cloud for commercial use. The Ollama package for this tag, however, bundles a plain **Apache License 2.0** text (`ollama show qwen2.5vl:3b --license`). The two disagree. Treat the stricter Qwen Research License as binding until verified: this hackathon prototype is research/evaluation use only; do not use for commercial purposes without checking.
-- Authors: Qwen Team, Alibaba Cloud. Reference: Bai et al., "Qwen2.5-VL Technical Report", arXiv:2502.13923 (citation from memory of the report; verify before publishing).
-- Ollama itself: https://ollama.com (MIT-licensed open source server; not re-verified here).
+## DINOv2
 
-## Python libraries (installed in `.venv`, versions from `pip list`)
-Used unmodified and not redistributed; each under its own license, to be confirmed from package metadata before any redistribution.
-- PyTorch 2.12.0 and torchvision 0.27.0 (BSD-style licenses)
-- Streamlit 1.65.0 (Apache-2.0)
-- OpenCV (opencv-python 4.13.0.92; Apache-2.0 for recent OpenCV)
-- NumPy 2.3.5 (BSD-3-Clause), Pillow 12.3.0 (HPND), pandas 2.3.3 (BSD-3-Clause), PyArrow 24.0.0 (Apache-2.0)
-- Pydantic 2.12.5 (MIT), PyYAML 6.0.3 (MIT), httpx 0.28.1 (BSD-3-Clause), huggingface_hub 1.8.0 (Apache-2.0), pytest 9.1.1 (MIT)
-License names in this section are from general knowledge of those projects, not re-fetched; marked unverified.
+Meta / facebookresearch, [DINOv2](https://github.com/facebookresearch/dinov2), Oquab et al., *DINOv2: Learning Robust Visual Features without Supervision* (2023). Used frozen `dinov2_vits14`, without training. Code and these weights are Apache-2.0; [pinned source license](https://github.com/facebookresearch/dinov2/blob/7764ea0f912e53c92e82eb78a2a1631e92725fc8/LICENSE), copy in `deploy/DINOV2_LICENSE.txt`. Weights are downloaded during Docker build, not committed. Other DINO variants and their potentially different licenses are not used.
+
+## Active hosted model
+
+Gemini via OpenRouter is a hosted API, not redistributed weights. Owner use is subject to [OpenRouter terms](https://openrouter.ai/terms) and the model provider terms. Credentials and spending controls belong to the owner. Live image uploads leave the application host.
+
+## Historical Qwen baseline
+
+Qwen2.5-VL 3B via Ollama is retained only as the measured historical baseline. It is not in the deployment image and no Qwen weights are distributed. Earlier documentation found a Qwen Research License versus Ollama packaged-license conflict; this task does not resolve or authorize commercial Qwen use. Consult the [Qwen model license](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/main/LICENSE) before any reuse.
+
+## Runtime packages
+
+Pinned versions are in `requirements.txt`. License identifiers below were checked against installed package metadata on 2026-10-09; dependency distributions retain their own license files. OpenCV deployment uses the headless variant of the same wheel release. Transitive bundled libraries may have additional notices shipped with their packages.
+
+| Package | Version | License |
+|---|---|---|
+| torch / torchvision | 2.6.0 /0.21.0 | BSD-3-Clause /BSD |
+| Streamlit | 1.61.1 | Apache-2.0 |
+| opencv-python-headless | 4.12.0.88 | Apache-2.0 (OpenCV), wheel bundled notices |
+| NumPy | 2.0.2 | BSD-3-Clause plus bundled notices |
+| Pillow | 10.4.0 | HPND |
+| pandas | 2.2.2 | BSD-3-Clause |
+| PyArrow | 21.0.0 | Apache-2.0 |
+| Pydantic | 2.8.2 | MIT |
+| PyYAML | 6.0.1 | MIT |
+| httpx | 0.27.0 | BSD-3-Clause |
+| huggingface_hub | 0.34.4 | Apache-2.0 |
+| python-dotenv | 0.21.0 | BSD-3-Clause |
+
+No license for the project's own source is invented here; repository owner must choose any desired redistribution license separately.

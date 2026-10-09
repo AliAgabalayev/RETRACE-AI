@@ -1,0 +1,24 @@
+[
+  {
+    "sample_id": "vr_4b921c5d",
+    "region": "R1",
+    "stage": "stage1",
+    "model": "openai-compatible@generativelanguage.googleapis.com:gemini-3.5-flash",
+    "latency_s": 3.4,
+    "gemini_raw": "{\n  \"before_shows\": \"A large wooden barrel resting horizontally on a wooden stand, with a warm light source glowing underneath it.\",\n  \"after_shows\": \"The same wooden stand but empty, with only a couple of small wooden wedges on it, and the large barrel is missing.\",\n  \"observed_change\": \"The large wooden barrel on the stand has disappeared in the AFTER image.\",\n  \"change_type\": \"disappeared\",\n  \"any_difference\": true\n}",
+    "qwen_observed_change": "The AFTER half shows a different texture and lighting effect on the barrels compared to the BEFORE half.",
+    "input_image": "docs/ali/a1_evidence/vr_4b921c5d_R1_vlm_input.png",
+    "note": "Same composite PNG and same stage-1 prompt that Qwen received in arm C; Gemini called once, cache off."
+  },
+  {
+    "sample_id": "vr_d07179d5",
+    "region": "R1",
+    "stage": "stage1",
+    "model": "openai-compatible@generativelanguage.googleapis.com:gemini-3.5-flash",
+    "latency_s": 2.6,
+    "gemini_raw": "{\n  \"before_shows\": \"A red telephone booth with its top roof structure and 'TELEPHONE' sign visible, next to a blue mailbox and a bicycle.\",\n  \"after_shows\": \"The same scene, but the top roof structure and 'TELEPHONE' sign of the red telephone booth are missing, leaving only the door frame.\",\n  \"observed_change\": \"The top roof structure and 'TELEPHONE' sign of the telephone booth have disappeared.\",\n  \"change_type\": \"disappeared\",\n  \"any_difference\": true\n}",
+    "qwen_observed_change": "The red telephone booth in the BEFORE half is replaced by a red mirror in the AFTER half.",
+    "input_image": "docs/ali/a1_evidence/vr_d07179d5_R1_vlm_input.png",
+    "note": "Same composite PNG and same stage-1 prompt that Qwen received in arm C; Gemini called once, cache off."
+  }
+]

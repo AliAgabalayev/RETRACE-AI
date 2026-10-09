@@ -1,0 +1,24 @@
+FROM python:3.12-slim-bookworm
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
+    GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml TORCH_HOME=/opt/torch-cache PYTHONPATH=/app/src \
+    PORT=8501
+WORKDIR /app
+COPY requirements.txt pyproject.toml ./
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt
+COPY src ./src
+COPY app.py ./
+COPY configs ./configs
+COPY scripts ./scripts
+COPY deploy ./deploy
+COPY .streamlit/config.toml .streamlit/config.toml
+RUN pip install --no-cache-dir --no-deps . \
+    && python scripts/cache_deployment_dino.py \
+    && useradd --create-home --uid 1000 gameqa \
+    && mkdir -p artifacts references \
+    && chown -R gameqa:gameqa /app /opt/torch-cache
+USER gameqa
+EXPOSE 8501
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
+    CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('PORT','8501')+'/_stcore/health',timeout=3)"
+CMD ["python", "scripts/start_deployment.py"]

@@ -1,0 +1,15 @@
+# WP0.5 fallback probe: configs/gemini.yaml with model gemini-3.5-flash, capped at <=2 calls.
+vlm:
+  provider: openai
+  model: gemini-3.5-flash
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai
+  api_key_env: GEMINI_API_KEY
+  timeout_s: 90
+  max_attempts: 1
+  transient_retries: 0
+  image_detail: null
+  reasoning_effort: low
+proposals:
+  max_regions: 1
+run:
+  cache_dir: data/cache_ali_fresh

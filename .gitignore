@@ -6,6 +6,7 @@ __pycache__/
 data/raw/
 data/work/
 data/cache/
+data/cache_gemini_integration_20261009/
 artifacts/*
 !artifacts/.gitkeep
 references/*

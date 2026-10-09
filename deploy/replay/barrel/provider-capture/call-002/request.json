@@ -1,0 +1,50 @@
+{
+  "model": "google/gemini-3.5-flash",
+  "temperature": 0.0,
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "A game QA tool compared a BEFORE and an AFTER screenshot (region [2484,1400,3049,1966]) and recorded:\n- BEFORE shows: A large wooden barrel with metal bands resting on a wooden stand, with a warm light source glowing underneath it.\n- AFTER shows: The same wooden stand but the large barrel is missing, leaving only a couple of small wooden blocks on the stand.\n- Change: The large wooden barrel has disappeared from the wooden stand.\n- Change type: disappeared; any difference: true\n\nRULES:\n- A1 [ALLOW]: Consider these variations ACCEPTABLE:\n- Player character customization elements\n- Environmental conditions (weather, day/night cycle)\n- Slight positional or animation differences\n- Lighting and shadow adjustments\n- Minor variations in non-critical background elements\n- D1 [DENY]: Consider these variations UNACCEPTABLE:\n- Interface corruption or element misalignment\n- Textual content changes (unless expected, e.g., dynamic text)\n- Significant visual artifacts or rendering errors (e.g., missing textures, z-fighting)\n- Major structural changes to scene geometry not attributable to gameplay state\n- Missing or grossly incorrect key scene elements compared to the reference\n\nALLOW rule IDs: A1\nDENY rule IDs: D1\n\nDecide using ONLY the recorded observation and the rules. Reply with JSON only, keys in this order:\n- verdict: \"forbidden\" if the change breaks a DENY rule (rule_ids must contain that DENY rule ID); \"allowed\" if an ALLOW rule covers the WHOLE change (rule_ids must contain that ALLOW rule ID; if there is no difference use []); \"uncertain\" if unclear or no rule clearly applies (rule_ids []).\n- rule_ids: only the IDs of the rules that actually apply, from the lists above.\n- evidence: one short sentence quoting what BEFORE and AFTER show that supports the verdict.\nSomething that disappeared, or geometry/texture that became corrupted, is never covered by an ALLOW rule unless that rule says so explicitly. If unsure, answer \"uncertain\"."
+        }
+      ]
+    }
+  ],
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "judgment",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "forbidden",
+              "uncertain"
+            ]
+          },
+          "rule_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "rule_ids",
+          "evidence"
+        ]
+      },
+      "strict": false
+    }
+  },
+  "reasoning_effort": "low"
+}

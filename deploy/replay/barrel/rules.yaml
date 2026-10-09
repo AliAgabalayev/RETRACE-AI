@@ -1,0 +1,27 @@
+rules:
+- id: A1
+  effect: allow
+  description: 'Consider these variations ACCEPTABLE:
+
+    - Player character customization elements
+
+    - Environmental conditions (weather, day/night cycle)
+
+    - Slight positional or animation differences
+
+    - Lighting and shadow adjustments
+
+    - Minor variations in non-critical background elements'
+- id: D1
+  effect: deny
+  description: 'Consider these variations UNACCEPTABLE:
+
+    - Interface corruption or element misalignment
+
+    - Textual content changes (unless expected, e.g., dynamic text)
+
+    - Significant visual artifacts or rendering errors (e.g., missing textures, z-fighting)
+
+    - Major structural changes to scene geometry not attributable to gameplay state
+
+    - Missing or grossly incorrect key scene elements compared to the reference'

@@ -1,0 +1,72 @@
+{
+  "model": "google/gemini-3.5-flash",
+  "temperature": 0.0,
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "The image shows a whole game screenshot: BEFORE (left half, reference build) and AFTER (right half, new build). Regions already checked are outlined in yellow with their IDs: R1=[2484, 1400, 3049, 1966].\n\nCompare the two halves carefully over the WHOLE picture. Is anything in BEFORE missing in AFTER?\n\nReply with JSON only, keys in this order:\n- before_shows: describe plainly what the BEFORE half shows (objects, colours, positions).\n- after_shows: the same for the AFTER half.\n- observed_change: one short sentence: what is different between BEFORE and AFTER.\n- change_type: none, disappeared (something in BEFORE is gone in AFTER), appeared, color_or_lighting, moved, distorted_or_corrupted, or other.\n- any_difference: true if BEFORE and AFTER differ in any visible way, false if they look the same.\n- other_changes_outside_boxes (last key): true if you see a visible difference outside the yellow boxes, otherwise false."
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": {
+              "path": "message-0-image-1.png",
+              "sha256": "e0f4a237e0e91e00eef36102ef8452ef5cab668bec0ee4008dd78aac6120ec5a"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": {
+      "name": "judgment",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "before_shows": {
+            "type": "string"
+          },
+          "after_shows": {
+            "type": "string"
+          },
+          "observed_change": {
+            "type": "string"
+          },
+          "change_type": {
+            "type": "string",
+            "enum": [
+              "none",
+              "disappeared",
+              "appeared",
+              "color_or_lighting",
+              "moved",
+              "distorted_or_corrupted",
+              "other"
+            ]
+          },
+          "any_difference": {
+            "type": "boolean"
+          },
+          "other_changes_outside_boxes": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "before_shows",
+          "after_shows",
+          "observed_change",
+          "change_type",
+          "any_difference",
+          "other_changes_outside_boxes"
+        ]
+      },
+      "strict": false
+    }
+  },
+  "reasoning_effort": "low"
+}

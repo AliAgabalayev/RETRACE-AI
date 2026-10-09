@@ -1,0 +1,54 @@
+{
+  "id": "gen-1791549439-BElJAQDOmPGqnz6Pj5x3",
+  "object": "chat.completion",
+  "created": 1791549439,
+  "model": "google/gemini-3.5-flash",
+  "provider": "Google",
+  "system_fingerprint": null,
+  "service_tier": "provisioned",
+  "choices": [
+    {
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "STOP",
+      "message": {
+        "role": "assistant",
+        "content": "{\n  \"before_shows\": \"A large wooden barrel with metal bands resting on a wooden stand, with a warm light source glowing underneath it.\",\n  \"after_shows\": \"The same wooden stand but the large barrel is missing, leaving only a couple of small wooden blocks on the stand.\",\n  \"observed_change\": \"The large wooden barrel has disappeared from the wooden stand.\",\n  \"change_type\": \"disappeared\",\n  \"any_difference\": true\n}",
+        "refusal": null,
+        "reasoning": "**Analyzing Image Changes**\n\nI've analyzed the provided image descriptions, noting the substantial presence of a large wooden barrel on a stand in the \"before\" state, contrasted with its complete absence and only residual blocks in the \"after\" state.\n\n",
+        "reasoning_details": [
+          {
+            "type": "reasoning.text",
+            "text": "**Analyzing Image Changes**\n\nI've analyzed the provided image descriptions, noting the substantial presence of a large wooden barrel on a stand in the \"before\" state, contrasted with its complete absence and only residual blocks in the \"after\" state.\n\n",
+            "format": "google-gemini-v1",
+            "index": 0
+          }
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 1465,
+    "completion_tokens": 209,
+    "total_tokens": 1674,
+    "cost": 0.0040785,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0040785,
+      "upstream_inference_prompt_cost": 0.0021975,
+      "upstream_inference_completions_cost": 0.001881
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 107,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  }
+}

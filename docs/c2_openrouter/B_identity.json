@@ -1,0 +1,88 @@
+{
+  "code_sha": "c917532ac3161a0886f626985c53307eb2d477d8",
+  "cfg": {
+    "input": {
+      "max_file_mb": 25,
+      "max_pixels": 16000000,
+      "allowed_formats": [
+        "PNG",
+        "JPEG",
+        "WEBP",
+        "BMP"
+      ]
+    },
+    "alignment": {
+      "mode": "auto",
+      "max_shift_fraction": 0.05,
+      "min_overlap_fraction": 0.85,
+      "min_inlier_ratio": 0.5,
+      "min_error_gain": 0.7
+    },
+    "features": {
+      "model": "dinov2_vits14",
+      "hub_repo": "facebookresearch/dinov2",
+      "input_long_side": 518,
+      "patch_size": 14,
+      "device": "auto",
+      "dtype": "float32"
+    },
+    "proposals": {
+      "sources": [
+        "dinov2",
+        "classical"
+      ],
+      "dinov2_threshold": 0.35,
+      "classical_threshold": 40,
+      "min_area_fraction": 0.0001,
+      "min_area_px": 40,
+      "global_change_fraction": 0.1,
+      "mask_erode_px": 7,
+      "box_padding_px": 8,
+      "merge_iou": 0.1,
+      "max_regions": 8
+    },
+    "vlm": {
+      "provider": "openai",
+      "model": "google/gemini-3.5-flash",
+      "base_url": "https://openrouter.ai/api/v1",
+      "timeout_s": 60,
+      "max_attempts": 1,
+      "temperature": 0.0,
+      "crop_max_side": 336,
+      "context_max_side": 512,
+      "num_ctx": 2048,
+      "keep_alive": "30m",
+      "audit_max_side": 512,
+      "api_key_env": "OPENROUTER_API_KEY",
+      "transient_retries": 0,
+      "image_detail": null,
+      "reasoning_effort": "low"
+    },
+    "run": {
+      "deadline_s": 300,
+      "artifacts_dir": "artifacts/c2-openrouter-20261009/runs-B",
+      "references_dir": "artifacts/c2-openrouter-20261009/references",
+      "cache_dir": "artifacts/c2-openrouter-20261009/cache-B"
+    }
+  },
+  "config_hash": "2dfeb64cd673",
+  "arm": "B",
+  "ali_tooling_commit": "cac62c7693abdf74b8b9e2b6455c82f148ee0493",
+  "ali_tooling_sha256": "66580f3c3518f5dd63add5589aa66c6ba20b603e84d3ef8ee5b94cdb88aa6800",
+  "runner_sha256": "a8b2a3321b7b4533443278b256d5e23c0c64f5f6778c79dba74a720d683ce743",
+  "ids": [
+    "vr_a981c1d3",
+    "vr_330651ed",
+    "vr_4255ae09",
+    "vr_09a066d3",
+    "vr_59af7164",
+    "vr_41bab231",
+    "vr_4b921c5d",
+    "vr_d07179d5",
+    "vr_c1f47c57",
+    "vr_fec26436",
+    "vr_ef9b073a",
+    "vr_43773eb8"
+  ],
+  "smoke_reused": false
+}

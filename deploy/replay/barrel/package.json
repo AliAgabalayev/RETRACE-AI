@@ -1,0 +1,31 @@
+{
+  "run_id": "20261009T123704Z-8e4e19",
+  "sample_id": "vr_4b921c5d",
+  "historical_inference": true,
+  "code_sha": "c917532ac3161a0886f626985c53307eb2d477d8",
+  "config_hash": "eaa371255716",
+  "source_zip_sha256": "b739b23a055fd70937dcf741c9595acd2587d13b1ea289fbb56ea81539bd2554",
+  "note": "Original input/crop bytes and observations; aligned image and overlay reconstructed for ZIP without inference. No labels used.",
+  "files": {
+    "analysis.json": "11ba487ff5cd3887d772c263a186db503a5928094a3f1344cec6db0257db058e",
+    "rules.yaml": "9c27faab5f1e1fef11243685ec1bf606cd70f7bbb0b8bf893a5f4acd0adcd62b",
+    "provider-usage.json": "eff0c29f0b5582790982c5698cf839c95c8eaf71a1814ce48d17435685e6de38",
+    "runtime-identity.json": "49f0962edd511df0566200a4fae002b9bd93f157178122a84fdb29eb3e59bce3",
+    "images/reference.png": "bc8c1790515a845e39839831f3d93049130372c9b4e6aedf6d3fcad58dabf4a6",
+    "images/candidate.png": "61d0d2018a38b88bfe81df96588a4597a272bed033d5239a9f6a2dd53d3bd041",
+    "crops/R1_ref.png": "170d39cfed3d0998db90cd328b74cdae724bd926e199c790b7900103691f133c",
+    "crops/R1_cand.png": "d04dc202eab08354640f02c49b6acd801c8d72be819d8c3917fd26bb49747990",
+    "diagnostics/heatmap.png": "777a1ed96444a41a561ea1d2c81a302ddc8fa3a96ec7e40998ea96e9840b8971",
+    "diagnostics/overlap_mask.png": "26db83be78206117158aebbc7b81c50ae3859624b15c159bec4f8465821eb4e7",
+    "provider-capture/call-001/message-0-image-1.png": "9137150981411cb5573529f04910e52b9facc95bc65b2252427ec275e9fe552d",
+    "provider-capture/call-001/request.json": "2da15a5dd5403e216cecc98846ad98f111ceba44f9d190faa7598956119da628",
+    "provider-capture/call-001/response.json": "f3fb6492a25438ed9971b2d873d70a984a4c46c94768074cabc6445d3c2bb54b",
+    "provider-capture/call-002/request.json": "ae077c1a1077bb6d00aac42b1baaeff179ea538cf31737ad3383f4199398f336",
+    "provider-capture/call-002/response.json": "ded50c7771fc5abd14270f54135bbc694b6b723c55cdf801558528cec01afde2",
+    "provider-capture/call-003/message-0-image-1.png": "e0f4a237e0e91e00eef36102ef8452ef5cab668bec0ee4008dd78aac6120ec5a",
+    "provider-capture/call-003/request.json": "6895430d15d878068e6ee9d2a387dcb1fe0c5e88fa63fee612f426a829142e6a",
+    "provider-capture/call-003/response.json": "8f5c0f712718228f4fef8800cabc525af7eb262c32c39b7a78ca300985b357d3",
+    "provider-capture/call-004/request.json": "2fa853fa2b6a2b31c1159c75f2ea7863af53ce153b749e0803d9416e5783cf54",
+    "provider-capture/call-004/response.json": "8befab730787c5ddc4e067e6d67955cb42bdfcd71b2a3a5ca3e51b3ff344472a"
+  }
+}
