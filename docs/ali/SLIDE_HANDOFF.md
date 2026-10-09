@@ -2,6 +2,8 @@
 
 9 oktyabr 2026, Bakı. Evidence source **`79a0ef740196cbaa0639579386c6c591d2bfd8ca`**; canonical C config **`eaa371255716`**. C2 raw rows/calls/usage lokal olaraq yenidən hesablanıb: [C2_VERIFICATION.md](C2_VERIFICATION.md), [C2_RECOMPUTED.json](C2_RECOMPUTED.json). UI-ready SHA ayrıca gözlənir; bu deck final UI recording deyil.
 
+**C4 update:** UI-ready code `be1ea0acce271df994b516f6fa297118e981a3dd`, delivery `68501897746bf674d582fd810cd9d7e2cfb943e6` artıq repo-da təsdiqlənib: [runbook](../FINAL_DEMO_RUNBOOK.md). Celal replay/browser checks READY, no fresh C4 inference; Ali local launch/bundle pre-flight və final recording pending-dir. Yuxarıdakı waiting status historical-dır. Deck-in C2 evidence source/metrics dəyişmir; bu task-da render edilməyib.
+
 ## Hazır artifact-lər
 
 - [7-slide PDF](pitch/AI_Gaming_Pitch.pdf)

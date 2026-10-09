@@ -2,6 +2,8 @@
 
 Bu artifact product implementation və ya yeni model experiment deyil. Mövcud pitch PNG-lərindən **110 saniyəlik, 1920×1080, H.264, silent evidence walkthrough** hazırlanır. Final UI footage Celalın ayrıca UI-ready SHA-sı gələndən sonra çəkilməlidir. `79a0ef740196cbaa0639579386c6c591d2bfd8ca` implementation freeze identity-dir; UI-ready acceptance demək deyil.
 
+**C4 update:** UI-ready code `be1ea0acce271df994b516f6fa297118e981a3dd`, delivery `68501897746bf674d582fd810cd9d7e2cfb943e6` [repo runbook](../FINAL_DEMO_RUNBOOK.md)-da READY-dir. Əvvəlki UI-ready waiting qeydləri historical-dır; Ali local C4 launch/bundle pre-flight, final UI footage və voice-over hələ pending-dir. Mövcud silent motion draft dəyişdirilməyib və bu repository cleanup task-da render edilməyib.
+
 Video boyunca `PRERECORDED / EVIDENCE WALKTHROUGH` və `DRAFT / UI RECORDING PENDING` görünür. Evidence card-ları saved inference nəticələrini təqdim edir. Renderer nə Streamlit-i başladır, nə VLM-ə call edir; heç bir ekran live UI kimi qurulmur. PNG-lər tam saxlanaraq header/footer üçün ayrıca letterbox sahəsinə yerləşdirilir; screenshot və text zoom edilmir.
 
 ## Render

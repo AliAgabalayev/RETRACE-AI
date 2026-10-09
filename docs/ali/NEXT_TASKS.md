@@ -1,6 +1,14 @@
-# Remaining tasks (Ali's side) — state at 2026-10-09 ~17:30 Baku
+# Remaining tasks (Ali's side) — state at 2026-10-09 ~18:02 Baku
 
-## Current checkpoint — overrides the historical 17:05 update below
+## C4 və repository consolidation — current checkpoint
+
+- Latest fetched integration delivery **`68501897746bf674d582fd810cd9d7e2cfb943e6`**; C4 runnable UI code **`be1ea0acce271df994b516f6fa297118e981a3dd`**. [Final demo runbook](../FINAL_DEMO_RUNBOOK.md) və [C4 verification](../C4_DEMO_VERIFICATION.json) UI-ready status-u təsdiqləyir. Celal host-da replay/stored rules/browser ZIP download verified-dir; **C4 fresh inference yoxdur**. Ali host-da hazırda açıq UI hələ `79a0ef7`-dədir; actual C2 ZIP bundle lokalda yoxdur.
+- Latest C4 exact checkout-da independent offline suite **197 passed, 6 skipped, 8.79 s**; vision/report/decision/pipeline/contracts/storage/final config `79a0ef7` ilə unchanged-dir. C2 metrics və source `79a0ef7`, config hash **`eaa371255716`** dəyişmir.
+- Ali bütün tamamlanmış işi integration-a, sonra reviewed PR ilə `master`-ə toplamağı istədi. Yeganə meaningful unmerged iş **`docs/ali-final-pitch`**-də birləşdirilir; əvvəlki `docs/ali-next-session` superseded backup-dır. Vision/Gemini/runtime-eval/git-workflow branches artıq integration-da var. [Git finalization](GIT_FINALIZATION.md). Push/PR/remote merge insan tərəfindən edilir; hələ merged/submitted deyil.
+- Recording üçün UI-ready SHA gözləmə gate-i **Celalın C4 checkpoint-i üçün açılıb**. Local Ali recording hələ fresh C4 launch + saved-run bundle/export pre-flight tələb edir. Final video, second-device check və submission confirmation pending-dir; deadline **19:30** qalır.
+
+## 17:46 checkpoint — historical; C4/current status above overrides it
+
 
 - **17:46 local self-test:** main checkout integration79a0ef7, OpenRouter config ilə http://localhost:8501; health200/AppTest0exceptions. Initial key401 Ali `.env` update ilə həll edildi: auth200; app fresh process-də `.env` dəyəri ilə yenidən açıldı. Model call edilməyib. Bu local baxış final recording üçün C4 UI-ready SHA gate-i əvəz etmir. [UI_LOCAL_OPENROUTER.md](UI_LOCAL_OPENROUTER.md).
 - Celalın confirmed remote integration SHA-sı **`79a0ef740196cbaa0639579386c6c591d2bfd8ca`** fetch ilə təsdiqləndi. Frozen runtime: OpenRouter / `google/gemini-3.5-flash` / low / prompt v9; config `configs/openrouter_gemini_pilot.yaml`, C hash **`eaa371255716`**, B diagnostic hash `2dfeb64cd673` (namespace paths fərqli).
@@ -28,18 +36,18 @@ Status legend: TODO / IN PROGRESS / BLOCKED. Owner: Ali = human; agent = Claude 
 
 | # | Task | Owner | Deadline | Inputs / notes | Done when |
 |---|---|---|---|---|---|
-| A1 | WAIT UI-ready SHA; record final 90–120 s video. 113 s shot list ready; 110 s motion evidence draft separately prepared | Ali (agent prepares) | 18:45 | C2 barrel `20261009T123704Z-8e4e19` FAIL; pedestal `20261009T124621Z-0b0c2b` false-PASS; Qwen REVIEW baseline. Final integration UI + exact config; labels every REPLAY / PRERECORDED / LIVE | Final video file exists; labels; ≤120 s; UI gate passed |
+| A1 | C4 UI-ready confirmed; local pre-flight + final 90–120 s recording pending. 113 s shot list and 110 s motion draft ready | Ali (agent prepares) | 18:45 | UI code be1ea0a / delivery6850189; barrel FAIL, pedestal false-PASS, Qwen REVIEW; exact config + REPLAY / PRERECORDED / LIVE labels | Final video file exists; labels; ≤120 s; local pre-flight passed |
 | A2 | DONE raw cross-check + pitch/video docs update. Pending actual ZIP bytes/full captures audit | agent + QA | 17:25 | `C2_RECOMPUTED.json`, `C2_VERIFICATION.md`, source SHA79a0ef7 | Raw counts/identities/cost recomputed; no unverified ZIP-byte claim |
-| A3 | WAIT Celal C4 UI-ready SHA, launch command and browser export verification; then recording pre-flight | agent + Ali + Celal | before recording | No Streamlit listener was observed in this session's host process/port query; earlier :8501 inventory is historical. Final run bundle absent locally | Current UI opens exact runs; downloaded ZIP includes evidence.json |
+| A3 | C4 runbook/browser export evidence received in repo; Ali local launch + actual run bundle/export check pending | agent + Ali + Celal | before recording | Ali :8501 still79a0ef7; final C2 bundle absent locally; Celal browser evidence does not prove Ali local ZIP bytes | Current C4 UI opens exact runs; downloaded ZIP includes evidence.json |
 | A4 | DONE 7-slide PDF/PPTX +3 evidence PNG + handoff; Celal assembles final deck | agent drafts, Celal assembles | 18:45 | `docs/ali/SLIDE_HANDOFF.md`, `pitch/`, `slides/` | Artifact files exist; numbers verified; team reviews |
 | A5 | PARTIAL: counts/config/calls/cost/tests verified; actual final ZIP, second device, final video and human acceptance pending | qa agent + Ali + Celal | 19:15 | `docs/ali/A5_acceptance.md`, `C2_VERIFICATION.md` | Verdict with unmet items listed |
-| A6 | Handoff checkpoint refreshed; add UI-ready SHA, final video path, submission confirmation when they exist | agent | 19:25 | `docs/ALI_HANDOFF.md` | Committed locally; Ali push/PR; final fields evidenced |
+| A6 | C4 UI-ready SHA recorded; add final video path and submission confirmation when they exist | agent | 19:25 | `docs/ALI_HANDOFF.md`; docs→integration→master via reviewed PRs | Committed locally; Ali push/PR; final fields evidenced |
 | A7 | Submission by authorized human; keep confirmation | Ali / Celal | 19:30 | package list (roadmap p.5) | Confirmation saved |
 
 ## B. Known defects / notes to hand to Celal (UI is Celal-owned; do not edit app.py/pipeline.py/decision.py/storage.py/contracts.py without him)
-1. Loaded saved runs are not labelled "replay" in the UI.
-2. After "Load saved run", the Rules editor shows the page's current rules, not the run's rules.
-3. Typing into Approve → Reference ID reruns the page and collapses the expander (value kept).
+1. **Resolved by C4:** saved runs explicitly labelled replay; verified on Celal host.
+2. **Resolved by C4:** loaded run shows stored rules read-only; verified on Celal host.
+3. **Resolved by C4:** Approve Reference ID expander persistence; confirmation guard preserved. Ali local C4 check pending.
 4. evidence.json cache status stays "unknown (replay possible)" although Ali's input dump (`calls.jsonl`) proves fresh calls (QA-Q2). Fix would need per-call provenance in analysis.json (contract change → Celal).
 5. Native DINOv2 identity prints `weights_sha256=unknown` under a custom TORCH_HOME (Celal's runtime).
 

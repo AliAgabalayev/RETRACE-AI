@@ -212,3 +212,11 @@ Visual inspection: `docs/ali/slides/01_comparison.png`, `02_perception.png`, `03
 Documentation input-scope refinement owner tərəfindən tətbiq edildi: exactrules/labelabsence Celal-report attribution-u və fullrequest/imagecapture audit pending-dir; compact JSON link-i əlavə olundu. Export artifact structure: `file` → PDF**7pages**, PPTXtypevalid; `ZipFile.testzip()` → **None**, PPTX**7slideXML entries**. Bu checks slides package-ni təsdiqləyir, finalvideo və actual UI export-u deyil.
 
 Deck07cost clarity fix root tərəfindən regenerated `07_next.png`-də **visually verified**: “B+C:80freshcalls”, “Provider-reported total:$0.2871945”, “Eyni12pair,ikiarm”. Pitch/video/slide claims audit **PASS**; final UI/ZIP/video acceptance hələ pending-dir.
+
+## C4 və repository consolidation QA — 2026-10-09
+
+Latest fetched integration delivery **`68501897746bf674d582fd810cd9d7e2cfb943e6`**; UI code **`be1ea0acce271df994b516f6fa297118e981a3dd`**. Independent QA exact `/tmp/ali-c4-6850189.HyqafP/checkout` source-da offline pytest işlədib: **197 passed, 6 skipped in 8.79s**. Vision/report/decision/pipeline/contracts/storage/canonical OpenRouter config byte hashes `79a0ef7` ilə unchanged-dir. Read-only code review C4 replay early-return, stored rules/run-bound ZIP və FAIL/REVIEW two-confirmation guard üçün blocker tapmayıb. **0 new inference calls**; real-model skips passing sayılmır.
+
+[C4 verification](../C4_DEMO_VERIFICATION.json) və [runbook](../FINAL_DEMO_RUNBOOK.md) **Celal host-da** replay/browser/export readiness göstərir; barrel/subtitle browser ZIP downloads source ilə byte-identical-dir. C4 fresh Analyze edilməyib. OneDrive atomic-rename permission failure və normal TEMP focused27pass ayrıca disclose edilir. Bu evidence Ali local reproduction deyil: Ali active UI hələ79a0ef7, actual C2 bundle/ZIP bytes lokalda absent-dir.
+
+Əvvəlki “UI-ready SHA gözlənir” gate **C4 reported/committed readiness üçün superseded-dir**. Final acceptance hələ incomplete: Ali local fresh C4 launch + actual archive/export check, full captures audit, final≤120s video/narration, second-device check və human19:30submission confirmation qalır. Ali docs→integration→master reviewed PR workflow-u hazırlamaq istəyib; local review/test remote PR approval və ya merge baş verdiyi iddiası deyil.

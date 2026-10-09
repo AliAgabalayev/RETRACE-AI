@@ -1,8 +1,10 @@
 # Ali handoff — final evidence və təqdimat
 
-9 oktyabr 2026, Bakı, ~17:30 checkpoint. Submission **19:30**, rəsmi deadline **20:00**. Implementation freeze qüvvədədir; presentation, docs, verification və submission qalır.
+9 oktyabr 2026, Bakı, ~18:02 checkpoint. Submission **19:30**, rəsmi deadline **20:00**. Implementation freeze qüvvədədir; presentation, docs, verification və submission qalır.
 
-**Hazır:** end-to-end prototype, Qwen baseline, C2 raw cross-check, test evidence, pitch/video script, 7-slide PDF/PPTX və 110 s motion draft. **Final acceptance açıqdır:** ayrıca UI-ready SHA, actual C2 ZIP bundle/full captures, final UI recording, second-device check və human submission confirmation.
+**Hazır:** end-to-end prototype, Qwen baseline, C2 raw cross-check, C4 UI-ready repo checkpoint, test evidence, pitch/video script, 7-slide PDF/PPTX və 110 s motion draft. **Final acceptance açıqdır:** Ali local C4 pre-flight, actual C2 ZIP bundle/full captures, final UI recording, second-device check və human submission confirmation.
+
+**Repository consolidation:** latest fetched integration delivery **`68501897746bf674d582fd810cd9d7e2cfb943e6`**, runnable C4 UI code **`be1ea0acce271df994b516f6fa297118e981a3dd`**. [Runbook](FINAL_DEMO_RUNBOOK.md) və [verification](C4_DEMO_VERIFICATION.json) Celal host-da replay/browser export readiness göstərir; fresh C4 inference yoxdur. Independent offline C4 suite **197 passed, 6 skipped, 8.79 s**. Model/policy/config unchanged-dir. Ali final docs latest integration-a reconcile olunur; sonra reviewed PR ilə `master`-ə toplamaq Ali tərəfindən istənilib. [Git finalization](ali/GIT_FINALIZATION.md). Remote merge/submission hələ edilməyib.
 
 **17:46 əlavə local UI baxışı:** main checkout integration79a0ef7-dir; OpenRouter config ilə http://localhost:8501, health200/AppTest0exceptions. Ali `.env` update ilə initial auth401-i həll etdi: auth200, fresh app process dotenv key istifadə edir; generation edilməyib. [UI_LOCAL_OPENROUTER.md](ali/UI_LOCAL_OPENROUTER.md). Final recording gate ayrıca saxlanılır. Main checkout switch-dən sonra deck/PNG copies `artifacts/ali/presentation/`-dadır; tracked docs ayrıca docs branch-də qalır.
 
@@ -11,7 +13,8 @@
 | Identity | Dəyər |
 |---|---|
 | Confirmed integration branch | `feat/hackathon-demo-integration` |
-| Confirmed local/remote delivery SHA | `79a0ef740196cbaa0639579386c6c591d2bfd8ca` |
+| C2 raw verification source SHA | `79a0ef740196cbaa0639579386c6c591d2bfd8ca` |
+| Latest fetched integration delivery SHA | `68501897746bf674d582fd810cd9d7e2cfb943e6` — Ali active UI still79a0ef7 |
 | Freeze implementation code SHA | `bdd93fb534e8c0e9b574e60d383bc8b14dd03bf3` |
 | Historical C2 inference code SHA | `c917532ac3161a0886f626985c53307eb2d477d8` — raw identity dəyişdirilməyib |
 | Runtime | OpenRouter / `google/gemini-3.5-flash` / low / prompt v9 |
@@ -19,7 +22,7 @@
 | B diagnostic config hash | `2dfeb64cd673` — output/cache namespace paths fərqli |
 | Ali vision freeze | `3591f7b`; fetched `74f84cf` əvvəlki integration merge-dir |
 | Report scope fix | `3b794aa` PR #3 history-dədir və final source-da saxlanılıb |
-| UI-ready SHA | **PENDING — code SHA recording gate-i əvəz etmir** |
+| C4 UI-ready code SHA | `be1ea0acce271df994b516f6fa297118e981a3dd`; delivery6850189. Celal replay/browser checks READY; Ali local pre-flight pending |
 
 Git-workflow-master exact delivery SHA-nı fetch ilə təsdiqləyib. `3591f7b` ancestor-dur; vision/report source frozen checkpoint ilə byte-for-byte eynidir. Detached verification checkout `/tmp/ali-c2-79a0ef7.ROajGB/checkout`-dur. Presentation/docs local hazırlanır; push/PR agent tərəfindən edilmir.
 
@@ -64,7 +67,7 @@ C bütün pair-lərdə abstain edir; 9/12 global-change collapse-dir. A3 A1-i 36
 | Qwen barrel baseline | `20261009T112802Z-c4530d` | REVIEW; model texture/lighting deyir |
 | C1 fallback barrel | `20261009T115633Z-83936b`, direct Gemini hash `6cfbba559386` | FAIL R1(D1); CLI25.4442s, pipeline18.4305s; Celalın prior UI replay/download check-i |
 
-**Final recording Celalın UI-ready SHA-sı gələndən sonra həmin integration UI-da edilir. Qwen branch UI istifadə edilmir.** Exact Windows launch command, video-ready run IDs, browser-downloaded ZIP verification və live/replay statusunu Celal C4 handoff-da göndərəcək. Deployment URL varsa ayrıca verified statusla yazılır; hazırda məlum deyil.
+**Final recording C4 UI-ready integration UI-da edilir; Qwen branch UI istifadə edilmir.** [C4 runbook](FINAL_DEMO_RUNBOOK.md) exact Windows launch command, run IDs və browser replay/download evidence-i ehtiva edir. Celal host-da barrel və subtitle browser ZIP source ilə byte-identical yoxlanıb; C4 calls0, fresh UI inference yoxdur. Ali local C4 launch və bundle/export pre-flight hələ pending-dir. Deployment URL hazırda məlum deyil.
 
 Linux canonical launch form (local self-test bu config ilə açıldı; final recording hələ pending-dir):
 
@@ -88,7 +91,7 @@ PPTX səhifələri image-based-dir. PDF7pages, PPTX CRC/XML7slides və represent
 
 ## Verification və açıq acceptance
 
-Exact source `79a0ef7`-də offline pytest **194 passed, 6 skipped, 5.14s**. Real-model skips passing sayılmır. Əvvəlki docs branch193/6 və Celal C2 suite186/6deselected ayrı nəticələrdir.
+Latest C4 source `6850189`-də independent offline pytest **197 passed, 6 skipped, 8.79s**. C2 verification source `79a0ef7`-də əvvəlki suite **194 passed, 6 skipped, 5.14s**-dır. Real-model skips passing sayılmır. Əvvəlki docs branch193/6 və Celal C2 suite186/6deselected ayrı nəticələrdir.
 
 Manifest hashes dəyişməyib: inference `245815f5191e6708`, labels `a10ab8dd2f936ada`, eval60 IDs `ff765d14428cd944`. `prepare_data.py` işlədilməyib. 3 local Qwen demo ZIP CRC/required members/6hashes-each check keçib; global-change collapse wording həmin local exports-da mövcuddur.
 
@@ -96,7 +99,7 @@ Manifest hashes dəyişməyib: inference `245815f5191e6708`, labels `a10ab8dd2f9
 
 Qalan qəbul:
 
-1. Celalın ayrıca UI-ready SHA + exact launch/C4 browser export evidence-i.
+1. C4 UI-ready/launch/browser evidence repo-dadır; Ali host-da fresh C4 launch + saved-run pre-flight hələ pending-dir.
 2. Actual C2 bundle: barrel/pedestal ZIP CRC, required files/stored hashes, full request input-label audit.
 3. Ali final UI recording + narration, ≤120s; replay/live labels və timing ayrılığı.
 4. Second-device check, final deck human review və package link-ləri.

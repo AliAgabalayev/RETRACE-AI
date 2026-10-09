@@ -1,6 +1,6 @@
 # Pitch evidence — Ali, 9 oktyabr 2026
 
-Final demo runtime **C2: Gemini 3.5 Flash via OpenRouter**-dır; **Qwen A1/A3 baseline** kimi qalır. QA exact final integration SHA **79a0ef740196cbaa0639579386c6c591d2bfd8ca** checkout-undan C2 raw rows, frozen labels, per-call records və identities-i **local olaraq independently recompute** edib. Runtime **google/gemini-3.5-flash**, reasoning low, prompt v9; canonical C config hash **eaa371255716**. **Actual C2 ZIP binaries və browser replay/export Ali host-da hələ yoxlanmayıb**. Recording Celalın ayrıca **UI-ready SHA** confirmation-unu gözləyir.
+Final demo runtime **C2: Gemini 3.5 Flash via OpenRouter**-dır; **Qwen A1/A3 baseline** kimi qalır. QA C2 delivery source **79a0ef740196cbaa0639579386c6c591d2bfd8ca** checkout-undan raw rows, frozen labels, per-call records və identities-i **local olaraq independently recompute** edib. Runtime **google/gemini-3.5-flash**, reasoning low, prompt v9; canonical C config hash **eaa371255716**. Latest C4 UI-ready delivery **68501897746bf674d582fd810cd9d7e2cfb943e6**-dir; runtime/policy/results dəyişməyib. [C4 runbook](../FINAL_DEMO_RUNBOOK.md) və [verification](../C4_DEMO_VERIFICATION.json) Celal host-da replay/browser export readiness göstərir. **Actual C2 ZIP binaries və browser replay/export Ali host-da hələ yoxlanmayıb**; local recording pre-flight pending-dir.
 
 Scope: **development diagnostic on 12 pairs**, Ali-nin frozen labels-ı ilə **5 bug / 7 clean**. dev12 mixed-source-dur və **held-out deyil**. Labels A1 başlayandan sonra **15:38:44**-də finalized olub; **5 bug label-dan 4-ü assistant-proposed correction, Ali-confirmed**-dir. Bu caveat metric slide-da görünməlidir. [Label audit](labels_audit.md), [A3 review](A3_review.md).
 
@@ -24,13 +24,14 @@ Aggregate counts eyni olsa da **pair-level qərarlar 10/12-də eynidir**: booth 
 | Calls / retries | 80 fresh calls / 0 cache hits / 0 retries / HTTP 200 80/80 | Calls + stages **independently verified**; inference burada rerun edilməyib |
 | Total cost | $0.2871945 (slaydda təxminən $0.287) | Per-call **provider-reported usage cost** Decimal ilə recompute edilib; invoice independently verified deyil |
 | Call/cost split | C 56 / $0.1934625; B 24 / $0.0937320 | Per-call records-dan verified |
-| Pinned current tests | **194 passed, 6 skipped, 5.14 s** | QA exact delivery checkout-da actual .venv pytest execution |
+| Latest C4 tests | **197 passed, 6 skipped, 8.79 s** | QA exact6850189 checkout-da actual offline .venv pytest execution |
+| C2 verification tests | **194 passed, 6 skipped, 5.14 s** | QA exact79a0ef7 checkout-da actual offline .venv pytest execution |
 | Historical C2 tests | **186 passed, 6 deselected, 0 skipped** | Celalın C2 execution report-u; current test run deyil |
 | C evidence ZIPs / scans | 12 verification records, Celal host-da checks | Records raw IDs ilə match; **actual ZIP bytes Ali host-da absent**, local unzip/download verified deyil |
-| Final integration SHA / C config hash | 79a0ef740196cbaa0639579386c6c591d2bfd8ca / eaa371255716 | Exact fetched checkpoint və identity verified |
+| C2 source SHA / C config hash | 79a0ef740196cbaa0639579386c6c591d2bfd8ca / eaa371255716 | Exact C2 verification checkpoint və identity verified |
 | B diagnostic config hash | 2dfeb64cd673 | Same settings, ayrı output/cache namespace |
 | C2 barrel run / timing | 20261009T123704Z-8e4e19; wall 31.520 s / pipeline 30.2167 s | C raw row; Celal host n=1; UI timing deyil |
-| UI-ready SHA | Pending, Celal ayrıca göndərəcək | Recording gate açılmayıb |
+| UI-ready code / delivery SHA | be1ea0acce271df994b516f6fa297118e981a3dd / 68501897746bf674d582fd810cd9d7e2cfb943e6 | C4 Celal-host READY; Ali local pre-flight pending; no C4 fresh inference |
 
 Pitch cümləsi: “12 development pair-də daha güclü VLM ilə hybrid **3/5 bug-a FAIL** verir; coverage **5/12**, bug false-PASS **1/5**-dir. Qwen hybrid **0/12 coverage, 0/5 false-PASS** ilə hamısında abstain edir. Gemini B və C aggregate counts-u eynidir; bu diagnostic-də DINOv2-hybrid advantage sübut edilməyib.”
 
@@ -93,8 +94,8 @@ Data **VideoGameQA-Bench, CC BY 4.0**, pinned revision **2afbfdcc9cb84318845f348
 
 ## 6. Qalan verification və təhvil gate
 
-Tamamlanan gate: [raw predictions və calls recompute](C2_RECOMPUTED.json), frozen-label counts, B/C pairwise differences, config/model identity, per-call freshness/cost və exact pinned checkout-da tests. Qalan gate: actual ignored C2 ZIP binaries-in transfer/unzip/hash check-i, full input/request/image capture audit; **UI-ready SHA**, browser saved replay və UI-exported evidence.json; final video duration, second-device acceptance və 19:30 submission confirmation. Celalın ZIP verification records-u local actual archive check-i əvəz etmir.
+Tamamlanan gate: [raw predictions və calls recompute](C2_RECOMPUTED.json), frozen-label counts, B/C pairwise differences, config/model identity, per-call freshness/cost, exact pinned tests və C4 UI-ready repo evidence. Qalan gate: actual ignored C2 ZIP binaries-in transfer/unzip/hash check-i, full input/request/image capture audit; **Ali local C4 launch/replay/export pre-flight**; final video duration, second-device acceptance və 19:30 submission confirmation. Celalın browser/ZIP verification evidence-i Ali local actual archive check-i əvəz etmir.
 
-**17:30-dan sonra yeni feature, experiment və threshold tuning yoxdur.** Video/slides 18:45; acceptance 19:15; daxili submission **19:30**, rəsmi deadline 20:00 Asia/Baku. **Recording UI-ready SHA gələnədək gözləyir**; Qwen vision-branch UI istifadə edilmir. Final code freeze SHA ayrıca saxlanılır. [Task list](NEXT_TASKS.md).
+**17:30-dan sonra yeni feature, experiment və threshold tuning yoxdur.** Video/slides 18:45; acceptance 19:15; daxili submission **19:30**, rəsmi deadline 20:00 Asia/Baku. **Recording C4 UI-ready source-dan local pre-flight tamamlandıqdan sonra edilir**; Qwen vision-branch UI istifadə edilmir. Final implementation freeze və C2 source SHA ayrıca saxlanılır. [Task list](NEXT_TASKS.md).
 
 Wording: “development diagnostic on 12 pairs”, “safe but abstains”, “localization works, perception is the bottleneck”, “a stronger model is the evidenced next step”. Sonrakı pilot fresh pre-labelled held-out scene groups və DINOv2 contribution üçün ayrıca ablation-dır; bu gün run edilmir. “Fine-tuned”, “production-ready”, “reduces QA workload”, “DINOv2 beats …” və generalization claim-ləri yoxdur.

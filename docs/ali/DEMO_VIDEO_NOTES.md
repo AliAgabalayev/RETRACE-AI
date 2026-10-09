@@ -2,16 +2,17 @@
 
 Status: **shot list hazırlanıb; UI video çəkildiyi və ya final video file yaradıldığı iddia edilmir**. Recording owner **Ali**, final slide assembly owner **Celal**. Motion evidence draft ayrıca artifact-dir; onun mövcudluğu UI recording və final acceptance tamamlandığını göstərmir. Video/slides deadline 18:45, daxili submission **19:30**, rəsmi deadline 20:00 Asia/Baku. **17:30-dan sonra feature, model experiment və threshold tuning yoxdur.**
 
-Final runtime **C2 OpenRouter / google/gemini-3.5-flash**, reasoning low, prompt v9. Final code delivery SHA **79a0ef740196cbaa0639579386c6c591d2bfd8ca**, canonical C config hash **eaa371255716**. C2 raw rows exact fetched checkout-dan QA tərəfindən **independently recompute edilib**. Actual ignored C2 ZIP bytes və Ali host-da browser replay/export hələ verified deyil. **UI recording Celalın ayrıca UI-ready SHA-sını gözləyir**; Qwen vision branch-dəki UI istifadə edilmir. [Pitch evidence](PITCH_EVIDENCE.md).
+Final runtime **C2 OpenRouter / google/gemini-3.5-flash**, reasoning low, prompt v9. C2 evidence source SHA **79a0ef740196cbaa0639579386c6c591d2bfd8ca**, canonical C config hash **eaa371255716**. C2 raw rows həmin checkout-dan QA tərəfindən **independently recompute edilib**. Latest C4 UI-ready delivery **68501897746bf674d582fd810cd9d7e2cfb943e6**, runnable UI code **be1ea0acce271df994b516f6fa297118e981a3dd**: [runbook](../FINAL_DEMO_RUNBOOK.md), [verification](../C4_DEMO_VERIFICATION.json). Celal host-da replay/browser export verified-dir; C4 fresh inference yoxdur. Actual ignored C2 ZIP bytes və Ali host-da C4 launch/browser export hələ verified deyil. **Local recording pre-flight qalır**; Qwen vision branch-dəki UI istifadə edilmir. [Pitch evidence](PITCH_EVIDENCE.md).
 
 ## Recording pre-flight — tamamlanma iddiası deyil
 
-- [ ] Celalın **UI-ready SHA** confirmation-u alınıb; app həmin checkout-dan açılır. Final code freeze SHA ilə UI-ready SHA ayrıca qeyd edilir. Köhnə :8501 owner instance təxminən 11:30-da başlayıb: recording-dən əvvəl reconciled integration kodundan restart edilməlidir.
+- [x] Celalın **C4 UI-ready SHA** repo confirmation-u alınıb: UI code be1ea0a, delivery6850189; freeze/source79 ayrı saxlanılır.
+- [ ] Ali app həmin C4 checkout-dan fresh açılır. Cari :8501 self-test17:46-da79a0ef7 ilə restart edilib, köhnə11:30 instance deyil; final recording-dən əvvəl C4 source + artifact bundle pre-flight tələb olunur.
 - [ ] Canonical runtime açıq seçilib: **GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml**. Sidebar/version identity config hash eaa371255716 ilə uyğun gəlir. Credentials ekranda görünmür.
 - [ ] C2 barrel saved run **20261009T123704Z-8e4e19**, pedestal **20261009T124621Z-0b0c2b**, outfit **20261009T123947Z-584a66** həmin UI host-da mövcuddur və açılır. Raw rows-un mövcudluğu ignored artifact binaries-in Ali host-da mövcudluğunu sübut etmir.
 - [ ] UI-exported ZIP-də report.md, analysis.json, **evidence.json**, rules.yaml, images və crops açılır; decision/hash identity yoxlanır. C2 source ZIPs ignored-dir; Ali host-da local ZIP/download verification pending-dir.
-- [ ] Saved-run Rules editor page-in current rules-ını göstərə bilər. Shot-da **run-un stored rules.yaml / report rules** göstərilir; current editor avtomatik loaded run rules kimi təqdim edilmir.
-- [ ] Bütün saved/cached/prerecorded segment-lərin caption-u hazırdır; UI replay-i özü label etmirsə overlay əlavə edilir.
+- [ ] C4 UI-də **run-un stored rules** read-only görünür; Ali local pre-flight-də exact run rules təsdiqlənir. Köhnə UI qayda editoru ilə recorded rules qarışdırılmır.
+- [ ] C4 **Saved run replay — no new inference** label-i kadrda saxlanılır; bütün cached/prerecorded segment-lər ayrıca caption daşıyır.
 - [ ] .env, API key və terminal environment recording-də görünmür; mock engine seçilmir.
 - [ ] Final video file metadata ilə **90–120 s** təsdiqlənir; cut markers, caveat-lər və submission package yoxlanır.
 

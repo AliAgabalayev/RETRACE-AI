@@ -39,3 +39,7 @@ OpenRouter gateway/provider yoludur; model burada Gemini3.5 Flash-dır. Pipeline
 ## Presentation files main switch-dən sonra
 
 Tracked slides docs branch-də saxlanılır. Main integration UI dəyişməsin deyə local copies git-ignored `artifacts/ali/presentation/{pitch,slides}/` altındadır. Motion `artifacts/ali/motion/ali_evidence_motion_DRAFT_110s.mp4`-dır: 110s silent draft, final recording deyil. Final recording yalnız C4 UI-ready SHA + final bundle/download verification-dən sonra.
+
+## C4 repository update — supersedes only the waiting status above
+
+Repository consolidation fetch latest integration delivery **`68501897746bf674d582fd810cd9d7e2cfb943e6`**-nı təsdiqlədi; runnable UI code **`be1ea0acce271df994b516f6fa297118e981a3dd`**. [C4 runbook](../FINAL_DEMO_RUNBOOK.md) və [verification](../C4_DEMO_VERIFICATION.json) Celal-host replay/browser readiness göstərir;0fresh inference. Ali local process bu audit zamanı **hələ79a0ef7**-də saxlanıldı və actual C2 bundle yoxdur. Yuxarıdakı17:46 launch/auth/health nəticələri həmin historical checkpoint-ə aiddir; yeni C4 local launch/export kimi təqdim edilmir. Recording üçün local C4 pre-flight + bundle/download verification qalır.
