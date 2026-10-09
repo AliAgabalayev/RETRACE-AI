@@ -20,12 +20,14 @@ jobs:
       - run: python scripts/prepare_deployment.py
       - run: python -m pytest -m 'not real_model' -q -ra
       - run: git diff --check
+      - run: test -z "$(git status --porcelain)"
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t gameqa-demo .
+      - run: docker image inspect gameqa-demo --format '{{.Size}}'
       - name: Keyless container replay and health
         run: |
           docker run -d --name gameqa -p 8501:8501 gameqa-demo

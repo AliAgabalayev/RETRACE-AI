@@ -16,18 +16,22 @@ def _load():
     return mod
 
 
-def _run() -> bytes:
-    subprocess.run([sys.executable, str(SCRIPT)], check=True, cwd=REPO, capture_output=True)
-    return OUT.read_bytes()
+def _run(tmp_path) -> bytes:
+    mod = _load()
+    # Exercise the actual entrypoint with committed inputs and isolated output.
+    # Tests must not regenerate the frozen selection file.
+    mod.REPO = tmp_path
+    mod.OUT = tmp_path / "ali_dev12.json"
+    assert mod.main() == 0
+    return mod.OUT.read_bytes()
 
 
-def test_output_is_byte_identical_across_runs():
-    assert _run() == _run()
+def test_output_is_byte_identical_across_runs(tmp_path):
+    assert _run(tmp_path) == _run(tmp_path)
 
 
-def test_counts_and_membership():
-    _run()
-    data = json.loads(OUT.read_text())
+def test_counts_and_membership(tmp_path):
+    data = json.loads(_run(tmp_path))
     manifest = {e["sample_id"]: e for e in json.loads((REPO / "data/manifests/inference_manifest.json").read_text())}
     labels = json.loads((REPO / "data/manifests/eval_labels.json").read_text())
     ids = [r["sample_id"] for r in data["dev12"]]
@@ -42,9 +46,8 @@ def test_counts_and_membership():
     assert sum(manifest[i]["media_source"] == "UnityCapturesDataset" for i in six) == 2
 
 
-def test_json_has_no_label_values():
-    _run()
-    text = OUT.read_text().lower()
+def test_json_has_no_label_values(tmp_path):
+    text = _run(tmp_path).decode().lower()
     for token in ("no_bug", "test_pass", '"label"', "ground_truth", '"eval"'):
         assert token not in text
     assert "bug" not in text.replace("no label", "")
