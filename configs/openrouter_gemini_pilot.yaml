@@ -1,0 +1,15 @@
+# C2: same v9 visual representation/policy; OpenRouter supports reasoning_effort.
+vlm:
+  provider: openai
+  model: google/gemini-3.5-flash
+  base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+  timeout_s: 60
+  max_attempts: 1
+  transient_retries: 0
+  image_detail: null
+  reasoning_effort: low
+run:
+  cache_dir: artifacts/c2-openrouter-20261009/cache-C
+  artifacts_dir: artifacts/c2-openrouter-20261009/runs-C
+  references_dir: artifacts/c2-openrouter-20261009/references
