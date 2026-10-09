@@ -105,3 +105,15 @@ def test_plain_export_report_writes_evidence(pair, cfg, patch_vision):
     run_dir = pair_dir(cfg, r)
     export_report(r, run_dir)
     assert f"{r.run_id}/evidence.json" in zipfile.ZipFile(zip_path_for(run_dir)).namelist()
+
+
+def test_scope_names_global_change_collapse(pair, cfg, patch_vision):
+    from gameqa.contracts import RegionProposal
+    patch_vision["proposals"] = [RegionProposal(id="R1", box=(0, 0, 160, 120), score=2.0, source="dinov2",
+                                                area_fraction=1.0)]
+    patch_vision["coverage"].proposals_total = 1
+    patch_vision["coverage"].truncated = True
+    r = analyze(pair, cfg, judge=FakeJudge(), extractor=FakeExtractor())
+    notes = build_evidence(r)["scope"]["not_assessed"]
+    assert any("global change" in n for n in notes)
+    assert not any("region cap" in n for n in notes)
