@@ -1,0 +1,11 @@
+# VLM via Google Gemini's OpenAI-compatible endpoint. Use: GAMEQA_CONFIG=configs/gemini.yaml (app)
+# or --config configs/gemini.yaml (CLI). Key: $GEMINI_API_KEY in .env (git-ignored). See DECISIONS D16.
+vlm:
+  provider: openai              # OpenAI-compatible client (judge._openai_reply)
+  model: gemini-3.8-flash       # newest usable on the free tier (3.1-pro-preview: HTTP 429, no free quota)
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai
+  api_key_env: GEMINI_API_KEY
+  timeout_s: 90
+  max_attempts: 2
+  image_detail: null            # OpenAI-only field; omitted for Gemini
+  reasoning_effort: low         # default effort ~29 s/call; low ~7 s/call (D16)

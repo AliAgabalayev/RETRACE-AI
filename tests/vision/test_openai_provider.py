@@ -83,3 +83,71 @@ def test_gameqa_config_env_selects_provider(monkeypatch):
     assert cfg["vlm"]["provider"] == "openai" and cfg["proposals"]["max_regions"] == 8
     monkeypatch.delenv("GAMEQA_CONFIG")
     assert load_config()["vlm"]["provider"] == "ollama"
+
+
+def test_gemini_config_omits_openai_only_detail(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    cfg = load_config("configs/gemini.yaml")
+    cfg["vlm"]["cache"] = False
+    j = Judge(cfg)
+    assert j.model_id.startswith("openai-compatible@generativelanguage.googleapis.com:")
+    seen = {}
+
+    def fake_post(url, json=None, timeout=None, headers=None):
+        seen.update(url=url, payload=json)
+        return _Resp(200, {"choices": [{"message": {"content": "{}"}}]})
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    j._openai_reply([np.zeros((30, 30, 3), np.uint8)], "p", {"type": "object"})
+    assert seen["url"].endswith("/v1beta/openai/chat/completions")
+    assert "detail" not in seen["payload"]["messages"][0]["content"][1]["image_url"]
+
+
+def test_reasoning_effort_is_sent_and_part_of_cache_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    low, default = Judge(_cfg(reasoning_effort="low")), Judge(_cfg())
+    img = [np.zeros((10, 10, 3), np.uint8)]
+    assert low._cache_key(img, "p", {}) != default._cache_key(img, "p", {})
+    seen = {}
+
+    def fake_post(url, json=None, timeout=None, headers=None):
+        seen["payload"] = json
+        return _Resp(200, {"choices": [{"message": {"content": "{}"}}]})
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    low._openai_reply(img, "p", {})
+    assert seen["payload"]["reasoning_effort"] == "low"
+    default._openai_reply(img, "p", {})
+    assert "reasoning_effort" not in seen["payload"]
+
+
+def test_transient_503_is_retried_with_backoff(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    j = Judge(_cfg(max_attempts=1))
+    calls = {"n": 0}
+
+    def flaky(images, prompt, schema):
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise RuntimeError("HTTP 503: model overloaded")
+        return '{"ok": true}'
+
+    monkeypatch.setattr(j, "_reply", flaky)
+    monkeypatch.setattr("gameqa.vision.judge.time.sleep", lambda s: None)
+    raw, errors, _ = j._ask([], "p", {}, RULES, False)
+    assert raw == '{"ok": true}' and errors == [] and calls["n"] == 3
+
+
+def test_permanent_error_is_not_retried_beyond_max_attempts(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    j = Judge(_cfg(max_attempts=2))
+    calls = {"n": 0}
+
+    def broken(images, prompt, schema):
+        calls["n"] += 1
+        raise RuntimeError("HTTP 400: bad request")
+
+    monkeypatch.setattr(j, "_reply", broken)
+    monkeypatch.setattr("gameqa.vision.judge.time.sleep", lambda s: None)
+    raw, errors, _ = j._ask([], "p", {}, RULES, False)
+    assert raw is None and calls["n"] == 2 and len(errors) == 2
