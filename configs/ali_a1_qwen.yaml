@@ -1,0 +1,18 @@
+# A1 crop/resize inspection: same as default (Ollama qwen2.5vl:3b) + fresh cache namespace + input dump.
+# Usage (Ali/Celal: pipeline run under the VLM lock rule): config path = this file.
+vlm:
+  provider: ollama
+  model: qwen2.5vl:3b
+  base_url: http://localhost:11434
+  timeout_s: 75
+  max_attempts: 2
+  temperature: 0.0
+  crop_max_side: 336
+  context_max_side: 512
+  num_ctx: 2048
+  keep_alive: 30m
+  audit_max_side: 512
+  dump_inputs_dir: artifacts/ali/a1_inputs   # opt-in; files go to <dir>/<dump_tag or "run">/
+  dump_tag: a1
+run:
+  cache_dir: data/cache_ali_a1   # fresh namespace: no cache hits from earlier runs
