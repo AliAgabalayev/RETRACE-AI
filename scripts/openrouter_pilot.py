@@ -136,9 +136,10 @@ def main():
                  'unknown_cost_calls':sum(c.get('cost_usd') is None for c in calls),'reserve_per_call_usd':reserve,
                  'stopped':stopped,'max_attempts':120,'max_spend_usd':5})
 
-    def ask(judge, images, prompt, schema, rules, audit):
+    def ask(judge, images, prompt, schema, rules, audit, *stage_args, **stage_kwargs):
         before = len(calls)
-        raw, errors, latency = original_ask(judge,images,prompt,schema,rules,audit)
+        raw, errors, latency = original_ask(judge,images,prompt,schema,rules,audit,
+                                          *stage_args, **stage_kwargs)
         append(stages_file,{**current,'stage':'observation' if images else 'rule_judgment',
                 'cache_hit':judge.last_cache_hit,'attempts':len(calls)-before,'seconds':latency,'errors':errors})
         return raw, errors, latency
