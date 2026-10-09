@@ -122,11 +122,12 @@ def zip_path_for(run_dir: Path) -> Path:
 
 def export_report(result: AnalysisResult, run_dir: str | Path) -> Path:
     """Write report.md in ``run_dir`` and a ZIP of the run directory. Returns report.md."""
-    from gameqa.report import render_report
+    from gameqa.report import render_report, write_evidence
 
     run_dir = Path(run_dir)
     report = run_dir / "report.md"
-    write_text_atomic(report, render_report(result))
+    write_evidence(result, run_dir)
+    write_text_atomic(report, render_report(result, run_dir))
     zpath = zip_path_for(run_dir)
     tmp = zpath.with_name(zpath.name + ".tmp")
     with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zf:
