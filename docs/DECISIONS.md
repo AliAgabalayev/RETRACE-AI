@@ -103,7 +103,7 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 ## D13 — QA final pass: QA-D10/D11 fixed, D12–D15 recorded (session 3)
 - QA-D10: `Judge._ask` no longer returns earlier-attempt notes when a retry produced a usable answer (they made valid answers NEEDS_REVIEW and runs non-reproducible). Test `tests/vision/test_judge.py::test_recovered_retry_leaves_no_judgment_errors`.
 - QA-D11: alignment fills pixels outside the valid overlap with reference pixels, so that strip is never compared. `decision.MIN_OVERLAP_FOR_PASS = 0.98`: below it, PASS is blocked with reason "N% of the reference was not compared"; FAIL from compared regions still stands. Consequence: shifted captures (e.g. `small_translation` fixture, overlap ≈ 0.97) now end NEEDS_REVIEW (its expected.json allows it). Tests in `tests/policy/test_decision.py`.
-- Open (minor, documented in HANDOFF): QA-D12 mock provider + pixel-identical audit shortcut can yield PASS labelled engine `mock`; QA-D13 a judge exception is labelled real/COMPLETE; QA-D14 a "no visible change" answer is accepted as allowed without a rule ID; QA-D15 E2 `run_meta.json` commit field says 0b3cc1b (written by evaluate.py from HEAD at start) — the frozen identity is `config_hash 8e6c97c0395c` + prompt v9, identical for E2 and E4.
+- Open (minor, documented in HANDOFF): QA-D12 mock provider + pixel-identical audit shortcut can yield PASS labelled engine `mock`; QA-D13 a judge exception is labelled real/COMPLETE; QA-D14 a "no visible change" answer is accepted as allowed without a rule ID; QA-D15 E2 `run_meta.json` commit field says 3022ec8 [was 0b3cc1b] (written by evaluate.py from HEAD at start) — the frozen identity is `config_hash 8e6c97c0395c` + prompt v9, identical for E2 and E4.
 - E1/E2/E4 numbers were produced before D13; D10/D11 would only change runs with retries (E2: 0 provider errors) or partial-overlap alignment (all E2 dev/eval runs were identity/unreliable per dl-engineer), so the reported numbers stand.
 
 ## D14 — OpenAI-compatible VLM provider (owner request, 2026-10-09)
@@ -113,3 +113,7 @@ Crops: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y
 - Config selection without code changes: `$GAMEQA_CONFIG` (e.g. `GAMEQA_CONFIG=configs/openai.yaml .venv/bin/streamlit run app.py`) or CLI `--config configs/openai.yaml`.
 - Not yet measured with a real key. Before any claim: dev split first, then the same `eval_subset_60.json` for E2/E4 comparison with Qwen.
 - Privacy: screenshots are sent to the provider. Fine for the CC BY 4.0 benchmark; consider before using confidential game screenshots.
+
+## D15 — Attribution trailers removed; commit hashes changed (2026-10-09)
+- Owner request: no `Co-Authored-By` / AI attribution in commits or PRs (rule in CLAUDE.md). All existing commits were rewritten (`git filter-branch --msg-filter`; trees verified identical, 8 commits) and force-pushed by the owner. Local backup tag: `backup/pre-trailer-strip` (not pushed).
+- Old → new hashes: 9c09345→d4b85af, 0b3cc1b→3022ec8, c463a07→58ba189, 1f81dd2→871d8b1, 5f4fb4a→1c2f1ca, 9e9eb16→2349860, 9a34339→2663d6f, eab6514→004d997. Docs now show `new [was old]`; untracked `artifacts/eval/*/run_meta.json` keep the old hashes.

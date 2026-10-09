@@ -52,11 +52,11 @@ Each agent writes only its own files and its own `docs/status/<agent>.md`; senio
 - Dispatched in parallel: git-workflow-master (initial commit), python-developer DATA, python-developer APP, dl-engineer, qa-engineer, experiment-tracker-pm, documentation-engineer. Each writes `docs/status/<name>.md`.
 - If interrupted: read all `docs/status/*.md`, re-dispatch any workstream whose status file is missing or stale, then continue integration.
 - Agent IDs (session 2, for SendMessage): DATA=afdb34c03018a7700, DL=a17dc2333c0a549cc, APP=acd79cea7f082b82b, QA=affe4eaa1acbfb700, EXP=a15e1832adce4ec82 (done), DOCS=a01bcf1c36e5f78de (done phase 1; re-dispatch once app/cli/artifacts exist).
-- Done: initial commit 9c09345; D6 policy fixes (QA-D1/D2/D3); D7 splits + 60-pair eval subset; EXPERIMENTS.md, DATA_CARD.md (partial), THIRD_PARTY_NOTICES.md written.
-- Checkpoint 0b3cc1b: integrated slice (101 files). Tests: 83 + 39 pass, 4 real_model skipped. APP done; real VLM run → NEEDS_REVIEW (audit timeout, rule-ID compliance) → sent to DL.
+- Done: initial commit d4b85af [was 9c09345]; D6 policy fixes (QA-D1/D2/D3); D7 splits + 60-pair eval subset; EXPERIMENTS.md, DATA_CARD.md (partial), THIRD_PARTY_NOTICES.md written.
+- Checkpoint 3022ec8 [was 0b3cc1b]: integrated slice (101 files). Tests: 83 + 39 pass, 4 real_model skipped. APP done; real VLM run → NEEDS_REVIEW (audit timeout, rule-ID compliance) → sent to DL.
 - D8: benchmark rules split into A1 (ACCEPTABLE) / D1 (UNACCEPTABLE); manifest regenerated. DATA done: 250 pairs, demo 5 / dev 40 / eval 205, eval_subset_60.json.
 - QA done: 138 pass / 4 skip after D9. E1 classical: eval_full balanced acc 0.516 (bug recall 0.03) ≈ chance. E2/E4 blocked on real-VLM (D6 RAM, DL fixes).
-- c463a07: config frozen (D10). E2 (pipeline, 60) then E4 (vlm_only, 60) running serially in background → artifacts/eval/e2_pipeline_subset60, e4_vlm_only_subset60; logs artifacts/eval/e{2,4}_predict.log. Docs phase 2 re-dispatched (a8a27f55de610a06c).
+- 58ba189 [was c463a07]: config frozen (D10). E2 (pipeline, 60) then E4 (vlm_only, 60) running serially in background → artifacts/eval/e2_pipeline_subset60, e4_vlm_only_subset60; logs artifacts/eval/e{2,4}_predict.log. Docs phase 2 re-dispatched (a8a27f55de610a06c).
 - Docs phase 2 done (README, walkthrough, runbook, handoff draft, readability). Fixed now: decision.py docstring; approve of non-PASS/non-real run needs --force (CLI) / override checkbox (UI) + test → 164 pass / 6 skip.
 - DEFERRED until E2+E4 finish (config/code frozen for eval): yaml `vlm.prompt_version` v1 vs real v9; judge.py fallback defaults ≠ yaml; SCENE_ID constant; mock-timeout reason text; judge.py dead code (`prep_crop`, identical branches, unused `_rule_fields` outputs); app engine cache keeps degraded after a load failure; then QA_REPORT/EXPERIMENTS/DATA_CARD refresh by owners.
 
@@ -64,7 +64,7 @@ Each agent writes only its own files and its own `docs/status/<agent>.md`; senio
 - E2 60/60 complete; E4 resumed 50→60. Both scored. E1 re-tuned on final dev (D12). Verdict NOT SUPPORTED (D11/D12). Key false PASS: vr_bcbcf341.
 - Real demo runs: object_removed FAIL, allowed_and_forbidden FAIL, small_object_removed FAIL, clothing_color_change PASS, lighting_change NEEDS_REVIEW, identical PASS; benchmark demo split 5/5 NEEDS_REVIEW (artifacts/demo/demo_split.jsonl).
 - UI: Chrome extension not connected → scripts/ui_smoke.py (AppTest, real engines) OK: Analyze FAIL rendered, rerun no re-inference, approve v1+v2 + history.
-- Commits: 1f81dd2 (approve guard, docs phase 2). Post-eval cleanup (D11) uncommitted.
+- Commits: 871d8b1 [was 1f81dd2] (approve guard, docs phase 2). Post-eval cleanup (D11) uncommitted.
 - Next: QA final acceptance + real_model tests; docs final; HANDOFF.md; fresh-process launch check; final commit.
 - QA final verdict: accept as honest prototype, not a working detector. QA-D10/D11 fixed by senior-pm (D13), 168 passed / 6 skipped. Real-model tests 6 passed (QA, cached VLM).
 - Fresh-process Streamlit launch: health ok / HTTP 200 (port 8517 check).

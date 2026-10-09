@@ -1,6 +1,6 @@
 # QA Report (qa-engineer) - final acceptance pass
 
-Date: 2026-10-09. Tree: HEAD 1f81dd2 plus uncommitted post-eval cleanup (D11). Every number below comes from a command actually run or an artifact actually read in this pass. Held-out labels were used only by `scripts/evaluate.py` / `scripts/compare_runs.py` scoring, never at inference (checked: `load_inference_manifest` rejects label keys; `grep eval_labels` over `src/` and `app.py` finds only `src/gameqa/data/`).
+Date: 2026-10-09. Tree: HEAD 871d8b1 [was 1f81dd2] plus uncommitted post-eval cleanup (D11). Every number below comes from a command actually run or an artifact actually read in this pass. Held-out labels were used only by `scripts/evaluate.py` / `scripts/compare_runs.py` scoring, never at inference (checked: `load_inference_manifest` rejects label keys; `grep eval_labels` over `src/` and `app.py` finds only `src/gameqa/data/`).
 
 ## 1. Commands run and results
 
@@ -39,7 +39,7 @@ Date: 2026-10-09. Tree: HEAD 1f81dd2 plus uncommitted post-eval cleanup (D11). E
 | QA-D12 | minor | Provider `mock` + pixel-identical-within-tolerance audit shortcut yields `PASS` with `engine_mode=mock`; the shortcut judgment has `is_mock=False` (`judge.py` ~378-384). Violates "mock never shown as real" in a corner (tiny change under `min_area_px` and `identical_max_px`). | OPEN, owner dl-engineer |
 | QA-D13 | minor | Judge exception text (`judge raised X`) is not a component-failure marker, so such a run is labelled real/COMPLETE (still NEEDS_REVIEW). Real `Judge` never raises. | OPEN |
 | QA-D14 | minor (model quality) | A "no visible change"/allowed answer with no rule is accepted on a proposed region; before/after agreement is not checked. Documented in MODEL_NOTES. | OPEN |
-| QA-D15 | minor (provenance) | `e2_pipeline_subset60/run_meta.json` records commit 0b3cc1b while D10 says config was frozen at c463a07 (E4 records c463a07; both `config_hash` 8e6c97c0395c, identical). Treat E2 commit field as unreliable. | OPEN, docs note |
+| QA-D15 | minor (provenance) | `e2_pipeline_subset60/run_meta.json` records commit 3022ec8 [was 0b3cc1b] while D10 says config was frozen at 58ba189 [was c463a07] (E4 records 58ba189 [was c463a07]; both `config_hash` 8e6c97c0395c, identical). Treat E2 commit field as unreliable. | OPEN, docs note |
 
 No open error-to-PASS defect and no forbidden-change miss attributable to code logic was found. QA-D11 is the one plausible code-level false-PASS path; no failing test was written because it was not reproduced end to end by QA in this pass (I did not edit non-test code). senior-pm should decide whether to schedule a reproduction test.
 

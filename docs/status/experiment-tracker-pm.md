@@ -15,7 +15,7 @@ False PASS on bug pairs: E1 40/42 (95.2%), E4 33/42 (78.6%), E2 1/42 (2.4%, Wils
 
 ## Flags for senior-pm
 1. E1 threshold provenance: `classical_threshold.json` dev_ids contain 23 IDs that are now in the eval split (2 in the 60-subset, both predicted PASS). Likely produced against an earlier split. Effect on conclusions negligible, but re-tune E1 on current dev (CPU, minutes) before quoting E1 as clean.
-2. E2 `run_meta.commit` says `0b3cc1b` although config was frozen later; `config_hash` 8e6c97c0395c is identical in E2 and E4 and is the reliable identity.
+2. E2 `run_meta.commit` says `3022ec8 [was 0b3cc1b]` although config was frozen later; `config_hash` 8e6c97c0395c is identical in E2 and E4 and is the reliable identity.
 3. Source predicts label; 2 question texts; Unity scene groups unknown (sha-grouping only); N = 18 no_bug. Say so in any result slide.
 
 ## Ranked next experiments (expected value per cost; do not run VLM jobs while demos use Ollama)

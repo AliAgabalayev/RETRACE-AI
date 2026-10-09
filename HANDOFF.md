@@ -204,7 +204,10 @@ Saxlanan run: `artifacts/20261009T003250Z-58905e/` (`report.md`, `crops/R1_ref.p
 
 ## 9. Git checkpoint
 
-Branch `master`, yalnız lokal (remote yoxdur). Commit-lər: `9c09345` (skeleton) → `0b3cc1b` (vertical slice) → `c463a07` (real inference, config E2-dən əvvəl donduruldu) → `1f81dd2` → final handoff commit (`git log -1`). Data (`data/raw`, `data/work`), `artifacts/` və `references/` git-də deyil, lokal diskdədir. Manifest-lər və fixture-lər commit olunub.
+Branch `master`; remote `origin` = private GitHub repo https://github.com/AliAgabalayev/neuroscience-hackhaton (push yalnız açıq istəklə).
+- Commit-lər: `d4b85af` (skeleton) → `3022ec8` (vertical slice) → `58ba189` (real inference, config E2-dən əvvəl donduruldu) → `871d8b1` → `1c2f1ca` (final delivery) → `2349860` (GPT/OpenAI-compatible provider) → `2663d6f`, `004d997` (CLAUDE.md).
+- 2026-10-09-da owner-in istəyi ilə `Co-Authored-By` trailer-ləri tarixçədən silindi, ona görə bütün hash-lər dəyişdi (D15). Köhnə→yeni xəritə `docs/DECISIONS.md` D15-dədir. `artifacts/eval/*/run_meta.json` fayllarında köhnə hash-lər qalır.
+- Data (`data/raw`, `data/work`), `artifacts/` və `references/` git-də deyil, lokal diskdədir. Manifest-lər və fixture-lər commit olunub.
 
 ## 10. Ali-nin sabah ilk üç işi
 

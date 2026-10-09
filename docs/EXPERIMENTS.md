@@ -41,13 +41,13 @@ All runs use the same 60 eval pair IDs (`data/manifests/eval_subset_60.json`: 18
 
 | ID | What | Config / model / prompt (from run_meta.json) | Status | N | Artifacts |
 | --- | --- | --- | --- | --- | --- |
-| E1 | Classical pixel baseline: grayscale diff, `pixel_thr` 25, changed-area fraction; FAIL if fraction >= T else PASS. No rules, no VLM. T = 0.7821 tuned on dev (`classical_threshold.json`, dev balanced accuracy 0.53). | commit `0b3cc1b`, no model, no prompt | **done** | 60 (subset) and 205 (full eval split) | `artifacts/eval/e1_classical_eval_subset60/`, `.../e1_classical_eval_full/` |
-| E2 | Full pipeline: alignment, DINOv2 + classical proposals (max 8) + per-region VLM + whole-scene audit + `decision.py`. | commit recorded `0b3cc1b`; `config_hash` 8e6c97c0395c; `ollama:qwen2.5vl:3b` (CPU); prompt v9; `dinov2_vits14` weights_sha256 b938bf1bc15c (CUDA, fp32); DINOv2 threshold 0.35; timeout 75 s, 2 attempts; global-change collapse at >=10 % area. Run 2026-10-08 23:08Z to 2026-10-09 01:03Z, not resumed. | **done** | 60 | `artifacts/eval/e2_pipeline_subset60/` |
+| E1 | Classical pixel baseline: grayscale diff, `pixel_thr` 25, changed-area fraction; FAIL if fraction >= T else PASS. No rules, no VLM. T = 0.7821 tuned on dev (`classical_threshold.json`, dev balanced accuracy 0.53). | commit `3022ec8 [was 0b3cc1b]`, no model, no prompt | **done** | 60 (subset) and 205 (full eval split) | `artifacts/eval/e1_classical_eval_subset60/`, `.../e1_classical_eval_full/` |
+| E2 | Full pipeline: alignment, DINOv2 + classical proposals (max 8) + per-region VLM + whole-scene audit + `decision.py`. | commit recorded `3022ec8 [was 0b3cc1b]`; `config_hash` 8e6c97c0395c; `ollama:qwen2.5vl:3b` (CPU); prompt v9; `dinov2_vits14` weights_sha256 b938bf1bc15c (CUDA, fp32); DINOv2 threshold 0.35; timeout 75 s, 2 attempts; global-change collapse at >=10 % area. Run 2026-10-08 23:08Z to 2026-10-09 01:03Z, not resumed. | **done** | 60 | `artifacts/eval/e2_pipeline_subset60/` |
 | E2b | Ablation isolating DINOv2: E2 with classical-only proposals. | n/a | **NOT RUN** | - | - |
 | E3 | Proposal sanity (proposal box vs true changed box). | n/a | **NOT RUN** (needs manual region annotations; pair labels cannot give IoU) | - | - |
-| E4 | VLM-only: one whole-scene audit call per pair, no proposals. | recorded commit `c463a07`; `config_hash` 8e6c97c0395c (same as E2); `ollama:qwen2.5vl:3b`; prompt v9. Resumed after power loss at 50/60 (D11); same frozen config. | **done** | 60 | `artifacts/eval/e4_vlm_only_subset60/` |
+| E4 | VLM-only: one whole-scene audit call per pair, no proposals. | recorded commit `58ba189 [was c463a07]`; `config_hash` 8e6c97c0395c (same as E2); `ollama:qwen2.5vl:3b`; prompt v9. Resumed after power loss at 50/60 (D11); same frozen config. | **done** | 60 | `artifacts/eval/e4_vlm_only_subset60/` |
 
-Note on E2's recorded commit (`0b3cc1b`): the run was launched from a working tree ahead of that commit (D10 freezes config at the later commit). The identical `config_hash` for E2 and E4 is the reliable identity check; the commit field alone is not.
+Note on E2's recorded commit (`3022ec8 [was 0b3cc1b]`): the run was launched from a working tree ahead of that commit (D10 freezes config at the later commit). The identical `config_hash` for E2 and E4 is the reliable identity check; the commit field alone is not.
 
 Lifecycle: E1, E2, E4 analyzed; hypothesis verdict below ("decided" rests with senior-pm). E2b, E3 designed, not run.
 
