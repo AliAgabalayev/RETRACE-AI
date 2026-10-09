@@ -4,6 +4,8 @@
 
 **Hazır:** end-to-end prototype, Qwen baseline, C2 raw cross-check, test evidence, pitch/video script, 7-slide PDF/PPTX və 110 s motion draft. **Final acceptance açıqdır:** ayrıca UI-ready SHA, actual C2 ZIP bundle/full captures, final UI recording, second-device check və human submission confirmation.
 
+**17:39 əlavə local UI baxışı:** Ali-nin göstərişi ilə main checkout integration79a0ef7-dir; OpenRouter config ilə http://localhost:8501 açıldı, health200/AppTest0exceptions. Local key auth401-dir, `.env` update gözlənir; generation edilməyib. [UI_LOCAL_OPENROUTER.md](ali/UI_LOCAL_OPENROUTER.md). Final recording gate ayrıca saxlanılır. Main checkout switch-dən sonra deck/PNG copies `artifacts/ali/presentation/`-dadır; tracked docs ayrıca docs branch-də qalır.
+
 ## Source və runtime identity
 
 | Identity | Dəyər |
@@ -64,7 +66,7 @@ C bütün pair-lərdə abstain edir; 9/12 global-change collapse-dir. A3 A1-i 36
 
 **Final recording Celalın UI-ready SHA-sı gələndən sonra həmin integration UI-da edilir. Qwen branch UI istifadə edilmir.** Exact Windows launch command, video-ready run IDs, browser-downloaded ZIP verification və live/replay statusunu Celal C4 handoff-da göndərəcək. Deployment URL varsa ayrıca verified statusla yazılır; hazırda məlum deyil.
 
-Linux canonical launch form (bu sessiyada final UI işə salınmayıb):
+Linux canonical launch form (local self-test bu config ilə açıldı; final recording hələ pending-dir):
 
 ```bash
 GAMEQA_CONFIG=configs/openrouter_gemini_pilot.yaml .venv/bin/streamlit run app.py
