@@ -2,10 +2,14 @@
 
 This is the ONLY place that maps pipeline outputs to PASS / FAIL / NEEDS_REVIEW.
 Order matters:
-1. A reliable forbidden judgment -> FAIL, even if other components failed.
+1. A reliable forbidden judgment -> FAIL, even if other components failed. "Reliable" means
+   real (non-mock), validated, error-free, with evidence, citing only known rule IDs and at
+   least one deny rule not involved in a rule conflict (D6/D9). Under unreliable, failed or
+   missing alignment only the whole-scene audit ("SCENE") can establish FAIL (D9).
 2. Identical decoded images with valid inputs -> PASS (documented shortcut).
-3. Any incompleteness, error, mock, or uncertainty -> NEEDS_REVIEW.
-4. Otherwise (everything ran, every change allowed, audit clean) -> PASS.
+3. Any incompleteness, error, mock, uncertainty, rule conflict, or allowed verdict without
+   evidence / citing a deny or unknown rule -> NEEDS_REVIEW.
+4. Otherwise (everything ran, every change acceptably allowed, audit clean) -> PASS.
 """
 
 from __future__ import annotations

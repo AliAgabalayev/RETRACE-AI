@@ -1,108 +1,139 @@
 # Code walkthrough: screenshot to verdict
 
-Status legend: **[exists]** file read and described from source; **[pending]** module not yet in the repo when this was written (interface taken from `docs/DECISIONS.md` D4, may change).
+Written from the integrated code at commit `c463a07` (plus uncommitted docs). Line numbers refer to that code and drift when owners edit; search for the function name if a line is off. Run artifacts used as the worked example: `artifacts/20261008T230650Z-1335da/` (synthetic fixture `data/fixtures/object_removed`, real DINOv2 + real `qwen2.5vl:3b`, VLM answers came from the disk cache).
 
-## 1. Conventions that everything depends on
+## 1. Conventions everything depends on
 
 - **Image order** is always `(reference, candidate)`. Reference = approved screenshot, candidate = new build.
-- **Box** = `[x1, y1, x2, y2]` in ORIGINAL reference pixels, right/bottom exclusive (like NumPy slicing: `ref[y1:y2, x1:x2]`). `RegionProposal` validates `x2 > x1`, `y2 > y1`, `x1,y1 >= 0` (`contracts.py`, `_valid_box`).
-- **Transform direction**: `AlignmentResult.candidate_to_reference` is a 3x3 matrix mapping a *candidate* pixel `(x, y, 1)` to *reference* pixel coordinates. Warping the candidate into the reference frame uses this matrix; to draw a reference box on the raw candidate you apply the inverse.
-- **Crops**: both crops use the same reference box: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y2, x1:x2]` (D4). That is why both crops show the same place even if the candidate was shifted.
-- Resize/pad: DINOv2 sees a resized+padded image; `FeatureExtractor.distance_map` must undo that and return a map at reference resolution (D4), so proposals never need to know the patch grid.
+- **Box** = `[x1, y1, x2, y2]` in ORIGINAL reference pixels, right/bottom exclusive, so `ref[y1:y2, x1:x2]` is the crop. `RegionProposal` rejects bad boxes (`contracts.py`, `_valid_box`).
+- **Transform direction**: `AlignmentResult.candidate_to_reference` (3x3) maps a candidate pixel `(x, y, 1)` to a reference pixel. `aligned_candidate = cv2.warpAffine(candidate, M[:2], (W, H))`. To draw a reference box on the raw candidate (the UI does this) apply the inverse: `report.draw_boxes(..., candidate_to_reference)`.
+- **Both crops use the same reference box**: `ref_crop = reference[y1:y2, x1:x2]`, `cand_crop = aligned_candidate[y1:y2, x1:x2]` (`pipeline.py:247`).
+- **Who decides what**: DINOv2 (and the classical diff) only PROPOSE where something differs. The VLM only JUDGES one proposal (and the whole scene) against the rules. `decision.decide()` alone turns judgments into `PASS` / `FAIL` / `NEEDS_REVIEW`. No model output is ever used as the final answer.
 
-## 2. The stages [contracts: exists, stages: see status]
+## 2. Stage map
 
-| # | Stage | Function (D4) | File | Status |
-| --- | --- | --- | --- | --- |
-| 1 | Validate input, decode, size limits | `analyze()` -> `_analyze_inner()` | `src/gameqa/pipeline.py:115,155` | [exists] |
-| 1a | Decode + limits | `load_image`, `decode_image` (file size, format whitelist, pixel cap; raises `ImageError`) | `src/gameqa/imageio.py:173,197` | [exists] |
-| 2 | Align candidate to reference | `align(reference, candidate, cfg)` -> `(AlignmentResult, aligned_candidate, overlap_mask)` | `vision/alignment.py:70` | [exists] |
-| 3 | DINOv2 distance map | `FeatureExtractor.distance_map(ref, aligned)` | `vision/features.py:144` | [exists] |
-| 4 | Region proposals | `propose(ref, aligned, overlap_mask, dino_map, cfg)` -> `(list[RegionProposal], Coverage)` | `vision/proposals.py:65` | [exists] |
-| 5 | VLM verdict per region | `Judge.judge_region(...)` -> `RegionJudgment` | `vision/judge.py:255` | [exists] |
-| 6 | Whole-scene audit | `Judge.audit_scene(...)` -> `SceneAudit` | `vision/judge.py:269` | [exists] |
-| 7 | Final decision | `decide(DecisionInput)` -> `(FinalDecision, reason)` | `src/gameqa/decision.py:53` | [exists] |
-| 8 | Artifacts, report, approve reference | `new_run_dir`, `write_json_atomic`, `export_report`, `approve_reference` | `storage.py:69,43,123,159`; report text `report.py:48` | [exists] |
+| # | Stage | Function | Where |
+| --- | --- | --- | --- |
+| 0 | entry | `analyze()` -> `_analyze_inner()` | `pipeline.py:114`, `:154` |
+| 0a | engines built once | `build_engines()`: Ollama warm-up FIRST, then DINOv2 | `pipeline.py:343` |
+| 1 | decode + limits | `load_image` / `decode_image` (25 MB, 16 MP, PNG/JPEG/WEBP/BMP) | `imageio.py:51`, `:27` |
+| 2 | identical shortcut | `np.array_equal` -> `decide(identical_images=True)` | `pipeline.py:179` |
+| 3 | alignment | `align()` | `vision/alignment.py:70` |
+| 4 | DINOv2 map | `FeatureExtractor.distance_map()` | `vision/features.py:144` |
+| 5 | proposals | `propose()` | `vision/proposals.py:67` |
+| 6 | crops | slicing + `save_image` | `pipeline.py:238-252` |
+| 7a | region judgment | `Judge.judge_region()` -> `_two_stage()` -> `validate_response()` | `vision/judge.py:373`, `:311`, `:112` |
+| 7b | scene audit | `Judge.audit_scene()` | `vision/judge.py:387` |
+| 8 | decision | `decide()` | `decision.py:105` |
+| 9 | artifacts | `_finish`, `write_json_atomic`, `render_report` | `pipeline.py:141`, `:136-137`, `report.py:48` |
+| 10 | export / approve | `export_report`, `approve_reference` | `storage.py:123`, `:159` |
 
-### Alignment (stage 2) [exists] (`vision/alignment.py`, read, not run by me)
-What `align()` actually does, in order:
-1. If candidate size differs, resize it to the reference size (`alignment.py:85-91`). If aspect ratios differ by more than 0.02 the result is `UNRELIABLE` immediately (`:97-99`).
-2. Compute `residual_identity` (mean absolute gray difference, `_mad`). If the mode is `identity` or the residual is below 2.0 gray levels, stop: status `identity` or `resized` (`:101-102`).
-3. Otherwise try a global translation (`cv2.phaseCorrelate`, `:44-49`) and a restricted affine (ORB features + RANSAC `estimateAffinePartial2D`: rotation, uniform scale, translation only, `:52-67`). A warp is adopted only if it cuts the residual to less than `min_error_gain` (0.7) of the identity residual (`:114,127`); this is the guard against "aligning away" a real change.
-4. If an adopted warp shifts more than `max_shift_fraction` or leaves less than `min_overlap_fraction` valid pixels -> `UNRELIABLE` (`:142-145`). If no warp helps and the residual is large (>25) with no reliable transform -> `UNRELIABLE` (`:132-134`).
-5. On success returns `ALIGNED`, the warped candidate and the valid-overlap mask (255 = valid). Direction: `M` maps candidate -> reference and is passed to `cv2.warpAffine` (`_warp`, `:35`). Whether the sign of the phase-correlation shift is right is not covered by a test I have seen (UNVERIFIED; see READABILITY_FEEDBACK).
+Stages 1-9 never raise to the caller: every failure is appended to `run.errors` and turned into a decision by `decide()`.
 
-### Image decoding [exists] (`imageio.py`)
-`decode_image` rejects empty files, files over `input.max_file_mb`, formats outside `allowed_formats`, images over `max_pixels`, and anything PIL cannot decode, all as `ImageError`. Output is RGB uint8.
+## 3. Alignment (`vision/alignment.py`)
 
-### Rules [exists] (`rules.py`)
-`parse_rules(text)` / `load_rules(path)` accept YAML `{rules: [...]}` and reject duplicate ids. There is no conflict detection between an allow and a deny rule yet (QA defect QA-D3 in `docs/status/qa-engineer.md`).
-`AlignmentStatus` values (`contracts.py`): `identity` (same size, no warp), `aligned` (translation/affine estimated and passed checks), `resized` (dimensions differed, candidate resized to reference), `unreliable`, `failed`. Config keys: `alignment.max_shift_fraction`, `min_overlap_fraction`, `min_inlier_ratio`. Alignment must not hide a vanished object by "fixing" it; if quality is low the status is `unreliable` and the decision becomes review.
+Different size -> candidate is resized to the reference (`RESIZED`); an aspect-ratio mismatch above 2 % is `UNRELIABLE` (`:85-98`). Same size and mean gray residual below 2.0 -> `IDENTITY` and nothing else is tried (`:101`). Otherwise a global translation (`cv2.phaseCorrelate`) and a similarity transform (ORB + RANSAC `estimateAffinePartial2D`) are tried, and a warp is adopted only if its residual is below `alignment.min_error_gain` (0.7) times the identity residual. A shift above `max_shift_fraction` (5 %) or overlap below `min_overlap_fraction` (0.85) gives `UNRELIABLE`. No local warping or optical flow, because it could warp a real bug away.
 
-### DINOv2 features [exists] (`vision/features.py`, read, not run by me)
-`compute_preproc` (`:40`) scales the longer side to `features.input_long_side` (518), then pads right/bottom (zeros after normalisation = mean colour) to a multiple of 14. `FeatureExtractor.patch_grid_distance` (`:128`) runs the frozen model on reference and aligned candidate, L2-normalises patch tokens, and returns `1 - cos` on the patch grid. `grid_to_reference` (`:54`) crops away the padded cells, upsamples bilinearly and resizes to reference HxW; this is the "undo resize/pad" step. Loading tries `torch.hub` `dinov2_vits14`, then a `transformers` fallback `facebook/dinov2-small` (a different model: `version` string records which one). Failure raises `ModelLoadError` (the pipeline should then report degraded mode; pipeline not yet present).
+Pixels outside the valid overlap are filled with reference pixels (they compare equal) and are 0 in `overlap_mask`. Example run: `status: identity`, `residual_identity: 0.63`.
 
-### Proposals [exists] (`vision/proposals.py:65`, read, not run by me)
-Threshold the DINOv2 map (`dinov2_threshold`) and the blurred gray diff (`classical_threshold`), both restricted to the valid-overlap mask; morphological close, connected components, drop components under `min_area_fraction`; pad each box by `box_padding_px`; merge overlapping boxes (IoU > `merge_iou` or one box mostly inside another); sort by score; keep `max_regions`. `Coverage.truncated` is set when merged count exceeds the cap. A box found by both sources gets `source="union"`. Scores from the two sources are on different scales and are only used for ordering (stated in the module docstring). `Coverage.proposals_judged` is left at 0 here; the pipeline must fill it.
+## 4. DINOv2 proposals
 
-### Three different kinds of output, kept apart
+### 4.1 Reference coordinates, resize/pad (`vision/features.py`)
 
-1. **DINOv2 patch distance** (stage 3): `1 - cosine_similarity` of L2-normalised patch features between reference and aligned candidate. It says "these patches look semantically different". It is not a bug probability; a small vanished object can be invisible at 14-pixel patch scale.
-2. **Proposals** (stage 4): the DINOv2 map thresholded (`proposals.dinov2_threshold`), cleaned, merged, padded (`box_padding_px`) and capped (`max_regions`: 8) are unioned with **classical** pixel-diff boxes (`classical_threshold`). Each proposal records `source` (`dinov2`/`classical`/`union`). If the cap drops regions, `Coverage.truncated=True` and PASS is blocked.
-3. **VLM judgment** (stages 5-6): for each region the VLM sees before/after crops, context, region location and the rules, and returns `observed_change`, `verdict` (`allowed`/`forbidden`/`uncertain`), `rule_ids`, `evidence`. Its self-reported confidence is not used as a probability. The judgment is only `validated=True` after schema, rule-ID and consistency checks (validation lives in the judge, [pending]).
-4. **Deterministic decision** (stage 7): `decide()` in `decision.py`. The VLM never outputs PASS/FAIL; code does.
+`compute_preproc` (`:40`) resizes the long side to `features.input_long_side` = 518 and zero-pads bottom/right to a multiple of 14. `distance_map` returns a map at REFERENCE resolution, so no later code knows the patch grid. For the 640x360 example: scale 0.8094, resized 518x291, `pad_h` 3, grid 21x37 patches; a patch is about 17.3 reference pixels wide. `grid_to_reference` (`:54`) crops the padded cells away, bilinearly upsamples and resizes to 640x360.
 
-### Orchestration [exists] (`pipeline.py`, read, not run by me)
-`analyze()` (`:115`) creates the run dir, writes `rules.yaml`, calls `_analyze_inner`, then always writes `report.md` and `analysis.json`. `_analyze_inner` (`:155`) order:
-1. `:159-175` load both images (`ImageError` is recorded in `errors`); if either is missing -> `decide(inputs_valid=False)` -> NEEDS_REVIEW, `execution_status=error`.
-2. `:180` pixel-identical shortcut: no model is loaded, `decide(identical_images=True)` -> PASS.
-3. `:191-208` alignment; an exception becomes status `FAILED` and the run stops with review. An `UNRELIABLE` alignment does NOT stop the run (models still run); the policy turns it into review.
-4. `:213-227` DINOv2 `distance_map`; any exception -> `degraded=True`, classical-only proposals, error text appended (this is the "DINOv2 unavailable" fallback; it is visible in `errors`, `engine_mode="degraded"`).
-5. `:231-237` `propose`; on exception no proposals and an error (error forces review, so an empty proposal list caused by a crash cannot PASS).
-6. `:241-253` crops: `ref[y1:y2, x1:x2]` and `aligned[y1:y2, x1:x2]` with the same box; saved to `crops/<id>_ref.png`, `crops/<id>_cand.png`; `images/overlay.png` has boxes drawn on the reference.
-7. `:256-296` judge each region then `audit_scene`, checking the `run.deadline_s` clock BETWEEN calls (a single in-flight request is not interrupted). Exceptions from the judge become `uncertain` judgments with `errors`.
-8. `:298-318` fill `coverage.proposals_judged`, compute `engine_mode`/`execution_status`, call `decide`. `mock` judge -> `engine_mode="mock"`.
+Distance per patch = `1 - cos(feature_ref, feature_cand)` on `x_norm_patchtokens` (`patch_grid_distance`, `:128`). The CLS token is never used as a spatial map.
 
-### The VLM layer [exists] (`vision/judge.py`, `vision/prompts.py`, read, not run by me)
-- `Judge.__init__` (`:133`): `provider: ollama` -> `model_id="ollama:<model>"`, `is_mock=False`; `provider: mock` -> `model_id="mock:<behavior>"`, `is_mock=True`. Mock behaviours: `allowed, forbidden, uncertain, timeout, invalid_json, unknown_rule` (`MOCK_BEHAVIORS`, `:19`). Mock replies say "no image was examined".
-- `judge_region` (`:255`) sends three images in order: reference crop, candidate crop, and a side-by-side context image (left reference, right candidate, region outlined) plus the rules text. `audit_scene` (`:269`) sends the full reference and aligned candidate with the already-proposed boxes outlined in yellow and asks whether anything changed outside them (`other_changes_outside_boxes`).
-- Requests: Ollama `/api/chat`, JSON-schema `format`, temperature 0 (`:192-201`). `_ask` (`:203`) retries only on provider errors or malformed JSON, at most `max_attempts`; timeout is per request (`timeout_s`). Replies are cached on disk under `<cache_dir>/vlm/` keyed by image bytes, prompt, schema, model id, prompt version (`:159`). A cache hit reports latency 0.0.
-- `validate_response` (`:62`) is the gatekeeper for `RegionJudgment.validated`. It forces `uncertain` and `validated=False` on: malformed JSON, missing keys, invalid verdict, unknown rule IDs, `forbidden` without a cited deny rule or evidence or citing an allow rule, `allowed` citing a deny rule, `allowed` with no rule and not saying "no visible change", `allowed` with rule but no evidence. This catches QA-D1 and most of QA-D2 at the judge level (as read; not re-tested by me).
-- The model's own confidence is not requested or used.
+### 4.2 `propose()` (`vision/proposals.py:67`)
 
-## 3. The decision policy, line by line [exists] (`src/gameqa/decision.py`; `is_reliable_forbidden` at line 40, `decide` at line 53)
+1. Valid area = overlap mask eroded by `mask_erode_px` (7) so warp borders do not make features.
+2. **Global-change collapse** (D10, `:85-91`): if at least `global_change_fraction` (10 %) of the valid area exceeds `dinov2_threshold` (0.35), return ONE full-frame proposal `R1 = [0,0,W,H]` with `truncated=True`. Truncated coverage can never PASS.
+3. DINOv2 source: threshold the map at 0.35, morphological close (about 1 % of the short side), 8-connected components, drop areas below `max(min_area_px 40, min_area_fraction * H*W)`.
+4. Classical source: blur both grays (sigma 2), fit a robust global gain/offset (`:99-107`, so allowed global lighting does not flood the diff), threshold the absolute difference at `classical_threshold` (40 gray levels).
+5. Pad each box by `box_padding_px` (8), merge boxes with IoU above `merge_iou` (0.1) or containment above 0.5, sort by score, cap at `max_regions` (8). Dropping any sets `Coverage.truncated`.
+6. `score` = max(signal / its source threshold) in the box, i.e. "x times the threshold". It orders proposals; it is not a probability. `source` is `dinov2`, `classical` or `union`.
 
-`is_reliable_forbidden(j, rules)` is true only if ALL hold: verdict is `forbidden`, `validated`, not `is_mock`, no `errors`, non-empty `evidence`, and at least one cited `rule_id` is a `deny` rule. This is the only way to FAIL.
+## 5. Worked example: `artifacts/20261008T230650Z-1335da`
 
-`decide(DecisionInput)` order:
-1. Collect region judgments plus the scene-audit judgment. If any is a reliable forbidden -> `FAIL`. This comes first on purpose: a timeout or truncation elsewhere cannot turn a proven fail into pass.
-2. `inputs_valid=False` -> `NEEDS_REVIEW`.
-3. `identical_images=True` -> `PASS` (documented shortcut).
-4. Otherwise collect reasons for review: no rules; alignment missing/`unreliable`/`failed`; `coverage.truncated`; `deadline_exceeded`; fewer judged than proposed; scene audit did not run or reported `extra_changes_reported`; any pipeline error; per judgment: mock, errors/not validated, or verdict not `allowed` (so `uncertain` and `forbidden`-but-unreliable land here).
-5. Any reason -> `NEEDS_REVIEW` with the joined reasons; none -> `PASS` with the heuristic disclaimer.
+Input: `data/fixtures/object_removed` (SYNTHETIC; a barrel is deleted; `expected.json` true box `[444,209,506,271]`), rules from `configs/rules_example.yaml` (A1, A2 allow; D1, D2 deny).
 
-Why errors become review: the pipeline cannot know whether the part that failed (model down, bad JSON, timeout) hid a bug. Treating that as PASS would be a false pass, the dangerous outcome. Treating it as FAIL would invent a defect without evidence. So uncertainty is surfaced to a human.
+**Stage by stage, with the real values from `analysis.json`:**
 
-### Worked example (small, hand-computed from `decide`; not a measured run)
-Rules: `A1 allow` weather/lighting may change; `D1 deny` objects must not disappear. Two regions:
-- R1 (sky), verdict `allowed`, rule `A1`, validated, real -> contributes no reason.
-- R2 (crate gone), verdict `forbidden`, rule `D1`, evidence "crate present in reference, absent in candidate", validated, real -> reliable forbidden.
-Result: `FAIL`, reason "Forbidden change with visual evidence: R2 (D1)." If instead R2's JSON was malformed (`validated=False`, `errors` set): no reliable forbidden, reasons = ["R2: invalid or failed model response"], result `NEEDS_REVIEW`. If R2 is `allowed` too, scene audit ran clean, nothing truncated, alignment `identity`: `PASS`.
-
-## 4. Where to change things
-
-| Want to change | Edit |
+| Stage | Value in the artifact |
 | --- | --- |
-| Thresholds, caps, timeouts, model name, deadline | `configs/default.yaml` (record changes in `docs/DECISIONS.md`) |
-| Decision policy | `src/gameqa/decision.py` (frozen; via senior-pm) |
-| Prompt / VLM provider | `src/gameqa/vision/judge.py`, `vlm.*` config [pending] |
-| Rules | `configs/rules_example.yaml` or the UI editor [pending] |
+| alignment | `identity`, overlap 1.0 |
+| proposals | one: `R1 box=[424,181,521,286] score=3.65 source=union` (both DINOv2 and classical fired) |
+| crops | `crops/R1_ref.png`, `crops/R1_cand.png`, 97x105 px each, same box on reference and aligned candidate |
+| diagnostics | `diagnostics/heatmap.png` (DINOv2 distance), `diagnostics/overlap_mask.png`, `images/overlay.png` (boxes on reference) |
+| R1 judgment | `forbidden`, `rule_ids [D1]`, `validated true`, evidence "The stack of brown blocks that was present in the BEFORE half is no longer visible in the AFTER half." |
+| scene audit | `uncertain`, `validated false`, rules `[A1, A2]`, errors: "allowed verdict but the text describes something missing/removed (internal contradiction)" and "...change_type=disappeared (never auto-allowed; needs review)" |
+| coverage | 1/1 judged, `truncated false`, `scene_audit_ran true` |
+| decision | `FAIL`, "Forbidden change with visual evidence: R1 (D1)." |
 
-## 5. One traced real pair
-[pending] `artifacts/` was empty when last checked. No `artifacts/<run_id>/analysis.json` existed when this section was written. To be filled with the actual function path and fields of a real run.
+Two honest observations. (a) The VLM called the object "a stack of brown blocks" in R1 and "the barrel" in the audit; the verdict is right, the description is not reliable. (b) The scene audit tried to answer `allowed` for a removal and `validate_response` rejected it; that is the guard working, and the audit still ends `uncertain`, so it can neither help nor block this FAIL.
 
-## 5b. Data manifest [exists] (`src/gameqa/data/manifest.py`)
-`load_inference_manifest` raises if a record contains `label`, `ground_truth`, `ground_truth_raw` or `test_pass` (`FORBIDDEN_INFERENCE_KEYS`), so labels cannot leak into inference. `load_eval_labels` is the only reader of labels. `rules_from_question` turns every benchmark question into one deny rule `Q1` ("Report a regression: <question>") plus an optional allow rule `A1` copied from an ACCEPTABLE block in the question. Consequence: benchmark runs use a single broad deny rule, unlike the demo A1/A2/D1/D2 rules. Preparation code is in `src/gameqa/data/prepare.py` (not run by me; no data-prep status file existed when checked).
+**Status caveat.** This artifact was written before the engine-mode fix in `pipeline.py:298-303` (file edited 03:07, run at 03:06), so it says `execution_status: degraded`, `engine_mode: degraded` although `errors` is empty. The same pair re-run after the fix, `artifacts/20261008T230730Z-818bb9`, has identical proposals and judgments but `complete` / `real`. `latency_s` is 0.0 and `timings.total` is 0.39 s because the replies came from `data/cache/vlm/`.
 
-## 6. Known limitations to state in the final version
-Known open policy defects (QA-D1..D3, `docs/status/qa-engineer.md`: an `allowed` verdict citing a deny rule, allowed with no evidence, and conflicting rules all currently PASS). Small-object misses at patch resolution; alignment sensitivity; VLM verdicts uncalibrated; qwen2.5vl:3b JSON compliance unmeasured; selective-download constraints for the dataset not yet observed. All to be updated from QA / data status.
+### 5.1 What the VLM is sent (`vision/judge.py`, prompt `v9`)
+
+`judge_region` (`:373`) builds ONE composite image with `labelled_pair` (`:63`): BEFORE crop on the left, AFTER crop on the right, captions burned in, small crops upscaled (Ollama's qwen2.5vl crashes below 28 px). The whole-scene audit sends one composite of both full frames (long side `audit_max_side` 512) with the already-judged boxes drawn in yellow with their IDs.
+
+`_two_stage` (`:311`):
+- **Stage 1** (image, NO rules; `REGION_PROMPT` / `AUDIT_PROMPT` in `prompts.py`): the model only describes. Schema `STAGE1_SCHEMA`: `before_shows, after_shows, observed_change, change_type, any_difference` (+ `other_changes_outside_boxes` for the audit). Reason: with rules in the prompt the 3B model echoed rule text and cited every allow rule (MODEL_NOTES section 7, v2-v7).
+- **Stage 2** (text only; `DECIDE_PROMPT`): the stage-1 text plus the rules (IDs verbatim, explicit ALLOW and DENY ID lists) -> `verdict, rule_ids, evidence` (`STAGE2_SCHEMA`).
+- Both calls use Ollama `format=<JSON schema>`, temperature 0, `num_ctx` 2048, timeout 75 s, 2 attempts. The merged JSON of both stages is what `validate_response` sees. The reply is cached by hash of images + prompt + schema + model + `PROMPT_VERSION` (`_cache_key`, `:229`); delete `data/cache/vlm/` to force a fresh call.
+
+### 5.2 `validate_response` (`judge.py:112`)
+
+Any failed check forces `verdict=uncertain, validated=False, errors=[...]`. Checks: JSON parses; required keys; `verdict` in the enum; every `rule_id` exists (D9); `forbidden` must cite a deny rule, no allow rule, and have evidence; `allowed` must cite no deny rule, have evidence, cite a rule or declare "no visible change" (`any_difference=false`), must not describe something missing while a deny rule exists (`_DISAPPEAR` regex, `:19`), and must not have `change_type` `disappeared` / `distorted_or_corrupted`. The model's own confidence is not used.
+
+Scene-audit extras (`audit_scene`, `:387`): (a) a deterministic pixel-identical shortcut (model id `deterministic:pixel-identical`, not a VLM result) only when there are no proposals and at most 8 pixels differ; (b) a validated `forbidden` audit with no pixel residual outside the judged boxes is downgraded to `uncertain` (the 3B model hallucinated `forbidden` on near-identical pairs); (c) an unvalidated audit never sets `extra_changes_reported`.
+
+## 6. The decision (`decision.py:105`, policy in `docs/DECISIONS.md` D3, D6, D9)
+
+Order inside `decide()`:
+
+1. **FAIL first.** `is_reliable_forbidden` (`:54`) needs: verdict `forbidden`, `validated`, not mock, no errors, non-empty evidence, all cited IDs known (D9/QA-D7), and at least one cited ID is a deny rule that is NOT in a rule conflict (D9/QA-D8). Which judgments count: all of them if alignment is not `UNRELIABLE`/`FAILED`/missing; otherwise ONLY the whole-scene one (`:115-122`), because region crops cut the same reference box from both images and a "missing object" under bad alignment may be misregistration (D9). FAIL wins even if other components failed.
+2. Invalid inputs -> `NEEDS_REVIEW`. Identical images -> `PASS` (`:127-131`).
+3. Collect reasons for `NEEDS_REVIEW`: no rules; rule conflicts (`find_rule_conflicts`, `:70`: duplicate IDs or the same description both allow and deny); alignment unreliable; truncated; deadline exceeded; not all proposals judged; scene audit missing or `extra_changes_reported`; any pipeline error; per judgment: mock, errors or unvalidated, not `allowed`, or `allowed` that fails `is_acceptable_allowed` (`:89`: validated, real, evidence, known IDs, no deny rule cited, D6).
+4. No reasons -> `PASS`, worded as "a heuristic result, not proof that no bug exists".
+
+In the example only step 1 runs: R1 is reliable forbidden citing D1 (not conflicted), alignment `identity` -> FAIL.
+
+Why errors become review: a timeout, an invalid JSON reply or a mock is not evidence of a bug and not evidence of safety. The only safe outputs are `NEEDS_REVIEW` (or `FAIL` when a proven forbidden change exists).
+
+## 7. Artifacts, UI, export, approval
+
+`analyze()` writes (`pipeline.py:130-137`): `rules.yaml`, `images/{reference,candidate,aligned_candidate,overlay}.png`, `crops/<id>_{ref,cand}.png`, `diagnostics/{heatmap,overlap_mask}.png`, `analysis.json` (the `AnalysisResult`, `contracts.py`), `report.md`. All writes are atomic (`storage.write_json_atomic`, `save_png`).
+
+`app.py`: `main()` (`:199`) holds source choice (upload or demo pair), the rules editor (`rules_editor`, `:82`), engine choice (real or MOCK), and the **Analyze** button. Results are keyed by an input hash in `st.session_state` (`input_hash`, `:75`) so reruns do not repeat inference. `render_result` (`:100`) shows banner, MOCK/DEGRADED notices, boxes on both images, per-region expanders, scene audit, diagnostics, **Export bug report (ZIP)** (`storage.export_report` writes `report.md` and `artifacts/<run_id>.zip` next to the run dir) and `render_approval` (`:179`).
+
+**Approve as new reference** (`storage.approve_reference`, `:159`) needs a reference ID plus a confirmation checkbox. It stores the run's candidate as the next `references/<id>/versions/vN.png`; if the ID is new, the replaced reference is stored first as `v1` ("baseline: original reference"); `history.json` records run ID, versions and sha256. Older versions are never overwritten (`_link_new`, `:144`). It does not touch benchmark source images. It does not check the decision: it can approve a `FAIL`, `NEEDS_REVIEW` or MOCK run if the user confirms.
+
+## 8. Where to change things
+
+| Want to change | Where |
+| --- | --- |
+| VLM model / server / timeout / attempts | `configs/default.yaml` `vlm.model`, `vlm.base_url`, `vlm.timeout_s` (75), `vlm.max_attempts` (2), `vlm.num_ctx`. Another provider needs a branch next to `Judge._ollama_reply` (`judge.py:262`) and `provider:` in `Judge.__init__` (`:222-226`) |
+| DINOv2 model / input size / device | `features.model`, `input_long_side` (518), `device` (`FeatureExtractor.__init__`, `features.py:68`) |
+| Sensitivity of proposals | `proposals.dinov2_threshold` (0.35), `classical_threshold` (40), `min_area_px`, `min_area_fraction`, `box_padding_px`, `merge_iou`, `max_regions` (8), `global_change_fraction` (0.10), `mask_erode_px` (7) |
+| Alignment strictness | `alignment.max_shift_fraction`, `min_overlap_fraction`, `min_inlier_ratio`, `min_error_gain`, `mode` |
+| Deadline | `run.deadline_s` (300): checked between VLM calls only |
+| Prompts | `src/gameqa/vision/prompts.py`: edit `REGION_PROMPT`, `AUDIT_PROMPT`, `DECIDE_PROMPT`, schemas, and **bump `PROMPT_VERSION`** (cache key). Do not add example sentences: the 3B model copies them (MODEL_NOTES v2-v5) |
+| Response validation rules | `judge.validate_response` (`judge.py:112`) |
+| Final decision policy | `decision.py` only; record every change in `docs/DECISIONS.md`; policy tests: `tests/policy/test_decision.py` |
+| Rules | at run time: the UI rules table or a YAML file (`configs/rules_example.yaml` format: `rules: [{id, effect: allow|deny, description}]`, quote values that YAML may turn into booleans, IDs unique). Benchmark rules: `data.manifest.rules_from_question` (`manifest.py:32`, D8) |
+| Mock behaviours | `MOCK_BEHAVIORS` (`judge.py:20`, repeated in `cli.py:15` and `app.py:30`) |
+
+Every config key can be overridden without editing `default.yaml`: `--config extra.yaml` is deep-merged over it (`config.load_config`, `config.py:28`). Config key names that `Judge` reads but `default.yaml` does not list: `vlm.use_context`, `vlm.cache`, `vlm.mock_behavior`, `vlm.identical_max_px`, `vlm.warmup_timeout_s`, `proposals.classical_gain_normalize`.
+
+## 9. Known limits relevant to the next day
+
+- **Small objects.** DINOv2 patches are about 14 px at 518 px input (17 px in a 640 px frame). A 12 px coin removed gives DINOv2 max 0.35, exactly at threshold (MODEL_NOTES section 4); only the classical diff catches it. Textures that change a little over a small area may be missed by both (the `clothing_color_change` fixture gets no proposal at all).
+- **Alignment sensitivity.** With `UNRELIABLE` alignment, region-level FAIL is disabled (D9). Two YouTube dev pairs were `unreliable`; no real pair has needed a warp.
+- **Global change.** Cutscene pairs change globally even when labelled `no_bug`; the collapse into one full-frame region keeps runs bounded but removes localisation (and forces `NEEDS_REVIEW`).
+- **Uncalibrated 3B judgments.** Weak rule mapping, weak scene audit, no validated `forbidden` on any of the 10 dev pairs (dl-engineer status). A larger VLM is the biggest lever and needs an owner decision.
+- **Latency.** Ollama runs on CPU: ~20 s per region call, ~35 s per audit, ~85 s median per uncached pair, 55-70 s cold load, ~9.3 GiB free RAM needed.
+- **Benchmark rules.** Only two distinct question texts exist, so benchmark runs barely exercise multi-rule logic; the synthetic fixtures do.
+- **Selective download.** Only metadata plus the selected image pairs are downloaded; never the 33.4 GB repository (DATA_CARD section 1). Manifest `sha256_*` is of the raw JPEG, not the working PNG.
+- **Doc/code mismatches found while writing this** are listed in `docs/READABILITY_FEEDBACK.md` section "Mismatches".

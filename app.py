@@ -183,6 +183,12 @@ def render_approval(result: AnalysisResult, run_dir: Path) -> None:
         ref_id = st.text_input("Reference ID", value=default_id, key=f"refid_{result.run_id}")
         sure = st.checkbox("I confirm this candidate becomes the new reference",
                            key=f"confirm_{result.run_id}")
+        risky = result.final_decision.value != "PASS" or result.engine_mode != "real"
+        if risky:
+            st.warning(f"This run is {result.final_decision.value} (engine: {result.engine_mode}). "
+                       "Approving overrides the tool's verdict.")
+            sure = sure and st.checkbox("I reviewed the regions and override the verdict",
+                                        key=f"override_{result.run_id}")
         if st.button("Approve as new reference", disabled=not (sure and ref_id.strip()),
                      key=f"approve_{result.run_id}"):
             try:

@@ -127,6 +127,12 @@ def cmd_approve(args) -> int:
     try:
         run_dir = run_dir_for(args.run_id, cfg)
         result = load_run(args.run_id, cfg)
+        risky = result.final_decision.value != "PASS" or result.engine_mode != "real"
+        if risky and not args.force:
+            print(f"error: run {args.run_id} is {result.final_decision.value} "
+                  f"(engine {result.engine_mode}); approving it as the new reference overrides "
+                  "the tool's verdict. Re-run with --force to confirm.", file=sys.stderr)
+            return 3
         info = approve_reference(
             args.reference_id, run_dir / "images" / "candidate.png", args.run_id, cfg,
             previous_reference_path=run_dir / "images" / "reference.png",
@@ -171,6 +177,8 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--reference-id", required=True)
     c.add_argument("--run-id", required=True)
     c.add_argument("--config", default=None)
+    c.add_argument("--force", action="store_true",
+                   help="required when the run is not a real-engine PASS (overrides the verdict)")
     c.set_defaults(func=cmd_approve)
 
     args = parser.parse_args(argv)

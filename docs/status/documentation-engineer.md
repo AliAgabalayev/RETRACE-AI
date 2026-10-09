@@ -1,10 +1,19 @@
 # documentation-engineer status
 
-## Done (2026-10-09)
-- README.md, docs/CODE_WALKTHROUGH.md (with file:line refs for imageio, alignment, features, proposals, judge, prompts, pipeline, storage, decision, manifest), docs/DEMO_RUNBOOK.md (skeleton + placeholders), docs/HANDOFF_DRAFT.md (Azerbaijani), docs/READABILITY_FEEDBACK.md (alignment, features, proposals, pipeline, judge, storage, rules, manifest).
-- All from reading code only. I ran nothing; every command is marked UNVERIFIED unless a status file recorded it (setup commands from senior-pm).
+## Phase 2 done (2026-10-09, against commit c463a07)
+- README.md: real commands and CLI flags (from `--help`), VERIFIED/UNVERIFIED per source.
+- docs/CODE_WALKTHROUGH.md: rewritten with current function names and line refs; traces `artifacts/20261008T230650Z-1335da` (proposals -> crops -> prompt v9 two stages -> `validate_response` -> `decide()` with D6/D9); where-to-change table.
+- docs/DEMO_RUNBOOK.md: three cases (object_removed FAIL, clothing_color_change UNVERIFIED PASS, lighting_change NEEDS_REVIEW + MOCK `timeout`), 5 benchmark demo pairs with outcome "pending", export and approve steps.
+- docs/HANDOFF_DRAFT.md: Azerbaijani; E2/E4 section is a PENDING placeholder for senior-pm.
+- docs/READABILITY_FEEDBACK.md: refreshed; fixed items removed; mismatch table (12 items).
 
-## Still pending (code/artifacts not present at last check)
-- app.py, cli.py, scripts/evaluate.py, tests/vision, tests/app, tests/acceptance, data/fixtures, any artifacts/<run_id>/, dl-engineer/python-developer-app/experiment-tracker status files, MODEL_NOTES.md, QA_REPORT.md, DATA_CARD.md.
-- Walkthrough section 5 (traced real analysis.json), runbook cases 1-3 (observed outcomes), HANDOFF_DRAFT items 3, 6, 7, 8 final values, CLI flags in README.
-- Re-run this pass once those land; line numbers in the walkthrough will drift as owners edit.
+## What I ran myself
+- `.venv/bin/python -m pytest -q` -> 163 passed, 6 skipped (5.5 s).
+- `--help` of gameqa.cli (analyze, batch, approve), scripts/make_fixtures.py, prepare_data.py, evaluate.py.
+- `gameqa.cli analyze ... --mock timeout` and `--mock allowed` on object_removed (real DINOv2 on CUDA, mock judge, artifacts in the session scratchpad via `--config`): NEEDS_REVIEW [MOCK], mock / degraded. `gameqa.cli approve` on that run: v1 + v2 + history.json.
+- Did NOT run: any real VLM call, Streamlit Analyze, GAMEQA_REAL tests (E2 was running).
+
+## Open
+- Runbook benchmark outcomes and clothing_color_change PASS: fill after senior-pm runs them.
+- HANDOFF_DRAFT section 6: fill after E2/E4.
+- Line numbers drift when owners edit; re-check `pipeline.py`, `judge.py`, `alignment.py` refs.

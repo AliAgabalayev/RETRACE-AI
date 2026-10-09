@@ -30,6 +30,23 @@ def test_cli_analyze_json_and_approve(pair, patch_vision, fake_engines, tmp_path
     assert rc == 0 and (tmp_path / "refs" / "g1" / "versions" / "v2.png").is_file()
 
 
+def test_cli_approve_of_non_pass_run_requires_force(pair, patch_vision, fake_engines, tmp_path, capsys):
+    rules = tmp_path / "r.yaml"
+    rules.write_text('rules:\n - {id: A1, effect: allow, description: "ok"}\n - {id: D1, effect: deny, description: "no"}\n')
+    cfgf = _cfg_file(tmp_path)
+    cli.main(["analyze", "--reference", pair.reference_path, "--candidate", pair.candidate_path,
+              "--rules", str(rules), "--config", cfgf, "--json"])
+    out = json.loads(capsys.readouterr().out)
+    analysis = tmp_path / "art" / out["run_id"] / "analysis.json"
+    saved = json.loads(analysis.read_text())
+    saved["final_decision"] = "FAIL"  # simulate a run whose verdict the human overrides
+    analysis.write_text(json.dumps(saved))
+    rc = cli.main(["approve", "--reference-id", "g2", "--run-id", out["run_id"], "--config", cfgf])
+    assert rc == 3 and not (tmp_path / "refs" / "g2").exists()
+    rc = cli.main(["approve", "--reference-id", "g2", "--run-id", out["run_id"], "--config", cfgf, "--force"])
+    assert rc == 0 and (tmp_path / "refs" / "g2" / "history.json").is_file()
+
+
 def test_cli_batch_reads_only_inference_fields(pair, patch_vision, fake_engines, tmp_path, capsys):
     manifest = [{"sample_id": "m1", "split": "demo", "reference_path": pair.reference_path,
                  "candidate_path": pair.candidate_path,
