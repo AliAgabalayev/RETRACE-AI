@@ -29,7 +29,7 @@ Command: `python3 -I /tmp/qa_scripts/recompute.py` (reads `configs/ali_dev12.jso
 | Localization claims for vr_4b921c5d and vr_d07179d5 | PASS (with note) | proposals R1 [2484,1400,3049,1966] and [1936,1094,2612,2053] equal the cited values. My IoU against the labelled boxes: 0.60 and 0.71. Pitch correctly says "no IoU metric computed"; see D3 for the label-circularity caveat |
 | Quoted Qwen texts and decisions (4b921c5d, d07179d5, 09a066d3, 330651ed) | PASS | match `observed_change`, `decision`, run_ids in predictions_C |
 | labels_audit.md sensitivity table (330651ed counted clean: 4 bug / 8 clean) | PASS | A: false-PASS 4/4, clean PASS 8/8, coverage 12/12. B: 4/4, 4/8, 8/12. C: 0/4, 0/8, 0/12. All identical to my recompute (`sens` lines) |
-| Observation accuracy not claimed | PASS | `obs_review.csv` has 24 rows, `obs_correct` empty; docs say "not scored" |
+| Observation accuracy | PASS (superseded) | at my first check `obs_review.csv` was unmarked and the docs said "not scored". It is now marked by Ali (16:10): B y1/p3/n8 (y+p 4/12), C y1/p8/n3 (y+p 9/12); strict 10/12 target not met. One rater, possible anchoring, one Claude disagreement (vr_43773eb8 C). Pitch/video must quote these as dev12, n=12, partial credit by hand |
 
 Remarks (not failures):
 - B scene-audit input is not byte-identical to C's. Same size and same prompt, except C's audit prompt line lists `Regions already checked are outlined in yellow ...: R1=[...]` and C's audit PNG draws those outlines (B: "none"). This is by design (the audit is the second stage of the hybrid) but the docs say "same aligned input"; it is the same aligned frames, not the same audit image. Verified by `diff` of `artifacts/ali/a1_inputs/a1/{B,C}/*/SCENE_audit_1.txt`.
@@ -94,7 +94,7 @@ Likely affected component: docs only.
 
 Priority: minor
 Case and checkpoint: D4. Label text vs. image, vr_d07179d5, `labels_ali.csv`.
-Expected / actual: label says "appearance changed (glass/texture differs)". `docs/ali/a1_evidence/vr_d07179d5_R1_vlm_input.png` shows the booth's top roof and the "TELEPHONE" sign visible BEFORE and absent AFTER (and the booth door frame tilted). Gemini's description matches the image, the label does not. Not a rule-class problem (still D1) but "observation correctness" scoring against this label would mark the correct Gemini text wrong. Fix the free-text before obs_review is ever scored; do not edit the frozen label silently, record it in labels_audit.md.
+Expected / actual: label says "appearance changed (glass/texture differs)". `docs/ali/a1_evidence/vr_d07179d5_R1_vlm_input.png` shows the booth's top roof and the "TELEPHONE" sign visible BEFORE and absent AFTER (and the booth door frame tilted). Gemini's description matches the image, the label does not. Not a rule-class problem (still D1) but "observation correctness" scoring against this label would mark the correct Gemini text wrong. (obs_review is now scored; d07179d5 marks are B n, C p, so check that mark against the image.) Fix the free-text; do not edit the frozen label silently, record it in labels_audit.md.
 
 Priority: minor
 Case and checkpoint: D5. Bug ZIP report wording.
