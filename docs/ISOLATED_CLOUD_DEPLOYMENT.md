@@ -14,6 +14,7 @@ Laptop demosu dəyişdirilməyib: `https://wax-coleman-meat-invention.trycloudfl
 - Ayrıca checkout: `retrace-cloud-isolated`; feature branch: `feat/cloud-deployment`.
 - Audit/base və dəyişməyən application code SHA: `538e1b149cb75ae691888ecf23a4277fa792ad73`.
 - Base parent (GitHub commit metadata): `3d7dbf7db57e244846546cf99b360ae760710e2c`.
+- Deployment assets verified commit: `618f6f303b4f662b1dcc2f9bd598ed344baec3f6`; [draft PR #10](https://github.com/AliAgabalayev/RETRACE-AI/pull/10). Sonrakı report-only commit həmin yoxlamaların nəticəsini qeyd edir; blueprint/source dəyişmir.
 - Shallow, public clone istifadə edilib. Əvvəlki dayandırılmış clone `retrace-cloud-deployment` qovluğunda saxlanılıb; onu işlək checkout kimi istifadə etmirik.
 - Yalnız `render.yaml` və bu report əlavə olunur. Source, tests, dependencies, Dockerfile, frozen configs, prompts və policy dəyişmir.
 - Branch commit-i `git log -1 --format=%H feat/cloud-deployment` ilə alınır və delivery cavabında qeyd olunur. Default branch-ə merge və auto deployment yoxdur.
@@ -59,6 +60,7 @@ Environment names və davranış:
 | Lokal offline suite | **218 passed, 6 deselected, 87.07 s**; `pytest -m 'not real_model' -q -ra`, ayrıca writable basetemp, mövcud venv. Deselected real-model checks icra edilməyib. |
 | İlkin sandbox test | **73 failed, 145 passed, 6 deselected, 102.38 s**. Müvəqqəti atomic rename-lərdə WinError 5 və environment config təsiri; sonra ayrı writable temp və inherited config olmadan yuxarıdakı clean rerun. Bu ilk nəticə gizlədilmir və cloud xətası kimi sayılmır. |
 | Base GitHub CI | Run [37955492597](https://github.com/AliAgabalayev/RETRACE-AI/actions/runs/37955492597), exact base SHA: checks/container success; **218 passed, 6 deselected, 39.71 s**. Saved CI log birbaşa oxunub. |
+| Yeni feature PR CI | Run [38136686460](https://github.com/AliAgabalayev/RETRACE-AI/actions/runs/38136686460): **checks PASS (1m38s), container PASS (1m27s), GitGuardian PASS**. GitHub runner-də yeni Docker build/startup, keyless replay/evidence və CPU DINO check icra olunub; Render deyil. Log ayrıca saxlanılıb. |
 | Docker build/startup | Lokal Linux Docker engine pipe yoxdur, ona görə **lokal build BLOCKED**. Eyni dəyişməyən Dockerfile GitHub CI-də build edilib; image 1,734,729,871 bytes (~1.62 GiB). Health ilk connection reset-lərdən sonra retry ilə uğurlu, keyless replay və CPU DINO load verified. Render build nəticəsi deyil. |
 | Ayrıca lokal app | `scripts/start_deployment.py`, yalnız yeni checkout, port **8537**, public replay, credentials boş; health **200**. stderr-də `Uvicorn server started on 0.0.0.0:8537`, 15:33:50 local log vaxtı. Launch-to-ready duration ayrıca ölçülməyib. |
 | Browser | Reference/Candidate, recorded replay/no-new-inference label, stored read-only rules, run/sample, **FAIL**, region və scene forbidden observations, crops və ZIP button görüldü. DOM-də 8 image loaded, browser warn/error siyahısı boş idi. Public mode-da live və approvals disabled. |
