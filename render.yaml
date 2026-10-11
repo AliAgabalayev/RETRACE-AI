@@ -1,0 +1,18 @@
+# Creating this service is billable: obtain owner pricing approval first.
+# This is an independent service; it does not replace the laptop tunnel.
+services:
+  - type: web
+    name: retrace-ai-isolated
+    runtime: docker
+    repo: https://github.com/AliAgabalayev/RETRACE-AI
+    branch: feat/cloud-deployment
+    region: frankfurt
+    plan: 2c-4g
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: "off"
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: GAMEQA_PUBLIC_REPLAY
+        value: "1"
