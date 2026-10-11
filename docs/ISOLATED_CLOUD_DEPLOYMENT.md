@@ -1,5 +1,7 @@
 # RETRACE-AI — ayrıca Render deployment hazırlığı
 
+**Sonrakı scope:** owner ayrıca 24-hour Free replay istədi. Cari `render.yaml` artıq yalnız Free `Dockerfile.replay` seçir; aşağıdakı paid blueprint təsviri əvvəlki auditin historical nəticəsidir. Aktual addımlar və nəticələr: [Render Free demo](RENDER_FREE_DEMO.md).
+
 Tarix: 11 oktyabr 2026, Asia/Baku. Status: **PARTIAL — hazırlıq və lokal replay yoxlanıb; cloud xidmət yaradılmayıb.** Yeni cloud URL yoxdur.
 
 ## Qərar və sərhəd

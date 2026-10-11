@@ -1,15 +1,15 @@
-# Creating this service is billable: obtain owner pricing approval first.
+# Free replay only. Do not upgrade, add disks, secrets, or paid resources.
 # This is an independent service; it does not replace the laptop tunnel.
 services:
   - type: web
-    name: retrace-ai-isolated
+    name: retrace-ai-free-replay
     runtime: docker
     repo: https://github.com/AliAgabalayev/RETRACE-AI
     branch: feat/cloud-deployment
     region: frankfurt
-    plan: 2c-4g
+    plan: free
     numInstances: 1
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.replay
     dockerContext: .
     autoDeployTrigger: "off"
     healthCheckPath: /_stcore/health

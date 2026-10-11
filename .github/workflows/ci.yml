@@ -6,6 +6,23 @@ on:
 permissions:
   contents: read
 jobs:
+  free-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f Dockerfile.replay -t gameqa-free .
+      - name: Replay UI without models within 512 MiB
+        run: docker run --rm --memory=512m --memory-swap=512m --cpus=1 --entrypoint python gameqa-free scripts/verify_free_replay.py
+      - name: Dynamic port, health, and cold restart
+        run: |
+          docker run -d --name free-replay --memory=512m --memory-swap=512m --cpus=1 -e PORT=10000 -p 10000:10000 gameqa-free
+          curl --retry 12 --retry-all-errors --retry-delay 2 --fail http://127.0.0.1:10000/_stcore/health
+          docker restart free-replay
+          curl --retry 12 --retry-all-errors --retry-delay 2 --fail http://127.0.0.1:10000/_stcore/health
+          docker inspect free-replay --format '{{.State.OOMKilled}}'
+          test "$(docker inspect free-replay --format '{{.State.OOMKilled}}')" = false
+          docker logs free-replay
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
