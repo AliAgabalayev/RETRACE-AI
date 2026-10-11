@@ -1,0 +1,12 @@
+# Existing UI dependencies only; no Torch, torchvision, models, or provider SDK.
+# Versions match the frozen application's direct dependency declaration.
+numpy==2.0.2
+Pillow==10.4.0
+opencv-python-headless==4.12.0.88
+pydantic==2.8.2
+PyYAML==6.0.1
+httpx==0.27.0
+streamlit==1.61.1
+python-dotenv==0.21.0
+pandas==2.2.2
+pyarrow==21.0.0

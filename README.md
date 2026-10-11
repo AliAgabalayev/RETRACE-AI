@@ -21,6 +21,8 @@ The entrypoint selects the frozen configuration and seeds a checksum-verified hi
 
 Primary deployment: **Render Docker web service, at least 4 GB RAM / 2 CPU**. This is a capacity recommendation, not a measured hosted performance guarantee. [Deployment and owner checklist](docs/DEPLOYMENT.md), [Windows/video runbook](docs/FINAL_DEMO_RUNBOOK.md).
 
+For the separate temporary **Render Free replay-only demo**, use `Dockerfile.replay` and [Free replay instructions](docs/RENDER_FREE_DEMO.md). It preserves the recorded UI/evidence and disables new inference; no Torch/model download or API key is needed. The full application Dockerfile remains unchanged.
+
 ## Evidence and limits
 
 - Portable saved run **20261009T123704Z-8e4e19**: barrel removal, validated forbidden/D1 and final FAIL. Export contains evidence.json, analysis.json, Markdown, inputs and crops. It is labelled replay.

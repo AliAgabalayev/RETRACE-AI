@@ -1,0 +1,18 @@
+# Free replay only. Do not upgrade, add disks, secrets, or paid resources.
+# This is an independent service; it does not replace the laptop tunnel.
+services:
+  - type: web
+    name: retrace-ai-free-replay
+    runtime: docker
+    repo: https://github.com/AliAgabalayev/RETRACE-AI
+    branch: feat/cloud-deployment
+    region: frankfurt
+    plan: free
+    numInstances: 1
+    dockerfilePath: ./Dockerfile.replay
+    dockerContext: .
+    autoDeployTrigger: "off"
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: GAMEQA_PUBLIC_REPLAY
+        value: "1"
