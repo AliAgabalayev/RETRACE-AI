@@ -2,6 +2,12 @@
 
 Compare approved game screenshots with a new build under explicit rules, inspect changed regions, and export evidence-backed PASS / FAIL / NEEDS_REVIEW reports.
 
+| Approved build | New build |
+| --- | --- |
+| ![Reference crop showing the barrel](deploy/replay/barrel/crops/R1_ref.png) | ![Candidate crop with the barrel removed](deploy/replay/barrel/crops/R1_cand.png) |
+
+**FAIL** · The barrel is missing in the new build. Rule D1 forbids its removal. [Inspect the saved replay](deploy/replay/barrel/)
+
 The final demo runtime is **OpenRouter / `google/gemini-3.5-flash` / reasoning low / prompt v9**, with frozen DINOv2 feature extraction and deterministic decision policy. Canonical configuration: `configs/openrouter_gemini_pilot.yaml`, merged config hash **eaa371255716**. Qwen is the historical comparison baseline, not the deployed runtime.
 
 ## Start
